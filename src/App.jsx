@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import {
   ResponsiveContainer,
   ComposedChart,
@@ -45,7 +45,20 @@ import {
   Sun,
   Moon,
   Bell,
+  Cloud,
+  CloudOff,
+  RefreshCw,
+  LogOut,
+  Download,
+  Upload,
 } from 'lucide-react';
+
+// ============================================================================
+// CONFIGURAZIONE CLOUD SYNC (Incolla qui i dati del tuo progetto Supabase)
+// ============================================================================
+const SUPABASE_URL = 'https://lubcesnljpwvgvsnhtcl.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_psF0qMa_982qxlfRWaFGHA_JlFL_9zW';
+// ============================================================================
 
 // --- UTILITY DATE (Locale, senza slittamenti di fuso orario) ---
 function getTodayStr() {
@@ -392,10 +405,24 @@ function createDemoExam() {
   };
 }
 
+function hasMeaningfulProgress(examState) {
+  if (!examState || !Array.isArray(examState.exams)) return false;
+  if (examState.exams.length > 1) return true;
+  const ex = examState.exams[0];
+  if (!ex) return false;
+  return (
+    (ex.logs && ex.logs.length > 0) ||
+    (ex.srTopics && ex.srTopics.length > 0) ||
+    (ex.pomodoroSessions && ex.pomodoroSessions.length > 0)
+  );
+}
+
 const STORAGE_KEY = 'studyburn_state_v2';
 const LAYOUT_STORAGE_KEY = 'studyburn_layout_v1';
 const THEME_STORAGE_KEY = 'studyburn_theme_v1';
 const POMO_PREFS_STORAGE_KEY = 'studyburn_pomo_prefs_v1';
+const CLOUD_CONFIG_STORAGE_KEY = 'studyburn_cloud_config_v1';
+const CLOUD_SESSION_STORAGE_KEY = 'studyburn_cloud_session_v1';
 
 export default function App() {
   // --- STATO MODALITÀ SCURA ---
@@ -552,7 +579,7 @@ export default function App() {
   const [editingLogDate, setEditingLogDate] = useState(null);
   const [editingLogPages, setEditingLogPages] = useState('');
 
-  // --- STATO TIMER POMODORO CLASSICO (4 sessioni + Pausa Lunga + Auto-start + Suoni) ---
+  // --- STATO TIMER POMODORO CLASSICO ---
   const initialPomoPrefs = useMemo(() => {
     try {
       const saved = localStorage.getItem(POMO_PREFS_STORAGE_KEY);
@@ -572,12 +599,12 @@ export default function App() {
   const [pomoLongBreakMin, setPomoLongBreakMin] = useState(
     initialPomoPrefs.longBreakMin || 15
   );
-  const [pomoPhase, setPomoPhase] = useState('study'); // 'study' | 'short_break' | 'long_break'
+  const [pomoPhase, setPomoPhase] = useState('study');
   const [pomoSecondsLeft, setPomoSecondsLeft] = useState(
     (initialPomoPrefs.studyMin || 25) * 60
   );
   const [pomoRunning, setPomoRunning] = useState(false);
-  const [pomoCycleCount, setPomoCycleCount] = useState(0); // 0..4 sessioni nel ciclo
+  const [pomoCycleCount, setPomoCycleCount] = useState(0);
   const [pomoAutoContinue, setPomoAutoContinue] = useState(
     Boolean(initialPomoPrefs.autoContinue)
   );
@@ -616,7 +643,6 @@ export default function App() {
     pomoSoundType,
   ]);
 
-  // Ref per evitare interruzioni del tick quando si cambiano opzioni al volo
   const pomoAutoContinueRef = useRef(pomoAutoContinue);
   const pomoSoundRef = useRef(pomoSound);
   const pomoSoundTypeRef = useRef(pomoSoundType);
@@ -629,6 +655,498 @@ export default function App() {
   useEffect(() => {
     pomoSoundTypeRef.current = pomoSoundType;
   }, [pomoSoundType]);
+
+  // --- STATO CLOUD SYNC MULTI-DISPOSITIVO ---
+  const [showCloudModal, setShowCloudModal] = useState(false);
+  const [cloudUrl, setCloudUrl] = useState(() => {
+    if (SUPABASE_URL.trim()) return SUPABASE_URL.trim().replace(/\/$/, '');
+    try {
+      const saved = JSON.parse(
+        localStorage.getItem(CLOUD_CONFIG_STORAGE_KEY) || '{}'
+      );
+      return (saved.url || '').trim().replace(/\/$/, '');
+    } catch {
+      return '';
+    }
+  });
+  const [cloudAnonKey, setCloudAnonKey] = useState(() => {
+    if (SUPABASE_ANON_KEY.trim()) return SUPABASE_ANON_KEY.trim();
+    try {
+      const saved = JSON.parse(
+        localStorage.getItem(CLOUD_CONFIG_STORAGE_KEY) || '{}'
+      );
+      return (saved.anonKey || '').trim();
+    } catch {
+      return '';
+    }
+  });
+  const [showAdvancedServerConfig, setShowAdvancedServerConfig] = useState(
+    () => !SUPABASE_URL.trim() || !SUPABASE_ANON_KEY.trim()
+  );
+  const [cloudSession, setCloudSession] = useState(() => {
+    try {
+      const saved = localStorage.getItem(CLOUD_SESSION_STORAGE_KEY);
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
+  const [authMode, setAuthMode] = useState('login'); // 'login' | 'signup'
+  const [authEmail, setAuthEmail] = useState('');
+  const [authPassword, setAuthPassword] = useState('');
+  const [authLoading, setAuthLoading] = useState(false);
+  const [cloudStatus, setCloudStatus] = useState('idle'); // 'idle' | 'syncing' | 'synced' | 'error'
+  const [cloudMessage, setCloudMessage] = useState('');
+  const [lastSyncedAt, setLastSyncedAt] = useState(null);
+  const [cloudConflictPayload, setCloudConflictPayload] = useState(null);
+
+  const cloudSyncReadyRef = useRef(false);
+  const skipNextAutoPushRef = useRef(false);
+  const importFileInputRef = useRef(null);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(
+        CLOUD_CONFIG_STORAGE_KEY,
+        JSON.stringify({ url: cloudUrl, anonKey: cloudAnonKey })
+      );
+    } catch (e) {
+      console.error('Errore salvataggio config cloud:', e);
+    }
+  }, [cloudUrl, cloudAnonKey]);
+
+  useEffect(() => {
+    try {
+      if (cloudSession) {
+        localStorage.setItem(
+          CLOUD_SESSION_STORAGE_KEY,
+          JSON.stringify(cloudSession)
+        );
+      } else {
+        localStorage.removeItem(CLOUD_SESSION_STORAGE_KEY);
+      }
+    } catch (e) {
+      console.error('Errore salvataggio sessione cloud:', e);
+    }
+  }, [cloudSession]);
+
+  const applyRemotePayload = useCallback((payload) => {
+    if (!payload || typeof payload !== 'object') return;
+    skipNextAutoPushRef.current = true;
+    if (
+      payload.state &&
+      Array.isArray(payload.state.exams) &&
+      payload.state.exams.length > 0
+    ) {
+      setState(payload.state);
+    }
+    if (payload.layout) {
+      setLayout(sanitizeLayout(payload.layout));
+    }
+    if (payload.pomoPrefs) {
+      if (payload.pomoPrefs.studyMin) {
+        setPomoStudyMin(payload.pomoPrefs.studyMin);
+        setPomoSecondsLeft(payload.pomoPrefs.studyMin * 60);
+      }
+      if (payload.pomoPrefs.shortBreakMin) {
+        setPomoShortBreakMin(payload.pomoPrefs.shortBreakMin);
+      }
+      if (payload.pomoPrefs.longBreakMin) {
+        setPomoLongBreakMin(payload.pomoPrefs.longBreakMin);
+      }
+      if (payload.pomoPrefs.autoContinue !== undefined) {
+        setPomoAutoContinue(Boolean(payload.pomoPrefs.autoContinue));
+      }
+      if (payload.pomoPrefs.soundEnabled !== undefined) {
+        setPomoSound(Boolean(payload.pomoPrefs.soundEnabled));
+      }
+      if (payload.pomoPrefs.soundType) {
+        setPomoSoundType(payload.pomoPrefs.soundType);
+      }
+    }
+  }, []);
+
+  const refreshCloudToken = useCallback(
+    async (sessionObj) => {
+      if (!cloudUrl || !cloudAnonKey || !sessionObj?.refresh_token) return null;
+      try {
+        const res = await fetch(
+          `${cloudUrl}/auth/v1/token?grant_type=refresh_token`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              apikey: cloudAnonKey,
+            },
+            body: JSON.stringify({ refresh_token: sessionObj.refresh_token }),
+          }
+        );
+        if (!res.ok) return null;
+        const data = await res.json();
+        const updatedSession = {
+          access_token: data.access_token,
+          refresh_token: data.refresh_token || sessionObj.refresh_token,
+          user: data.user || sessionObj.user,
+        };
+        setCloudSession(updatedSession);
+        return updatedSession;
+      } catch {
+        return null;
+      }
+    },
+    [cloudUrl, cloudAnonKey]
+  );
+
+  const pushToCloud = useCallback(
+    async (sessionOverride = null, customSnapshot = null) => {
+      const activeSess = sessionOverride || cloudSession;
+      if (!cloudUrl || !cloudAnonKey || !activeSess?.access_token || !activeSess?.user?.id) {
+        return false;
+      }
+
+      setCloudStatus('syncing');
+      const snapshot = customSnapshot || {
+        state,
+        layout,
+        pomoPrefs: {
+          studyMin: pomoStudyMin,
+          shortBreakMin: pomoShortBreakMin,
+          longBreakMin: pomoLongBreakMin,
+          autoContinue: pomoAutoContinue,
+          soundEnabled: pomoSound,
+          soundType: pomoSoundType,
+        },
+      };
+
+      const doUpsert = async (token) =>
+        fetch(
+          `${cloudUrl}/rest/v1/studyburn_profiles?on_conflict=user_id`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              apikey: cloudAnonKey,
+              Authorization: `Bearer ${token}`,
+              Prefer: 'resolution=merge-duplicates,return=minimal',
+            },
+            body: JSON.stringify({
+              user_id: activeSess.user.id,
+              payload: snapshot,
+              updated_at: new Date().toISOString(),
+            }),
+          }
+        );
+
+      try {
+        let res = await doUpsert(activeSess.access_token);
+        if (res.status === 401) {
+          const refreshed = await refreshCloudToken(activeSess);
+          if (refreshed) {
+            res = await doUpsert(refreshed.access_token);
+          }
+        }
+
+        if (!res.ok) {
+          const errText = await res.text();
+          throw new Error(errText || `Errore HTTP ${res.status}`);
+        }
+
+        setCloudStatus('synced');
+        setCloudMessage('');
+        setLastSyncedAt(getCurrentTimeStr());
+        return true;
+      } catch (err) {
+        console.error('Errore salvataggio cloud:', err);
+        setCloudStatus('error');
+        setCloudMessage(
+          'Errore durante il salvataggio sul cloud. Verifica la tabella Supabase.'
+        );
+        return false;
+      }
+    },
+    [
+      cloudUrl,
+      cloudAnonKey,
+      cloudSession,
+      state,
+      layout,
+      pomoStudyMin,
+      pomoShortBreakMin,
+      pomoLongBreakMin,
+      pomoAutoContinue,
+      pomoSound,
+      pomoSoundType,
+      refreshCloudToken,
+    ]
+  );
+
+  const pullFromCloud = useCallback(
+    async (sessionOverride = null, askOnLocalConflict = false) => {
+      const activeSess = sessionOverride || cloudSession;
+      if (!cloudUrl || !cloudAnonKey || !activeSess?.access_token || !activeSess?.user?.id) {
+        return null;
+      }
+
+      setCloudStatus('syncing');
+
+      const doSelect = async (token) =>
+        fetch(
+          `${cloudUrl}/rest/v1/studyburn_profiles?user_id=eq.${activeSess.user.id}&select=payload,updated_at`,
+          {
+            method: 'GET',
+            headers: {
+              apikey: cloudAnonKey,
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+      try {
+        let res = await doSelect(activeSess.access_token);
+        if (res.status === 401) {
+          const refreshed = await refreshCloudToken(activeSess);
+          if (refreshed) {
+            res = await doSelect(refreshed.access_token);
+          }
+        }
+
+        if (!res.ok) {
+          const errText = await res.text();
+          throw new Error(errText || `Errore HTTP ${res.status}`);
+        }
+
+        const rows = await res.json();
+        const remoteRow = Array.isArray(rows) && rows.length > 0 ? rows[0] : null;
+
+        if (remoteRow && remoteRow.payload && remoteRow.payload.state) {
+          if (askOnLocalConflict && hasMeaningfulProgress(state)) {
+            setCloudConflictPayload(remoteRow.payload);
+            setCloudStatus('synced');
+            return remoteRow.payload;
+          }
+          applyRemotePayload(remoteRow.payload);
+          cloudSyncReadyRef.current = true;
+          setCloudStatus('synced');
+          setCloudMessage('');
+          setLastSyncedAt(getCurrentTimeStr());
+          return remoteRow.payload;
+        } else {
+          cloudSyncReadyRef.current = true;
+          await pushToCloud(activeSess);
+          return null;
+        }
+      } catch (err) {
+        console.error('Errore lettura cloud:', err);
+        setCloudStatus('error');
+        setCloudMessage(
+          'Impossibile leggere dal cloud. Controlla URL, chiave API o tabella SQL.'
+        );
+        return null;
+      }
+    },
+    [
+      cloudUrl,
+      cloudAnonKey,
+      cloudSession,
+      state,
+      applyRemotePayload,
+      pushToCloud,
+      refreshCloudToken,
+    ]
+  );
+
+  // Pull automatico all'avvio se già loggato
+  useEffect(() => {
+    if (cloudUrl && cloudAnonKey && cloudSession?.access_token) {
+      pullFromCloud(cloudSession, false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Auto-sync debounced ogni volta che cambiano esami, layout o preferenze
+  useEffect(() => {
+    if (
+      !cloudUrl ||
+      !cloudAnonKey ||
+      !cloudSession?.access_token ||
+      !cloudSyncReadyRef.current
+    ) {
+      return;
+    }
+    if (skipNextAutoPushRef.current) {
+      skipNextAutoPushRef.current = false;
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      pushToCloud();
+    }, 1200);
+
+    return () => clearTimeout(timer);
+  }, [
+    state,
+    layout,
+    pomoStudyMin,
+    pomoShortBreakMin,
+    pomoLongBreakMin,
+    pomoAutoContinue,
+    pomoSound,
+    pomoSoundType,
+    cloudUrl,
+    cloudAnonKey,
+    cloudSession,
+    pushToCloud,
+  ]);
+
+  // Pull automatico quando torni sulla scheda/app da un altro dispositivo
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (
+        document.visibilityState === 'visible' &&
+        cloudUrl &&
+        cloudAnonKey &&
+        cloudSession?.access_token &&
+        cloudSyncReadyRef.current
+      ) {
+        pullFromCloud(cloudSession, false);
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () =>
+      document.removeEventListener('visibilitychange', handleVisibility);
+  }, [cloudUrl, cloudAnonKey, cloudSession, pullFromCloud]);
+
+  const handleCloudAuthSubmit = async (e) => {
+    e.preventDefault();
+    const cleanUrl = cloudUrl.trim().replace(/\/$/, '');
+    const cleanKey = cloudAnonKey.trim();
+
+    if (!cleanUrl || !cleanKey) {
+      setCloudMessage('Inserisci prima Project URL e Anon Key di Supabase.');
+      setShowAdvancedServerConfig(true);
+      return;
+    }
+    if (!authEmail.trim() || !authPassword) {
+      setCloudMessage('Inserisci email e password.');
+      return;
+    }
+
+    setAuthLoading(true);
+    setCloudMessage('');
+
+    try {
+      const endpoint =
+        authMode === 'signup'
+          ? `${cleanUrl}/auth/v1/signup`
+          : `${cleanUrl}/auth/v1/token?grant_type=password`;
+
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          apikey: cleanKey,
+        },
+        body: JSON.stringify({
+          email: authEmail.trim(),
+          password: authPassword,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(
+          data.error_description ||
+            data.msg ||
+            data.message ||
+            'Credenziali non valide.'
+        );
+      }
+
+      if (!data.access_token) {
+        setCloudMessage(
+          'Account creato! Controlla la tua email per confermare (oppure disattiva "Confirm email" su Supabase).'
+        );
+        setAuthLoading(false);
+        return;
+      }
+
+      const newSess = {
+        access_token: data.access_token,
+        refresh_token: data.refresh_token,
+        user: data.user,
+      };
+      setCloudUrl(cleanUrl);
+      setCloudAnonKey(cleanKey);
+      setCloudSession(newSess);
+      setAuthPassword('');
+
+      await pullFromCloud(newSess, true);
+    } catch (err) {
+      setCloudMessage(err.message || 'Errore di autenticazione.');
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  const handleCloudLogout = () => {
+    cloudSyncReadyRef.current = false;
+    setCloudSession(null);
+    setCloudConflictPayload(null);
+    setCloudStatus('idle');
+    setCloudMessage('');
+    setLastSyncedAt(null);
+  };
+
+  const handleExportBackupFile = () => {
+    const backup = {
+      version: 1,
+      exportedAt: new Date().toISOString(),
+      state,
+      layout,
+      pomoPrefs: {
+        studyMin: pomoStudyMin,
+        shortBreakMin: pomoShortBreakMin,
+        longBreakMin: pomoLongBreakMin,
+        autoContinue: pomoAutoContinue,
+        soundEnabled: pomoSound,
+        soundType: pomoSoundType,
+      },
+    };
+    const blob = new Blob([JSON.stringify(backup, null, 2)], {
+      type: 'application/json',
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `studyburn-backup-${getTodayStr()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleImportBackupFile = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const parsed = JSON.parse(String(ev.target?.result || '{}'));
+        if (parsed && parsed.state && Array.isArray(parsed.state.exams)) {
+          applyRemotePayload(parsed);
+          if (cloudSession?.access_token) {
+            cloudSyncReadyRef.current = true;
+            pushToCloud(cloudSession, parsed);
+          }
+          setCloudMessage('Backup importato con successo!');
+        } else {
+          setCloudMessage('File di backup non valido.');
+        }
+      } catch {
+        setCloudMessage('Impossibile leggere il file selezionato.');
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  };
 
   // --- STATO SPACED REPETITION ---
   const [srTitleInput, setSrTitleInput] = useState('');
@@ -2871,7 +3389,10 @@ export default function App() {
 
                   {/* Indicatore Ciclo 4 Sessioni */}
                   <div className="inline-flex items-center gap-1.5">
-                    <div className="flex items-center gap-1" title="Progresso verso la Pausa Lunga (4 sessioni)">
+                    <div
+                      className="flex items-center gap-1"
+                      title="Progresso verso la Pausa Lunga (4 sessioni)"
+                    >
                       {[1, 2, 3, 4].map((step) => {
                         const completed = step <= pomoCycleCount;
                         const activeCurrent =
@@ -3002,7 +3523,6 @@ export default function App() {
 
               {/* Opzione Continuazione Automatica + Scelta Suono */}
               <div className={`p-3 rounded-xl border space-y-2.5 ${subPanelClass}`}>
-                {/* Toggle Auto-start */}
                 <div className="flex items-center justify-between gap-2">
                   <div className="min-w-0">
                     <div
@@ -4011,6 +4531,41 @@ export default function App() {
               </button>
             )}
 
+            {/* PULSANTE CLOUD SYNC MULTI-DISPOSITIVO */}
+            <button
+              type="button"
+              onClick={() => setShowCloudModal(true)}
+              className={`inline-flex items-center gap-1.5 px-2.5 py-2 rounded-xl border text-xs font-semibold transition ${
+                cloudSession
+                  ? cloudStatus === 'error'
+                    ? isDark
+                      ? 'bg-rose-950/70 text-rose-300 border-rose-800'
+                      : 'bg-rose-50 text-rose-700 border-rose-200'
+                    : isDark
+                    ? 'bg-emerald-950/60 text-emerald-300 border-emerald-800/80 hover:bg-emerald-900/70'
+                    : 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
+                  : isDark
+                  ? 'bg-slate-800 text-slate-200 border-slate-700 hover:bg-slate-700'
+                  : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+              }`}
+              title="Sincronizza i progressi tra tutti i tuoi dispositivi"
+            >
+              {cloudStatus === 'syncing' ? (
+                <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+              ) : cloudSession ? (
+                <Cloud className="w-3.5 h-3.5" />
+              ) : (
+                <CloudOff className="w-3.5 h-3.5 opacity-75" />
+              )}
+              <span>
+                {cloudStatus === 'syncing'
+                  ? 'Sync...'
+                  : cloudSession
+                  ? 'Sincronizzato'
+                  : 'Cloud Sync'}
+              </span>
+            </button>
+
             {/* PULSANTE MODALITÀ SCURA / CHIARA */}
             <button
               type="button"
@@ -4041,6 +4596,374 @@ export default function App() {
           </div>
         </div>
       </header>
+
+      {/* MODALE CLOUD SYNC & BACKUP */}
+      {showCloudModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs"
+          onClick={() => setShowCloudModal(false)}
+        >
+          <div
+            className={`w-full max-w-md rounded-2xl border p-5 sm:p-6 shadow-xl space-y-4 ${
+              isDark
+                ? 'bg-slate-900 border-slate-800 text-slate-100'
+                : 'bg-white border-slate-200 text-slate-900'
+            }`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center gap-2.5">
+                <div
+                  className={`p-2 rounded-xl ${
+                    isDark
+                      ? 'bg-indigo-950/80 text-indigo-400'
+                      : 'bg-indigo-50 text-indigo-600'
+                  }`}
+                >
+                  <Cloud className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold">
+                    Sincronizzazione Multi-Dispositivo
+                  </h3>
+                  <p
+                    className={`text-xs ${
+                      isDark ? 'text-slate-400' : 'text-slate-500'
+                    }`}
+                  >
+                    Accedi con lo stesso account su Mac, iPhone e iPad
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowCloudModal(false)}
+                className={`p-1.5 rounded-lg transition ${
+                  isDark
+                    ? 'text-slate-400 hover:bg-slate-800'
+                    : 'text-slate-500 hover:bg-slate-100'
+                }`}
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Banner Conflitto Dati Locali vs Cloud al primo login */}
+            {cloudConflictPayload && (
+              <div
+                className={`p-3.5 rounded-xl border text-xs space-y-2.5 ${
+                  isDark
+                    ? 'bg-amber-950/50 border-amber-800 text-amber-100'
+                    : 'bg-amber-50 border-amber-200 text-amber-950'
+                }`}
+              >
+                <div className="font-bold">
+                  Trovati progressi sia su questo dispositivo che nel Cloud:
+                </div>
+                <p className="opacity-90">
+                  Scegli quale versione mantenere sincronizzata su tutti i
+                  dispositivi:
+                </p>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      applyRemotePayload(cloudConflictPayload);
+                      cloudSyncReadyRef.current = true;
+                      setCloudConflictPayload(null);
+                      setLastSyncedAt(getCurrentTimeStr());
+                    }}
+                    className="px-2.5 py-2 rounded-lg bg-indigo-600 text-white font-bold hover:bg-indigo-500 transition"
+                  >
+                    Usa dati del Cloud
+                  </button>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      cloudSyncReadyRef.current = true;
+                      setCloudConflictPayload(null);
+                      await pushToCloud();
+                    }}
+                    className={`px-2.5 py-2 rounded-lg border font-bold transition ${
+                      isDark
+                        ? 'bg-slate-800 border-slate-700 text-slate-100 hover:bg-slate-700'
+                        : 'bg-white border-slate-300 text-slate-800 hover:bg-slate-50'
+                    }`}
+                  >
+                    Usa dati locali
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {cloudMessage && (
+              <div
+                className={`p-3 rounded-xl border text-xs font-medium ${
+                  isDark
+                    ? 'bg-rose-950/50 border-rose-800/80 text-rose-200'
+                    : 'bg-rose-50 border-rose-200 text-rose-800'
+                }`}
+              >
+                {cloudMessage}
+              </div>
+            )}
+
+            {cloudSession ? (
+              <div className="space-y-4">
+                <div className={`p-3.5 rounded-xl border space-y-1.5 ${subPanelClass}`}>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-emerald-500 flex items-center gap-1.5">
+                      <CheckCircle2 className="w-4 h-4" />
+                      Account collegato
+                    </span>
+                    {lastSyncedAt && (
+                      <span
+                        className={`text-[11px] ${
+                          isDark ? 'text-slate-400' : 'text-slate-500'
+                        }`}
+                      >
+                        Aggiornato alle {lastSyncedAt}
+                      </span>3
+                    )}
+                  </div>
+                  <div className="text-sm font-semibold truncate">
+                    {cloudSession.user?.email}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2.5">
+                  <button
+                    type="button"
+                    onClick={() => pullFromCloud(cloudSession, false)}
+                    disabled={cloudStatus === 'syncing'}
+                    className={`inline-flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl border text-xs font-bold transition ${
+                      isDark
+                        ? 'bg-slate-800 border-slate-700 text-slate-200 hover:bg-slate-700'
+                        : 'bg-slate-50 border-slate-200 text-slate-800 hover:bg-slate-100'
+                    }`}
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    Aggiorna dal Cloud
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => pushToCloud(cloudSession)}
+                    disabled={cloudStatus === 'syncing'}
+                    className="inline-flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-500 transition"
+                  >
+                    <Upload className="w-3.5 h-3.5" />
+                    Salva ora sul Cloud
+                  </button>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleCloudLogout}
+                  className={`w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl border text-xs font-semibold transition ${
+                    isDark
+                      ? 'border-slate-800 text-rose-400 hover:bg-rose-950/50'
+                      : 'border-slate-200 text-rose-600 hover:bg-rose-50'
+                  }`}
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                  Disconnetti da questo dispositivo
+                </button>
+              </div>
+            ) : (
+              <form onSubmit={handleCloudAuthSubmit} className="space-y-3.5">
+                <div
+                  className={`grid grid-cols-2 gap-1 p-1 rounded-xl border ${
+                    isDark
+                      ? 'bg-slate-800 border-slate-700'
+                      : 'bg-slate-100 border-slate-200'
+                  }`}
+                >
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAuthMode('login');
+                      setCloudMessage('');
+                    }}
+                    className={`py-1.5 rounded-lg text-xs font-bold transition ${
+                      authMode === 'login'
+                        ? isDark
+                          ? 'bg-slate-900 text-slate-100 shadow-sm'
+                          : 'bg-white text-slate-900 shadow-sm'
+                        : isDark
+                        ? 'text-slate-400'
+                        : 'text-slate-600'
+                    }`}
+                  >
+                    Accedi
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAuthMode('signup');
+                      setCloudMessage('');
+                    }}
+                    className={`py-1.5 rounded-lg text-xs font-bold transition ${
+                      authMode === 'signup'
+                        ? isDark
+                          ? 'bg-slate-900 text-slate-100 shadow-sm'
+                          : 'bg-white text-slate-900 shadow-sm'
+                        : isDark
+                        ? 'text-slate-400'
+                        : 'text-slate-600'
+                    }`}
+                  >
+                    Crea Account
+                  </button>
+                </div>
+
+                <div>
+                  <label
+                    className={`block text-xs font-bold mb-1 ${
+                      isDark ? 'text-slate-300' : 'text-slate-700'
+                    }`}
+                  >
+                    Email
+                  </label>
+                  <input
+                    type="email"
+                    placeholder="tua@email.com"
+                    value={authEmail}
+                    onChange={(e) => setAuthEmail(e.target.value)}
+                    className={`w-full px-3 py-2 rounded-xl border text-sm ${inputSurfaceClass}`}
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label
+                    className={`block text-xs font-bold mb-1 ${
+                      isDark ? 'text-slate-300' : 'text-slate-700'
+                    }`}
+                  >
+                    Password (min. 6 caratteri)
+                  </label>
+                  <input
+                    type="password"
+                    minLength={6}
+                    placeholder="••••••••"
+                    value={authPassword}
+                    onChange={(e) => setAuthPassword(e.target.value)}
+                    className={`w-full px-3 py-2 rounded-xl border text-sm ${inputSurfaceClass}`}
+                    required
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={authLoading}
+                  className="w-full py-2.5 px-4 rounded-xl bg-indigo-600 text-white text-sm font-bold hover:bg-indigo-500 transition shadow-sm disabled:opacity-50"
+                >
+                  {authLoading
+                    ? 'Connessione in corso...'
+                    : authMode === 'signup'
+                    ? 'Registrati e Sincronizza'
+                    : 'Accedi e Sincronizza'}
+                </button>
+
+                {/* Configurazione Server Supabase (visibile se non inserita nel codice) */}
+                <div className="pt-1">
+                  <button
+                    type="button"
+                    onClick={() => setShowAdvancedServerConfig((v) => !v)}
+                    className={`text-[11px] font-semibold underline decoration-dotted ${
+                      isDark ? 'text-slate-400' : 'text-slate-500'
+                    }`}
+                  >
+                    {showAdvancedServerConfig
+                      ? 'Nascondi impostazioni server Supabase'
+                      : 'Configura URL e Chiave Supabase'}
+                  </button>
+
+                  {showAdvancedServerConfig && (
+                    <div
+                      className={`mt-2.5 p-3 rounded-xl border space-y-2.5 ${subPanelClass}`}
+                    >
+                      <div>
+                        <label className="block text-[11px] font-bold mb-1">
+                          Supabase Project URL
+                        </label>
+                        <input
+                          type="url"
+                          placeholder="https://xyz.supabase.co"
+                          value={cloudUrl}
+                          onChange={(e) => setCloudUrl(e.target.value)}
+                          className={`w-full px-2.5 py-1.5 rounded-lg border text-xs ${inputSurfaceClass}`}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-bold mb-1">
+                          Supabase Anon / Publishable Key
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="eyJhbGci..."
+                          value={cloudAnonKey}
+                          onChange={(e) => setCloudAnonKey(e.target.value)}
+                          className={`w-full px-2.5 py-1.5 rounded-lg border text-xs ${inputSurfaceClass}`}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </form>
+            )}
+
+            {/* Sezione Backup Manuale JSON */}
+            <div
+              className={`pt-3 border-t flex items-center justify-between gap-2 ${
+                isDark ? 'border-slate-800' : 'border-slate-100'
+              }`}
+            >
+              <span
+                className={`text-[11px] font-medium ${
+                  isDark ? 'text-slate-400' : 'text-slate-500'
+                }`}
+              >
+                Backup locale (.json):
+              </span>
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={handleExportBackupFile}
+                  className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border text-xs font-semibold transition ${
+                    isDark
+                      ? 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700'
+                      : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
+                  }`}
+                >
+                  <Download className="w-3 h-3" />
+                  Esporta
+                </button>
+                <button
+                  type="button"
+                  onClick={() => importFileInputRef.current?.click()}
+                  className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border text-xs font-semibold transition ${
+                    isDark
+                      ? 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700'
+                      : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
+                  }`}
+                >
+                  <Upload className="w-3 h-3" />
+                  Importa
+                </button>
+                <input
+                  ref={importFileInputRef}
+                  type="file"
+                  accept="application/json,.json"
+                  onChange={handleImportBackupFile}
+                  className="hidden"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* CONTENUTO PRINCIPALE A LARGHEZZA PIENA */}
       <main className="w-full px-4 sm:px-6 lg:px-8 pt-6 space-y-6">
