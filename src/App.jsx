@@ -54,13 +54,13 @@ import {
 } from 'lucide-react';
 
 // ============================================================================
-// CONFIGURAZIONE CLOUD SYNC (Configurata per il tuo progetto Supabase)
+// CONFIGURAZIONE CLOUD SYNC (Supabase)
 // ============================================================================
 const SUPABASE_URL = 'https://lubcesnljpwvgvsnhtcl.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_psF0qMa_982qxlfRWaFGHA_JlFL_9zW';
 // ============================================================================
 
-// --- UTILITY DATE (Locale, senza slittamenti di fuso orario) ---
+// --- UTILITY DATE ---
 function getTodayStr() {
   const now = new Date();
   const y = now.getFullYear();
@@ -116,7 +116,7 @@ function formatMinutesHuman(totalMinutes) {
   return m > 0 ? `${h}h ${m}m` : `${h}h`;
 }
 
-// --- MOTORE AUDIO POMODORO (Web Audio API con sblocco contesto e 5 suoni) ---
+// --- MOTORE AUDIO POMODORO ---
 const POMO_SOUNDS = [
   { id: 'bell', label: 'Campanella Zen' },
   { id: 'chime', label: 'Accordo Armonico' },
@@ -425,7 +425,6 @@ const CLOUD_CONFIG_STORAGE_KEY = 'studyburn_cloud_config_v1';
 const CLOUD_SESSION_STORAGE_KEY = 'studyburn_cloud_session_v1';
 
 export default function App() {
-  // --- STATO MODALITÀ SCURA ---
   const [isDark, setIsDark] = useState(() => {
     try {
       const savedTheme = localStorage.getItem(THEME_STORAGE_KEY);
@@ -473,7 +472,6 @@ export default function App() {
     };
   });
 
-  // --- STATO ORDINAMENTO SEZIONI ---
   const [layout, setLayout] = useState(() => {
     try {
       const savedLayout = localStorage.getItem(LAYOUT_STORAGE_KEY);
@@ -571,7 +569,6 @@ export default function App() {
   const [isRenamingHeader, setIsRenamingHeader] = useState(false);
   const [confirmReset, setConfirmReset] = useState(false);
 
-  // Stato registro pagine
   const [logMode, setLogMode] = useState('daily');
   const [logDate, setLogDate] = useState(getTodayStr());
   const [logPagesInput, setLogPagesInput] = useState('');
@@ -579,7 +576,7 @@ export default function App() {
   const [editingLogDate, setEditingLogDate] = useState(null);
   const [editingLogPages, setEditingLogPages] = useState('');
 
-  // --- STATO TIMER POMODORO CLASSICO ---
+  // --- STATO TIMER POMODORO ---
   const initialPomoPrefs = useMemo(() => {
     try {
       const saved = localStorage.getItem(POMO_PREFS_STORAGE_KEY);
@@ -965,7 +962,6 @@ export default function App() {
     ]
   );
 
-  // Pull automatico all'avvio se già loggato
   useEffect(() => {
     if (cloudUrl && cloudAnonKey && cloudSession?.access_token) {
       pullFromCloud(cloudSession, false);
@@ -973,7 +969,6 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Auto-sync debounced ogni volta che cambiano esami, layout o preferenze
   useEffect(() => {
     if (
       !cloudUrl ||
@@ -1008,7 +1003,6 @@ export default function App() {
     pushToCloud,
   ]);
 
-  // Pull automatico quando torni sulla scheda/app da un altro dispositivo
   useEffect(() => {
     const handleVisibility = () => {
       if (
@@ -1206,7 +1200,7 @@ export default function App() {
     });
   };
 
-  // --- LOGICA TICK TIMER POMODORO CLASSICO ---
+  // --- LOGICA TIMER POMODORO ---
   useEffect(() => {
     if (!pomoRunning) {
       document.title = 'StudyBurn';
@@ -2027,4 +2021,3055 @@ export default function App() {
     },
     red: {
       wrapper: isDark
-        ? 'bg-rose-
+        ? 'bg-rose-950/45 border-rose-800/70 text-rose-100'
+        : 'bg-rose-50/90 border-rose-200 text-rose-950',
+      badge: isDark
+        ? 'bg-rose-900/70 text-rose-200 border-rose-700/70'
+        : 'bg-rose-100 text-rose-800 border-rose-200',
+      iconBg: 'bg-rose-600 text-white',
+      lineColor: '#e11d48',
+      Icon: AlertOctagon,
+    },
+  }[analytics.status];
+
+  const StatusIcon = statusStyles.Icon;
+
+  const pomoMinutesDisplay = String(Math.floor(pomoSecondsLeft / 60)).padStart(
+    2,
+    '0'
+  );
+  const pomoSecondsDisplay = String(pomoSecondsLeft % 60).padStart(2, '0');
+
+  const cardSurfaceClass = isDark
+    ? 'bg-slate-900 border-slate-800'
+    : 'bg-white border-slate-200';
+  const subPanelClass = isDark
+    ? 'bg-slate-800/55 border-slate-700/80'
+    : 'bg-slate-50 border-slate-200/80';
+  const inputSurfaceClass = isDark
+    ? 'bg-slate-800 border-slate-700 text-slate-100 placeholder-slate-500 focus:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500'
+    : 'bg-white border-slate-300 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500';
+  const inputMutedSurfaceClass = isDark
+    ? 'bg-slate-800 border-slate-700 text-slate-100 placeholder-slate-500 focus:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500'
+    : 'bg-slate-50 border-slate-300 text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500';
+
+  const chartGridStroke = isDark ? '#1e293b' : '#e2e8f0';
+  const chartTickFill = isDark ? '#94a3b8' : '#64748b';
+  const chartAxisStroke = isDark ? '#334155' : '#cbd5e1';
+
+  const renderOrderControls = (sectionId, col, index, totalInCol) => (
+    <div
+      className={`inline-flex items-center gap-0.5 rounded-lg p-0.5 border transition shrink-0 ${
+        isReorderMode
+          ? isDark
+            ? 'bg-indigo-950/70 border-indigo-700 text-indigo-300 shadow-xs'
+            : 'bg-indigo-50 border-indigo-300 text-indigo-700 shadow-xs'
+          : isDark
+          ? 'bg-slate-800 border-slate-700 text-slate-400 hover:text-slate-200'
+          : 'bg-slate-50 border-slate-200/80 text-slate-400 hover:text-slate-700'
+      }`}
+    >
+      <button
+        type="button"
+        onClick={() => moveSectionUp(col, index)}
+        disabled={index === 0}
+        className={`p-1 rounded disabled:opacity-30 disabled:pointer-events-none transition ${
+          isDark ? 'hover:bg-slate-700' : 'hover:bg-white'
+        }`}
+        title="Sposta sezione in alto"
+      >
+        <ArrowUp className="w-3.5 h-3.5" />
+      </button>
+      <button
+        type="button"
+        onClick={() => moveSectionDown(col, index)}
+        disabled={index === totalInCol - 1}
+        className={`p-1 rounded disabled:opacity-30 disabled:pointer-events-none transition ${
+          isDark ? 'hover:bg-slate-700' : 'hover:bg-white'
+        }`}
+        title="Sposta sezione in basso"
+      >
+        <ArrowDown className="w-3.5 h-3.5" />
+      </button>
+      <button
+        type="button"
+        onClick={() => moveSectionAcross(col, index)}
+        className={`p-1 rounded transition ${
+          isDark ? 'hover:bg-slate-700' : 'hover:bg-white'
+        }`}
+        title={
+          col === 'left'
+            ? 'Sposta nella colonna laterale'
+            : 'Sposta nella colonna principale'
+        }
+      >
+        <ArrowLeftRight className="w-3.5 h-3.5" />
+      </button>
+      <span
+        onMouseDown={() => setDragReadyId(sectionId)}
+        onMouseUp={() => setDragReadyId(null)}
+        className={`p-1 rounded cursor-grab active:cursor-grabbing transition ${
+          isDark ? 'hover:bg-slate-700' : 'hover:bg-white'
+        }`}
+        title="Trascina per riordinare"
+      >
+        <GripVertical className="w-3.5 h-3.5" />
+      </span>
+    </div>
+  );
+
+  const renderSection = (sectionId, col, index, totalInCol) => {
+    const isNarrow = col === 'right' && layout.left.length > 0;
+    const isBeingDragged = draggedSection?.id === sectionId;
+    const isDropTargetBefore =
+      dragOverTarget?.col === col &&
+      dragOverTarget?.index === index &&
+      draggedSection?.id !== sectionId;
+
+    const orderControls = renderOrderControls(
+      sectionId,
+      col,
+      index,
+      totalInCol
+    );
+
+    let sectionContent = null;
+
+    if (sectionId === 'burndown') {
+      sectionContent = (
+        <section
+          className={`rounded-2xl border p-4 sm:p-6 shadow-sm ${cardSurfaceClass}`}
+        >
+          <div className="flex flex-wrap items-start justify-between gap-3 mb-5">
+            <div>
+              <h3
+                className={`text-base sm:text-lg font-bold ${
+                  isDark ? 'text-slate-100' : 'text-slate-900'
+                }`}
+              >
+                Burn-down Chart — {activeExam.name || 'Esame'}
+              </h3>
+              <p
+                className={`text-xs ${
+                  isDark ? 'text-slate-400' : 'text-slate-500'
+                }`}
+              >
+                Confronto tra discesa ideale, pagine reali rimanenti e
+                proiezione futura
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="flex flex-wrap items-center gap-1.5 text-xs font-medium">
+                <span
+                  className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full ${
+                    isDark
+                      ? 'bg-slate-800 text-slate-300'
+                      : 'bg-slate-100 text-slate-700'
+                  }`}
+                >
+                  <span
+                    className={`w-3 h-0.5 border-t-2 border-dashed ${
+                      isDark ? 'border-slate-400' : 'border-slate-500'
+                    }`}
+                  />
+                  Ideale
+                </span>
+                <span
+                  className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full ${
+                    isDark
+                      ? 'bg-emerald-950/70 text-emerald-300 border border-emerald-800/60'
+                      : 'bg-emerald-50 text-emerald-800'
+                  }`}
+                >
+                  <span
+                    className="w-2.5 h-2.5 rounded-full"
+                    style={{ backgroundColor: statusStyles.lineColor }}
+                  />
+                  Reale
+                </span>
+                <span
+                  className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full ${
+                    isDark
+                      ? 'bg-indigo-950/70 text-indigo-300 border border-indigo-800/60'
+                      : 'bg-indigo-50 text-indigo-700'
+                  }`}
+                >
+                  <span className="w-3 h-0.5 border-t-2 border-dotted border-indigo-400" />
+                  Proiezione
+                </span>
+              </div>
+              {orderControls}
+            </div>
+          </div>
+
+          <div
+            className={`${
+              isNarrow ? 'h-[280px]' : 'h-[320px] sm:h-[360px]'
+            } w-full`}
+          >
+            <ResponsiveContainer width="100%" height="100%">
+              <ComposedChart
+                data={analytics.chartData}
+                margin={{ top: 18, right: 16, left: -12, bottom: 5 }}
+              >
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  vertical={false}
+                  stroke={chartGridStroke}
+                />
+                <XAxis
+                  dataKey="date"
+                  tick={{ fontSize: 11, fill: chartTickFill }}
+                  tickLine={false}
+                  axisLine={{ stroke: chartAxisStroke }}
+                  minTickGap={22}
+                />
+                <YAxis
+                  domain={[0, analytics.totalPages]}
+                  tick={{ fontSize: 11, fill: chartTickFill }}
+                  tickLine={false}
+                  axisLine={false}
+                />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: isDark ? '#020617' : '#0f172a',
+                    border: isDark ? '1px solid #1e293b' : 'none',
+                    borderRadius: '12px',
+                    color: '#f8fafc',
+                    fontSize: '12px',
+                    boxShadow: '0 10px 15px -3px rgba(0,0,0,0.35)',
+                  }}
+                  labelStyle={{
+                    fontWeight: 700,
+                    marginBottom: '4px',
+                    color: '#e2e8f0',
+                  }}
+                  formatter={(value, name) => {
+                    const labels = {
+                      ideale: 'Ideale rimanenti',
+                      reale: 'Reale rimanenti',
+                      proiezione: 'Proiezione stimata',
+                    };
+                    return [`${value} pag`, labels[name] || name];
+                  }}
+                />
+
+                <ReferenceLine
+                  x={analytics.todayShort}
+                  stroke="#6366f1"
+                  strokeDasharray="4 4"
+                  label={{
+                    value: 'Oggi',
+                    position: 'top',
+                    fill: isDark ? '#818cf8' : '#4f46e5',
+                    fontSize: 11,
+                    fontWeight: 700,
+                  }}
+                />
+
+                {analytics.reviewShort && (
+                  <ReferenceLine
+                    x={analytics.reviewShort}
+                    stroke="#f59e0b"
+                    strokeDasharray="4 4"
+                    label={{
+                      value: 'Ripasso',
+                      position: 'top',
+                      fill: isDark ? '#fbbf24' : '#d97706',
+                      fontSize: 11,
+                      fontWeight: 700,
+                    }}
+                  />
+                )}
+
+                <Line
+                  type="monotone"
+                  dataKey="ideale"
+                  stroke={isDark ? '#94a3b8' : '#64748b'}
+                  strokeWidth={2}
+                  strokeDasharray="6 4"
+                  dot={false}
+                  activeDot={{ r: 4 }}
+                />
+
+                <Line
+                  type="monotone"
+                  dataKey="reale"
+                  stroke={statusStyles.lineColor}
+                  strokeWidth={3}
+                  dot={{ r: 3, fill: statusStyles.lineColor }}
+                  activeDot={{ r: 6 }}
+                  connectNulls={false}
+                />
+
+                <Line
+                  type="monotone"
+                  dataKey="proiezione"
+                  stroke={isDark ? '#818cf8' : '#6366f1'}
+                  strokeWidth={2.5}
+                  strokeDasharray="2 5"
+                  dot={false}
+                  connectNulls={false}
+                />
+              </ComposedChart>
+            </ResponsiveContainer>
+          </div>
+        </section>
+      );
+    } else if (sectionId === 'spaced_repetition') {
+      sectionContent = (
+        <section
+          className={`rounded-2xl border p-4 sm:p-6 shadow-sm space-y-5 ${cardSurfaceClass}`}
+        >
+          <div
+            className={`flex flex-wrap items-start justify-between gap-3 pb-3 border-b ${
+              isDark ? 'border-slate-800' : 'border-slate-100'
+            }`}
+          >
+            <div className="flex items-start gap-2.5">
+              <div
+                className={`p-2 rounded-xl mt-0.5 shrink-0 ${
+                  isDark
+                    ? 'bg-indigo-950/80 text-indigo-400'
+                    : 'bg-indigo-50 text-indigo-600'
+                }`}
+              >
+                <Repeat className="w-4 h-4" />
+              </div>
+              <div>
+                <h3
+                  className={`text-base sm:text-lg font-bold ${
+                    isDark ? 'text-slate-100' : 'text-slate-900'
+                  }`}
+                >
+                  Spaced Repetition &amp; Piano Ripassi
+                </h3>
+                <p
+                  className={`text-xs ${
+                    isDark ? 'text-slate-400' : 'text-slate-500'
+                  }`}
+                >
+                  Intervalli adattivi automatici (1g → 3g → 7g → 14g → 30g+)
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <span
+                className={`px-2.5 py-1 rounded-xl text-xs font-bold border ${
+                  srAnalytics.dueTotalCount > 0
+                    ? isDark
+                      ? 'bg-amber-950/60 text-amber-300 border-amber-800/70'
+                      : 'bg-amber-50 text-amber-800 border-amber-200'
+                    : isDark
+                    ? 'bg-emerald-950/60 text-emerald-300 border-emerald-800/70'
+                    : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                }`}
+              >
+                Oggi: {srAnalytics.dueTotalCount}
+              </span>
+              <span
+                className={`px-2.5 py-1 rounded-xl text-xs font-semibold border ${
+                  isDark
+                    ? 'bg-slate-800 text-slate-300 border-slate-700'
+                    : 'bg-slate-100 text-slate-700 border-slate-200'
+                }`}
+              >
+                7gg: {srAnalytics.next7DaysCount}
+              </span>
+              {orderControls}
+            </div>
+          </div>
+
+          <div
+            className={`rounded-xl border p-3.5 sm:p-4 ${
+              isDark
+                ? 'bg-slate-800/45 border-slate-800'
+                : 'bg-slate-50/70 border-slate-200/80'
+            }`}
+          >
+            <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+              <span
+                className={`text-xs font-bold uppercase tracking-wider ${
+                  isDark ? 'text-slate-300' : 'text-slate-600'
+                }`}
+              >
+                Carico Ripassi Programmati (14 Giorni)
+              </span>
+              <div
+                className={`flex items-center gap-3 text-[11px] font-medium ${
+                  isDark ? 'text-slate-400' : 'text-slate-500'
+                }`}
+              >
+                <span className="inline-flex items-center gap-1.5">
+                  <span className="w-2.5 h-2.5 rounded-sm bg-amber-500" />
+                  Oggi / Scaduti
+                </span>
+                <span className="inline-flex items-center gap-1.5">
+                  <span className="w-2.5 h-2.5 rounded-sm bg-indigo-500" />
+                  In programma
+                </span>
+              </div>
+            </div>
+
+            <div className="h-[185px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <ComposedChart
+                  data={srAnalytics.forecastChart}
+                  margin={{ top: 14, right: 12, left: -22, bottom: 0 }}
+                >
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    vertical={false}
+                    stroke={chartGridStroke}
+                  />
+                  <XAxis
+                    dataKey="date"
+                    tick={{ fontSize: 11, fill: chartTickFill }}
+                    tickLine={false}
+                    axisLine={{ stroke: chartAxisStroke }}
+                  />
+                  <YAxis
+                    allowDecimals={false}
+                    tick={{ fontSize: 11, fill: chartTickFill }}
+                    tickLine={false}
+                    axisLine={false}
+                  />
+                  <Tooltip
+                    cursor={{
+                      fill: isDark ? '#1e293b' : '#e2e8f0',
+                      opacity: 0.45,
+                    }}
+                    content={({ active, payload }) => {
+                      if (!active || !payload || !payload.length) return null;
+                      const item = payload[0].payload;
+                      return (
+                        <div
+                          className={`rounded-xl p-3 text-xs shadow-lg max-w-[260px] ${
+                            isDark
+                              ? 'bg-slate-950 text-slate-50 border border-slate-800'
+                              : 'bg-slate-900 text-slate-50'
+                          }`}
+                        >
+                          <div className="font-bold text-slate-200 mb-1">
+                            {item.date} — {item.ripassi}{' '}
+                            {item.ripassi === 1 ? 'argomento' : 'argomenti'}
+                          </div>
+                          {item.topicsList && item.topicsList.length > 0 ? (
+                            <ul className="space-y-0.5 text-[11px] text-slate-300 list-disc pl-3.5">
+                              {item.topicsList.map((title, idx) => (
+                                <li key={idx} className="truncate">
+                                  {title}
+                                </li>
+                              ))}
+                            </ul>
+                          ) : (
+                            <p className="text-[11px] text-slate-400">
+                              Nessun ripasso previsto in questa data.
+                            </p>
+                          )}
+                        </div>
+                      );
+                    }}
+                  />
+
+                  {srAnalytics.examShort && (
+                    <ReferenceLine
+                      x={srAnalytics.examShort}
+                      stroke="#e11d48"
+                      strokeDasharray="4 4"
+                      label={{
+                        value: 'Appello',
+                        position: 'top',
+                        fill: isDark ? '#fb7185' : '#e11d48',
+                        fontSize: 10,
+                        fontWeight: 700,
+                      }}
+                    />
+                  )}
+
+                  <Bar dataKey="ripassi" radius={[6, 6, 0, 0]} maxBarSize={28}>
+                    {srAnalytics.forecastChart.map((entry, idx) => (
+                      <Cell
+                        key={`cell-${idx}`}
+                        fill={
+                          entry.isToday
+                            ? '#f59e0b'
+                            : isDark
+                            ? '#818cf8'
+                            : '#6366f1'
+                        }
+                      />
+                    ))}
+                  </Bar>
+                </ComposedChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          <form
+            onSubmit={handleAddSrTopic}
+            className="grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-end"
+          >
+            <div className="sm:col-span-5">
+              <label
+                className={`block text-[11px] font-semibold mb-1 ${
+                  isDark ? 'text-slate-300' : 'text-slate-600'
+                }`}
+              >
+                Argomento / Capitolo studiato
+              </label>
+              <input
+                type="text"
+                placeholder="Es. Ciclo dell'urea, Enzimi epatici..."
+                value={srTitleInput}
+                onChange={(e) => setSrTitleInput(e.target.value)}
+                required
+                className={`w-full rounded-xl border px-3 py-2 text-xs sm:text-sm ${inputMutedSurfaceClass}`}
+              />
+            </div>
+            <div className="sm:col-span-2">
+              <label
+                className={`block text-[11px] font-semibold mb-1 ${
+                  isDark ? 'text-slate-300' : 'text-slate-600'
+                }`}
+              >
+                Rif. Pagine
+              </label>
+              <input
+                type="text"
+                placeholder="pp. 45-62"
+                value={srPagesInput}
+                onChange={(e) => setSrPagesInput(e.target.value)}
+                className={`w-full rounded-xl border px-3 py-2 text-xs sm:text-sm ${inputMutedSurfaceClass}`}
+              />
+            </div>
+            <div className="sm:col-span-3">
+              <label
+                className={`block text-[11px] font-semibold mb-1 ${
+                  isDark ? 'text-slate-300' : 'text-slate-600'
+                }`}
+              >
+                Studiato il
+              </label>
+              <input
+                type="date"
+                value={srStudyDateInput}
+                onChange={(e) => setSrStudyDateInput(e.target.value)}
+                className={`w-full rounded-xl border px-3 py-2 text-xs sm:text-sm ${inputMutedSurfaceClass}`}
+              />
+            </div>
+            <div className="sm:col-span-2">
+              <button
+                type="submit"
+                className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 shadow-xs transition cursor-pointer"
+              >
+                <Plus className="w-4 h-4" />
+                Aggiungi
+              </button>
+            </div>
+          </form>
+
+          <div className="space-y-3">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div
+                className={`inline-flex rounded-xl p-1 ${
+                  isDark ? 'bg-slate-800' : 'bg-slate-100'
+                }`}
+              >
+                <button
+                  type="button"
+                  onClick={() => setSrFilter('due')}
+                  className={`px-3 py-1 rounded-lg text-xs font-semibold transition cursor-pointer ${
+                    srFilter === 'due'
+                      ? isDark
+                        ? 'bg-slate-900 text-amber-400 shadow-xs'
+                        : 'bg-white text-amber-700 shadow-xs'
+                      : isDark
+                      ? 'text-slate-400 hover:text-slate-200'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  Da ripassare oggi ({srAnalytics.dueTotalCount})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSrFilter('upcoming')}
+                  className={`px-3 py-1 rounded-lg text-xs font-semibold transition cursor-pointer ${
+                    srFilter === 'upcoming'
+                      ? isDark
+                        ? 'bg-slate-900 text-indigo-400 shadow-xs'
+                        : 'bg-white text-indigo-600 shadow-xs'
+                      : isDark
+                      ? 'text-slate-400 hover:text-slate-200'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  Prossimi (
+                  {srAnalytics.totalTopics - srAnalytics.dueTotalCount})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSrFilter('all')}
+                  className={`px-3 py-1 rounded-lg text-xs font-semibold transition cursor-pointer ${
+                    srFilter === 'all'
+                      ? isDark
+                        ? 'bg-slate-900 text-slate-100 shadow-xs'
+                        : 'bg-white text-slate-900 shadow-xs'
+                      : isDark
+                      ? 'text-slate-400 hover:text-slate-200'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  Tutti ({srAnalytics.totalTopics})
+                </button>
+              </div>
+              <span
+                className={`text-[11px] ${
+                  isDark ? 'text-slate-400' : 'text-slate-500'
+                }`}
+              >
+                Valuta la difficoltà dopo il ripasso per ricalcolare il
+                prossimo intervallo
+              </span>
+            </div>
+
+            {filteredSrTopics.length === 0 ? (
+              <div
+                className={`rounded-xl border border-dashed p-5 text-center text-xs ${
+                  isDark
+                    ? 'border-slate-800 text-slate-400 bg-slate-800/30'
+                    : 'border-slate-200 text-slate-400 bg-slate-50/40'
+                }`}
+              >
+                {srAnalytics.totalTopics === 0
+                  ? 'Nessun argomento in Spaced Repetition. Aggiungi i capitoli studiati sopra per pianificare i ripassi!'
+                  : srFilter === 'due'
+                  ? 'Nessun ripasso in scadenza oggi! Ottimo lavoro.'
+                  : 'Nessun argomento in questa vista.'}
+              </div>
+            ) : (
+              <div className="space-y-2 max-h-[340px] overflow-y-auto pr-0.5">
+                {filteredSrTopics.map((topic) => {
+                  const previewHard =
+                    topic.repetitions <= 1
+                      ? 1
+                      : Math.max(1, Math.round(topic.intervalDays * 0.6));
+                  const previewGood =
+                    topic.repetitions === 0
+                      ? 1
+                      : topic.repetitions === 1
+                      ? 3
+                      : topic.repetitions === 2
+                      ? 7
+                      : Math.round(topic.intervalDays * topic.easeFactor);
+                  const previewEasy =
+                    topic.repetitions === 0
+                      ? 3
+                      : topic.repetitions === 1
+                      ? 6
+                      : Math.round(topic.intervalDays * topic.easeFactor * 1.3);
+
+                  return (
+                    <div
+                      key={topic.id}
+                      className={`rounded-xl border p-3 transition flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
+                        topic.isOverdue
+                          ? isDark
+                            ? 'bg-rose-950/35 border-rose-800/60'
+                            : 'bg-rose-50/50 border-rose-200'
+                          : topic.isDueToday
+                          ? isDark
+                            ? 'bg-amber-950/35 border-amber-800/60'
+                            : 'bg-amber-50/50 border-amber-200'
+                          : isDark
+                          ? 'bg-slate-800/50 border-slate-700/80 hover:border-slate-600'
+                          : 'bg-white border-slate-200 hover:border-slate-300'
+                      }`}
+                    >
+                      <div className="min-w-0 space-y-1">
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <span
+                            className={`text-sm font-bold truncate ${
+                              isDark ? 'text-slate-100' : 'text-slate-900'
+                            }`}
+                          >
+                            {topic.title}
+                          </span>
+                          {topic.pagesRef && (
+                            <span
+                              className={`text-[11px] font-medium px-2 py-0.5 rounded-md ${
+                                isDark
+                                  ? 'bg-slate-800 text-slate-300'
+                                  : 'bg-slate-100 text-slate-600'
+                              }`}
+                            >
+                              {topic.pagesRef}
+                            </span>
+                          )}
+                          {topic.isOverdue && (
+                            <span
+                              className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                                isDark
+                                  ? 'bg-rose-900/70 text-rose-200'
+                                  : 'bg-rose-100 text-rose-700'
+                              }`}
+                            >
+                              Scaduto da {Math.abs(topic.deltaDays)}g
+                            </span>
+                          )}
+                          {topic.isDueToday && (
+                            <span
+                              className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                                isDark
+                                  ? 'bg-amber-900/70 text-amber-200'
+                                  : 'bg-amber-100 text-amber-800'
+                              }`}
+                            >
+                              Oggi
+                            </span>
+                          )}
+                          {!topic.isDue && (
+                            <span
+                              className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+                                isDark
+                                  ? 'bg-indigo-950/80 text-indigo-300'
+                                  : 'bg-indigo-50 text-indigo-700'
+                              }`}
+                            >
+                              Tra {topic.deltaDays}g (
+                              {formatShortDate(topic.nextReviewDate)})
+                            </span>
+                          )}
+                          {topic.isAfterExam && (
+                            <span
+                              className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${
+                                isDark
+                                  ? 'bg-slate-700 text-slate-300'
+                                  : 'bg-slate-200 text-slate-700'
+                              }`}
+                              title="Questo ripasso cade dopo la data dell'appello"
+                            >
+                              Post-appello
+                            </span>
+                          )}
+                        </div>
+                        <div
+                          className={`text-[11px] flex flex-wrap items-center gap-x-3 gap-y-0.5 ${
+                            isDark ? 'text-slate-400' : 'text-slate-500'
+                          }`}
+                        >
+                          <span>
+                            Ripassi completati:{' '}
+                            <strong
+                              className={
+                                isDark ? 'text-slate-200' : 'text-slate-700'
+                              }
+                            >
+                              {topic.repetitions}
+                            </strong>
+                          </span>
+                          <span>
+                            Intervallo attuale:{' '}
+                            <strong
+                              className={
+                                isDark ? 'text-slate-200' : 'text-slate-700'
+                              }
+                            >
+                              {topic.intervalDays}g
+                            </strong>
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => handleReviewSrTopic(topic.id, 'hard')}
+                          className={`px-2 py-1 rounded-lg text-[11px] font-semibold border transition cursor-pointer ${
+                            isDark
+                              ? 'bg-rose-950/70 hover:bg-rose-900/80 text-rose-200 border-rose-800/70'
+                              : 'bg-rose-50 hover:bg-rose-100 text-rose-700 border-rose-200'
+                          }`}
+                          title="Difficile: accorcia l'intervallo di ripasso"
+                        >
+                          Difficile ({previewHard}g)
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleReviewSrTopic(topic.id, 'good')}
+                          className={`px-2 py-1 rounded-lg text-[11px] font-semibold border transition cursor-pointer ${
+                            isDark
+                              ? 'bg-emerald-950/70 hover:bg-emerald-900/80 text-emerald-200 border-emerald-800/70'
+                              : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border-emerald-200'
+                          }`}
+                          title="Buono: avanza al prossimo intervallo standard"
+                        >
+                          Buono ({previewGood}g)
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleReviewSrTopic(topic.id, 'easy')}
+                          className={`px-2 py-1 rounded-lg text-[11px] font-semibold border transition cursor-pointer ${
+                            isDark
+                              ? 'bg-indigo-950/70 hover:bg-indigo-900/80 text-indigo-200 border-indigo-800/70'
+                              : 'bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border-indigo-200'
+                          }`}
+                          title="Facile: estende l'intervallo di ripasso"
+                        >
+                          Facile ({previewEasy}g)
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteSrTopic(topic.id)}
+                          className={`p-1.5 rounded-lg transition cursor-pointer ${
+                            isDark
+                              ? 'text-slate-500 hover:text-rose-400 hover:bg-rose-950/60'
+                              : 'text-slate-400 hover:text-rose-600 hover:bg-rose-50'
+                          }`}
+                          title="Elimina argomento"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </section>
+      );
+    } else if (sectionId === 'progress_log') {
+      sectionContent = (
+        <section
+          className={`rounded-2xl border p-4 sm:p-6 shadow-sm ${cardSurfaceClass}`}
+        >
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+            <div>
+              <h3
+                className={`text-base sm:text-lg font-bold ${
+                  isDark ? 'text-slate-100' : 'text-slate-900'
+                }`}
+              >
+                Aggiornamento Avanzamento
+              </h3>
+              <p
+                className={`text-xs ${
+                  isDark ? 'text-slate-400' : 'text-slate-500'
+                }`}
+              >
+                Registra le pagine studiate oggi o in una data specifica
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <div
+                className={`inline-flex rounded-xl p-1 ${
+                  isDark ? 'bg-slate-800' : 'bg-slate-100'
+                }`}
+              >
+                <button
+                  type="button"
+                  onClick={() => setLogMode('daily')}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
+                    logMode === 'daily'
+                      ? isDark
+                        ? 'bg-slate-900 text-indigo-400 shadow-xs'
+                        : 'bg-white text-indigo-600 shadow-xs'
+                      : isDark
+                      ? 'text-slate-400 hover:text-slate-200'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  Pagine del giorno
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setLogMode('cumulative')}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
+                    logMode === 'cumulative'
+                      ? isDark
+                        ? 'bg-slate-900 text-indigo-400 shadow-xs'
+                        : 'bg-white text-indigo-600 shadow-xs'
+                      : isDark
+                      ? 'text-slate-400 hover:text-slate-200'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  Arrivato a pag. X
+                </button>
+              </div>
+              {orderControls}
+            </div>
+          </div>
+
+          <form
+            onSubmit={handleAddLog}
+            className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end mb-6"
+          >
+            <div className="sm:col-span-4">
+              <label
+                className={`block text-xs font-semibold mb-1 ${
+                  isDark ? 'text-slate-300' : 'text-slate-600'
+                }`}
+              >
+                Data
+              </label>
+              <input
+                type="date"
+                value={logDate}
+                onChange={(e) => setLogDate(e.target.value)}
+                required
+                className={`w-full rounded-xl border px-3 py-2 text-sm ${inputMutedSurfaceClass}`}
+              />
+            </div>
+
+            <div className="sm:col-span-5">
+              <label
+                className={`block text-xs font-semibold mb-1 ${
+                  isDark ? 'text-slate-300' : 'text-slate-600'
+                }`}
+              >
+                {logMode === 'daily'
+                  ? 'Pagine completate nella giornata'
+                  : `Pagina totale raggiunta (su ${analytics.totalPages})`}
+              </label>
+              <input
+                type="number"
+                min="0"
+                step="1"
+                placeholder={
+                  logMode === 'daily'
+                    ? 'Es. 22'
+                    : `Es. ${Math.min(
+                        analytics.totalPages,
+                        analytics.completedPages + 20
+                      )}`
+                }
+                value={logPagesInput}
+                onChange={(e) => setLogPagesInput(e.target.value)}
+                required
+                className={`w-full rounded-xl border px-3 py-2 text-sm ${inputMutedSurfaceClass}`}
+              />
+            </div>
+
+            <div className="sm:col-span-3">
+              <button
+                type="submit"
+                className="w-full inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 shadow-xs transition cursor-pointer"
+              >
+                <Plus className="w-4 h-4" />
+                Registra
+              </button>
+            </div>
+          </form>
+
+          <div
+            className={`border-t pt-4 ${
+              isDark ? 'border-slate-800' : 'border-slate-100'
+            }`}
+          >
+            <div className="flex items-center justify-between mb-3">
+              <h4
+                className={`text-xs font-bold uppercase tracking-wider ${
+                  isDark ? 'text-slate-400' : 'text-slate-500'
+                }`}
+              >
+                Storico Sessioni ({historyRows.length})
+              </h4>
+              {historyRows.length > 0 && (
+                <span
+                  className={`text-xs ${
+                    isDark ? 'text-slate-500' : 'text-slate-400'
+                  }`}
+                >
+                  Clicca la matita per correggere un inserimento
+                </span>
+              )}
+            </div>
+
+            {historyRows.length === 0 ? (
+              <div
+                className={`rounded-xl border border-dashed p-6 text-center text-sm ${
+                  isDark
+                    ? 'border-slate-800 text-slate-400'
+                    : 'border-slate-200 text-slate-400'
+                }`}
+              >
+                Nessuna sessione ancora registrata. Inserisci le prime pagine
+                qui sopra!
+              </div>
+            ) : (
+              <div className="overflow-x-auto max-h-64 overflow-y-auto pr-1">
+                <table className="w-full text-left border-collapse text-sm">
+                  <thead>
+                    <tr
+                      className={`border-b text-xs ${
+                        isDark
+                          ? 'border-slate-800 text-slate-400'
+                          : 'border-slate-200 text-slate-500'
+                      }`}
+                    >
+                      <th className="py-2 font-semibold">Data</th>
+                      <th className="py-2 font-semibold">Pagine del giorno</th>
+                      <th className="py-2 font-semibold">Cumulativo</th>
+                      <th className="py-2 font-semibold text-right">Azioni</th>
+                    </tr>
+                  </thead>
+                  <tbody
+                    className={`divide-y ${
+                      isDark ? 'divide-slate-800/80' : 'divide-slate-100'
+                    }`}
+                  >
+                    {historyRows.map((row) => (
+                      <tr
+                        key={row.date}
+                        className={`transition ${
+                          isDark
+                            ? 'hover:bg-slate-800/60'
+                            : 'hover:bg-slate-50/80'
+                        }`}
+                      >
+                        <td
+                          className={`py-2.5 font-medium ${
+                            isDark ? 'text-slate-200' : 'text-slate-800'
+                          }`}
+                        >
+                          {formatShortDate(row.date)}{' '}
+                          <span
+                            className={`text-xs font-normal ${
+                              isDark ? 'text-slate-500' : 'text-slate-400'
+                            }`}
+                          >
+                            ({row.weekday})
+                          </span>
+                          {row.isRestDay && (
+                            <span
+                              className={`ml-1.5 text-[10px] px-1.5 py-0.5 rounded font-medium ${
+                                isDark
+                                  ? 'bg-slate-800 text-slate-400'
+                                  : 'bg-slate-100 text-slate-500'
+                              }`}
+                            >
+                              Pausa
+                            </span>
+                          )}
+                        </td>
+                        <td className="py-2.5">
+                          {editingLogDate === row.date ? (
+                            <input
+                              type="number"
+                              min="0"
+                              value={editingLogPages}
+                              onChange={(e) =>
+                                setEditingLogPages(e.target.value)
+                              }
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter')
+                                  handleSaveEditedLog(row.date);
+                                if (e.key === 'Escape') setEditingLogDate(null);
+                              }}
+                              className={`w-20 rounded-lg border px-2 py-1 text-sm font-semibold focus:outline-none ${
+                                isDark
+                                  ? 'border-indigo-500 bg-slate-800 text-slate-100'
+                                  : 'border-indigo-400 bg-white text-slate-900'
+                              }`}
+                              autoFocus
+                            />
+                          ) : (
+                            <span
+                              className={`inline-flex items-center px-2 py-0.5 rounded-md font-semibold text-xs ${
+                                isDark
+                                  ? 'bg-indigo-950/70 text-indigo-300'
+                                  : 'bg-indigo-50 text-indigo-700'
+                              }`}
+                            >
+                              +{row.pages} pag
+                            </span>
+                          )}
+                        </td>
+                        <td
+                          className={`py-2.5 text-xs ${
+                            isDark ? 'text-slate-400' : 'text-slate-600'
+                          }`}
+                        >
+                          {row.cumulative} / {analytics.totalPages} pag
+                        </td>
+                        <td className="py-2.5 text-right">
+                          <div className="inline-flex items-center gap-1">
+                            {editingLogDate === row.date ? (
+                              <>
+                                <button
+                                  type="button"
+                                  onClick={() => handleSaveEditedLog(row.date)}
+                                  className={`p-1.5 rounded-lg cursor-pointer ${
+                                    isDark
+                                      ? 'text-emerald-400 hover:bg-emerald-950/70'
+                                      : 'text-emerald-600 hover:bg-emerald-50'
+                                  }`}
+                                  title="Salva"
+                                >
+                                  <Check className="w-4 h-4" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setEditingLogDate(null)}
+                                  className={`p-1.5 rounded-lg cursor-pointer ${
+                                    isDark
+                                      ? 'text-slate-400 hover:bg-slate-800'
+                                      : 'text-slate-500 hover:bg-slate-100'
+                                  }`}
+                                  title="Annulla"
+                                >
+                                  <X className="w-4 h-4" />
+                                </button>
+                              </>
+                            ) : (
+                              <>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setEditingLogDate(row.date);
+                                    setEditingLogPages(String(row.pages));
+                                  }}
+                                  className={`p-1.5 rounded-lg cursor-pointer ${
+                                    isDark
+                                      ? 'text-slate-400 hover:text-indigo-400 hover:bg-slate-800'
+                                      : 'text-slate-400 hover:text-indigo-600 hover:bg-slate-100'
+                                  }`}
+                                  title="Modifica pagine"
+                                >
+                                  <Edit3 className="w-3.5 h-3.5" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteLog(row.date)}
+                                  className={`p-1.5 rounded-lg cursor-pointer ${
+                                    isDark
+                                      ? 'text-slate-400 hover:text-rose-400 hover:bg-rose-950/60'
+                                      : 'text-slate-400 hover:text-rose-600 hover:bg-rose-50'
+                                  }`}
+                                  title="Elimina riga"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </section>
+      );
+    } else if (sectionId === 'pomodoro') {
+      sectionContent = (
+        <section
+          className={`rounded-2xl border p-4 sm:p-6 shadow-sm space-y-4 ${cardSurfaceClass}`}
+        >
+          <div className="flex items-start justify-between gap-2">
+            <div>
+              <div className="flex items-center gap-2">
+                <Clock
+                  className={`w-4 h-4 ${
+                    pomoPhase === 'study'
+                      ? isDark
+                        ? 'text-indigo-400'
+                        : 'text-indigo-600'
+                      : isDark
+                      ? 'text-emerald-400'
+                      : 'text-emerald-600'
+                  }`}
+                />
+                <h3
+                  className={`text-base font-bold ${
+                    isDark ? 'text-slate-100' : 'text-slate-900'
+                  }`}
+                >
+                  Timer Pomodoro
+                </h3>
+              </div>
+              <p
+                className={`text-xs mt-0.5 ${
+                  isDark ? 'text-slate-400' : 'text-slate-500'
+                }`}
+              >
+                Cicli Studio + Pausa Breve e Lunga
+              </p>
+            </div>
+
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => {
+                  getUnlockedAudioContext();
+                  const next = !pomoSound;
+                  setPomoSound(next);
+                  if (next) playPomodoroSound(pomoSoundType, 'study');
+                }}
+                className={`p-1.5 rounded-lg border text-xs transition cursor-pointer ${
+                  pomoSound
+                    ? isDark
+                      ? 'bg-indigo-950/70 border-indigo-800/70 text-indigo-300'
+                      : 'bg-indigo-50 border-indigo-200 text-indigo-600'
+                    : isDark
+                    ? 'bg-slate-800 border-slate-700 text-slate-500'
+                    : 'bg-slate-50 border-slate-200 text-slate-400'
+                }`}
+                title={pomoSound ? 'Suono attivo' : 'Suono disattivato'}
+              >
+                {pomoSound ? (
+                  <Volume2 className="w-3.5 h-3.5" />
+                ) : (
+                  <VolumeX className="w-3.5 h-3.5" />
+                )}
+              </button>
+              {orderControls}
+            </div>
+          </div>
+
+          <div
+            className={`grid grid-cols-3 gap-1 p-1 rounded-xl ${
+              isDark ? 'bg-slate-800' : 'bg-slate-100'
+            }`}
+          >
+            <button
+              type="button"
+              onClick={() => handlePomoSwitchPhase('study')}
+              className={`py-1.5 px-2 rounded-lg text-xs font-semibold transition cursor-pointer ${
+                pomoPhase === 'study'
+                  ? isDark
+                    ? 'bg-slate-900 text-indigo-400 shadow-xs'
+                    : 'bg-white text-indigo-600 shadow-xs'
+                  : isDark
+                  ? 'text-slate-400 hover:text-slate-200'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              Studio
+            </button>
+            <button
+              type="button"
+              onClick={() => handlePomoSwitchPhase('short_break')}
+              className={`py-1.5 px-2 rounded-lg text-xs font-semibold transition cursor-pointer ${
+                pomoPhase === 'short_break'
+                  ? isDark
+                    ? 'bg-slate-900 text-emerald-400 shadow-xs'
+                    : 'bg-white text-emerald-600 shadow-xs'
+                  : isDark
+                  ? 'text-slate-400 hover:text-slate-200'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              Pausa
+            </button>
+            <button
+              type="button"
+              onClick={() => handlePomoSwitchPhase('long_break')}
+              className={`py-1.5 px-2 rounded-lg text-xs font-semibold transition cursor-pointer ${
+                pomoPhase === 'long_break'
+                  ? isDark
+                    ? 'bg-slate-900 text-teal-400 shadow-xs'
+                    : 'bg-white text-teal-700 shadow-xs'
+                  : isDark
+                  ? 'text-slate-400 hover:text-slate-200'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              Pausa Lunga
+            </button>
+          </div>
+
+          <div
+            className={`rounded-2xl p-4 text-center border transition-colors ${
+              pomoPhase === 'study'
+                ? isDark
+                  ? 'bg-indigo-950/35 border-indigo-800/60'
+                  : 'bg-indigo-50/70 border-indigo-100'
+                : isDark
+                ? 'bg-emerald-950/35 border-emerald-800/60'
+                : 'bg-emerald-50/70 border-emerald-100'
+            }`}
+          >
+            <div className="flex items-center justify-center gap-1.5 mb-2">
+              {[1, 2, 3, 4].map((dot) => (
+                <span
+                  key={dot}
+                  className={`h-2 w-6 rounded-full transition-all ${
+                    dot <= pomoCycleCount
+                      ? pomoPhase === 'study'
+                        ? 'bg-indigo-500'
+                        : 'bg-emerald-500'
+                      : isDark
+                      ? 'bg-slate-700'
+                      : 'bg-slate-200'
+                  }`}
+                  title={`Pomodoro ${dot} di 4 prima della pausa lunga`}
+                />
+              ))}
+            </div>
+
+            <div
+              className={`text-4xl sm:text-5xl font-black tracking-tight tabular-nums my-1 ${
+                pomoPhase === 'study'
+                  ? isDark
+                    ? 'text-slate-50'
+                    : 'text-slate-900'
+                  : isDark
+                  ? 'text-emerald-200'
+                  : 'text-emerald-950'
+              }`}
+            >
+              {pomoMinutesDisplay}:{pomoSecondsDisplay}
+            </div>
+
+            <p
+              className={`text-xs font-medium mb-3 ${
+                pomoPhase === 'study'
+                  ? isDark
+                    ? 'text-indigo-300'
+                    : 'text-indigo-700'
+                  : isDark
+                  ? 'text-emerald-300'
+                  : 'text-emerald-700'
+              }`}
+            >
+              {pomoPhase === 'study'
+                ? `Sessione Studio #${(pomoCycleCount % 4) + 1} di 4`
+                : pomoPhase === 'short_break'
+                ? 'Pausa breve: sgranchisciti e riposa gli occhi'
+                : 'Pausa lunga meritata dopo 4 sessioni!'}
+            </p>
+
+            <div
+              className={`w-full h-1.5 rounded-full overflow-hidden mb-4 ${
+                isDark ? 'bg-slate-800/90' : 'bg-white/80'
+              }`}
+            >
+              <div
+                className={`h-full transition-all duration-300 ${
+                  pomoPhase === 'study' ? 'bg-indigo-600' : 'bg-emerald-500'
+                }`}
+                style={{ width: `${pomoStats.progressPct}%` }}
+              />
+            </div>
+
+            <div className="flex items-center justify-center gap-2">
+              <button
+                type="button"
+                onClick={handleTogglePomoRunning}
+                className={`inline-flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-xl text-sm font-bold text-white shadow-xs transition cursor-pointer ${
+                  pomoRunning
+                    ? 'bg-amber-500 hover:bg-amber-600'
+                    : pomoPhase === 'study'
+                    ? 'bg-indigo-600 hover:bg-indigo-700'
+                    : 'bg-emerald-600 hover:bg-emerald-700'
+                }`}
+              >
+                {pomoRunning ? (
+                  <>
+                    <Pause className="w-4 h-4" />
+                    Pausa
+                  </>
+                ) : (
+                  <>
+                    <Play className="w-4 h-4" />
+                    Avvia
+                  </>
+                )}
+              </button>
+
+              <button
+                type="button"
+                onClick={handlePomoReset}
+                className={`p-2.5 rounded-xl border transition cursor-pointer ${
+                  isDark
+                    ? 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700'
+                    : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                }`}
+                title="Azzera timer corrente"
+              >
+                <RotateCcw className="w-4 h-4" />
+              </button>
+
+              <button
+                type="button"
+                onClick={handlePomoSkipPhase}
+                className={`p-2.5 rounded-xl border transition cursor-pointer ${
+                  isDark
+                    ? 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700'
+                    : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                }`}
+                title="Salta alla fase successiva"
+              >
+                <SkipForward className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+
+          <div className="space-y-2.5">
+            <div className="flex items-center justify-between">
+              <span
+                className={`text-[11px] font-bold uppercase tracking-wider ${
+                  isDark ? 'text-slate-400' : 'text-slate-500'
+                }`}
+              >
+                Durata (min) e Preset
+              </span>
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => handlePomoPreset(25, 5, 15)}
+                  className={`px-2 py-0.5 rounded-md text-[11px] font-semibold transition cursor-pointer ${
+                    pomoStudyMin === 25 &&
+                    pomoShortBreakMin === 5 &&
+                    pomoLongBreakMin === 15
+                      ? isDark
+                        ? 'bg-indigo-950/80 text-indigo-300'
+                        : 'bg-indigo-100 text-indigo-700'
+                      : isDark
+                      ? 'bg-slate-800 text-slate-400 hover:bg-slate-700'
+                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  }`}
+                >
+                  25/5/15
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handlePomoPreset(50, 10, 20)}
+                  className={`px-2 py-0.5 rounded-md text-[11px] font-semibold transition cursor-pointer ${
+                    pomoStudyMin === 50 &&
+                    pomoShortBreakMin === 10 &&
+                    pomoLongBreakMin === 20
+                      ? isDark
+                        ? 'bg-indigo-950/80 text-indigo-300'
+                        : 'bg-indigo-100 text-indigo-700'
+                      : isDark
+                      ? 'bg-slate-800 text-slate-400 hover:bg-slate-700'
+                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  }`}
+                >
+                  50/10/20
+                </button>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-3 gap-2">
+              <div>
+                <label
+                  className={`block text-[11px] font-medium mb-1 ${
+                    isDark ? 'text-slate-400' : 'text-slate-500'
+                  }`}
+                >
+                  Studio
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  max="180"
+                  value={pomoStudyMin}
+                  onChange={(e) => {
+                    const val = Math.max(1, Number(e.target.value) || 1);
+                    setPomoStudyMin(val);
+                    if (!pomoRunning && pomoPhase === 'study') {
+                      setPomoSecondsLeft(val * 60);
+                    }
+                  }}
+                  className={`w-full rounded-xl border px-2.5 py-1.5 text-xs font-semibold ${inputMutedSurfaceClass}`}
+                />
+              </div>
+              <div>
+                <label
+                  className={`block text-[11px] font-medium mb-1 ${
+                    isDark ? 'text-slate-400' : 'text-slate-500'
+                  }`}
+                >
+                  Pausa
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  max="60"
+                  value={pomoShortBreakMin}
+                  onChange={(e) => {
+                    const val = Math.max(1, Number(e.target.value) || 1);
+                    setPomoShortBreakMin(val);
+                    if (!pomoRunning && pomoPhase === 'short_break') {
+                      setPomoSecondsLeft(val * 60);
+                    }
+                  }}
+                  className={`w-full rounded-xl border px-2.5 py-1.5 text-xs font-semibold ${inputMutedSurfaceClass}`}
+                />
+              </div>
+              <div>
+                <label
+                  className={`block text-[11px] font-medium mb-1 ${
+                    isDark ? 'text-slate-400' : 'text-slate-500'
+                  }`}
+                >
+                  P. Lunga
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  max="90"
+                  value={pomoLongBreakMin}
+                  onChange={(e) => {
+                    const val = Math.max(1, Number(e.target.value) || 1);
+                    setPomoLongBreakMin(val);
+                    if (!pomoRunning && pomoPhase === 'long_break') {
+                      setPomoSecondsLeft(val * 60);
+                    }
+                  }}
+                  className={`w-full rounded-xl border px-2.5 py-1.5 text-xs font-semibold ${inputMutedSurfaceClass}`}
+                />
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
+              <label
+                className={`inline-flex items-center gap-2 text-xs cursor-pointer select-none ${
+                  isDark ? 'text-slate-300' : 'text-slate-600'
+                }`}
+              >
+                <input
+                  type="checkbox"
+                  checked={pomoAutoContinue}
+                  onChange={(e) => setPomoAutoContinue(e.target.checked)}
+                  className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                />
+                Avvio automatico fase successiva
+              </label>
+
+              <button
+                type="button"
+                onClick={handleAddManualPomoSession}
+                className={`text-[11px] font-semibold cursor-pointer ${
+                  isDark
+                    ? 'text-indigo-400 hover:text-indigo-300'
+                    : 'text-indigo-600 hover:text-indigo-700'
+                }`}
+                title="Registra manualmente 1 sessione completata adesso"
+              >
+                +1 sessione
+              </button>
+            </div>
+
+            <div
+              className={`flex items-center justify-between gap-2 pt-2 border-t ${
+                isDark ? 'border-slate-800/80' : 'border-slate-100'
+              }`}
+            >
+              <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                <Bell
+                  className={`w-3.5 h-3.5 shrink-0 ${
+                    pomoSound
+                      ? isDark
+                        ? 'text-indigo-400'
+                        : 'text-indigo-600'
+                      : isDark
+                      ? 'text-slate-500'
+                      : 'text-slate-400'
+                  }`}
+                />
+                <select
+                  value={pomoSoundType}
+                  disabled={!pomoSound}
+                  onChange={(e) => {
+                    const chosen = e.target.value;
+                    setPomoSoundType(chosen);
+                    getUnlockedAudioContext();
+                    playPomodoroSound(chosen, 'study');
+                  }}
+                  className={`w-full rounded-lg border px-2 py-1 text-xs font-medium truncate disabled:opacity-50 ${inputMutedSurfaceClass}`}
+                  title="Scegli la suoneria di fine sessione o pausa"
+                >
+                  {POMO_SOUNDS.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <button
+                type="button"
+                disabled={!pomoSound}
+                onClick={() => {
+                  getUnlockedAudioContext();
+                  playPomodoroSound(pomoSoundType, 'study');
+                }}
+                className={`px-2.5 py-1 rounded-lg border text-[11px] font-semibold transition shrink-0 disabled:opacity-40 cursor-pointer ${
+                  isDark
+                    ? 'bg-slate-800 border-slate-700 text-slate-200 hover:bg-slate-700'
+                    : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
+                }`}
+                title="Ascolta anteprima suono"
+              >
+                Testa
+              </button>
+            </div>
+          </div>
+
+          <div
+            className={`pt-3 border-t space-y-2.5 ${
+              isDark ? 'border-slate-800' : 'border-slate-100'
+            }`}
+          >
+            <div className="grid grid-cols-2 gap-2">
+              <div
+                className={`rounded-xl p-2.5 border ${
+                  isDark
+                    ? 'bg-slate-800/60 border-slate-700/80'
+                    : 'bg-slate-50 border-slate-200/70'
+                }`}
+              >
+                <p
+                  className={`text-[11px] font-medium ${
+                    isDark ? 'text-slate-400' : 'text-slate-500'
+                  }`}
+                >
+                  Oggi ({activeExam.name})
+                </p>
+                <p
+                  className={`text-sm font-bold ${
+                    isDark ? 'text-slate-100' : 'text-slate-900'
+                  }`}
+                >
+                  {pomoStats.todayCount} pom ·{' '}
+                  <span
+                    className={isDark ? 'text-indigo-400' : 'text-indigo-600'}
+                  >
+                    {formatMinutesHuman(pomoStats.todayMinutes)}
+                  </span>
+                </p>
+              </div>
+              <div
+                className={`rounded-xl p-2.5 border ${
+                  isDark
+                    ? 'bg-slate-800/60 border-slate-700/80'
+                    : 'bg-slate-50 border-slate-200/70'
+                }`}
+              >
+                <p
+                  className={`text-[11px] font-medium ${
+                    isDark ? 'text-slate-400' : 'text-slate-500'
+                  }`}
+                >
+                  Totale Esame
+                </p>
+                <p
+                  className={`text-sm font-bold ${
+                    isDark ? 'text-slate-100' : 'text-slate-900'
+                  }`}
+                >
+                  {pomoStats.totalCount} pom ·{' '}
+                  <span
+                    className={isDark ? 'text-slate-300' : 'text-slate-700'}
+                  >
+                    {formatMinutesHuman(pomoStats.totalMinutes)}
+                  </span>
+                </p>
+              </div>
+            </div>
+
+            {pomoStats.sessions.length > 0 && (
+              <div>
+                <button
+                  type="button"
+                  onClick={() => setShowPomoHistory((v) => !v)}
+                  className={`w-full flex items-center justify-between text-xs font-semibold py-1 cursor-pointer ${
+                    isDark
+                      ? 'text-slate-400 hover:text-slate-200'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  <span>
+                    Registro sessioni Pomodoro ({pomoStats.sessions.length})
+                  </span>
+                  <span
+                    className={
+                      isDark
+                        ? 'text-indigo-400 text-[11px]'
+                        : 'text-indigo-600 text-[11px]'
+                    }
+                  >
+                    {showPomoHistory ? 'Nascondi' : 'Mostra'}
+                  </span>
+                </button>
+
+                {showPomoHistory && (
+                  <div className="mt-2 max-h-40 overflow-y-auto space-y-1.5 pr-1">
+                    {pomoStats.sessions.map((s) => (
+                      <div
+                        key={s.id}
+                        className={`flex items-center justify-between text-xs rounded-lg px-2.5 py-1.5 border ${
+                          isDark
+                            ? 'bg-slate-800/70 border-slate-700/80'
+                            : 'bg-slate-50 border-slate-200/60'
+                        }`}
+                      >
+                        <div className="flex items-center gap-1.5">
+                          <Coffee
+                            className={`w-3 h-3 ${
+                              isDark ? 'text-indigo-400' : 'text-indigo-500'
+                            }`}
+                          />
+                          <span
+                            className={`font-semibold ${
+                              isDark ? 'text-slate-200' : 'text-slate-800'
+                            }`}
+                          >
+                            {s.durationMin} min
+                          </span>
+                          <span
+                            className={`text-[11px] ${
+                              isDark ? 'text-slate-400' : 'text-slate-400'
+                            }`}
+                          >
+                            · {formatShortDate(s.date)}{' '}
+                            {s.time ? `alle ${s.time}` : ''}
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleDeletePomoSession(s.id)}
+                          className={`p-1 rounded cursor-pointer ${
+                            isDark
+                              ? 'text-slate-500 hover:text-rose-400'
+                              : 'text-slate-400 hover:text-rose-600'
+                          }`}
+                          title="Elimina sessione"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </section>
+      );
+    } else if (sectionId === 'parameters') {
+      sectionContent = (
+        <section
+          className={`rounded-2xl border p-4 sm:p-6 shadow-sm space-y-5 ${cardSurfaceClass}`}
+        >
+          <div
+            className={`flex items-center justify-between gap-2 pb-3 border-b ${
+              isDark ? 'border-slate-800' : 'border-slate-100'
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              <SlidersHorizontal
+                className={`w-4 h-4 ${
+                  isDark ? 'text-indigo-400' : 'text-indigo-600'
+                }`}
+              />
+              <h3
+                className={`text-base font-bold ${
+                  isDark ? 'text-slate-100' : 'text-slate-900'
+                }`}
+              >
+                Parametri Esame
+              </h3>
+            </div>
+            {orderControls}
+          </div>
+
+          <div className="space-y-4">
+            <div>
+              <label
+                className={`block text-xs font-semibold mb-1 ${
+                  isDark ? 'text-slate-300' : 'text-slate-600'
+                }`}
+              >
+                Nome Esame / Materia
+              </label>
+              <input
+                ref={sidebarNameInputRef}
+                type="text"
+                value={activeExam.name}
+                onChange={(e) => updateActiveExam({ name: e.target.value })}
+                placeholder="Es. Anatomia Patologica"
+                className={`w-full rounded-xl border px-3 py-2 text-sm font-medium ${inputMutedSurfaceClass}`}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label
+                  className={`block text-xs font-semibold mb-1 ${
+                    isDark ? 'text-slate-300' : 'text-slate-600'
+                  }`}
+                >
+                  Inizio Studio
+                </label>
+                <input
+                  type="date"
+                  value={activeExam.startDate}
+                  onChange={(e) =>
+                    updateActiveExam({ startDate: e.target.value })
+                  }
+                  className={`w-full rounded-xl border px-3 py-2 text-xs sm:text-sm ${inputMutedSurfaceClass}`}
+                />
+              </div>
+
+              <div>
+                <label
+                  className={`block text-xs font-semibold mb-1 ${
+                    isDark ? 'text-slate-300' : 'text-slate-600'
+                  }`}
+                >
+                  Data Appello
+                </label>
+                <input
+                  type="date"
+                  value={activeExam.examDate}
+                  onChange={(e) =>
+                    updateActiveExam({ examDate: e.target.value })
+                  }
+                  className={`w-full rounded-xl border px-3 py-2 text-xs sm:text-sm ${inputMutedSurfaceClass}`}
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label
+                  className={`block text-xs font-semibold mb-1 ${
+                    isDark ? 'text-slate-300' : 'text-slate-600'
+                  }`}
+                >
+                  Pagine Totali
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  value={activeExam.totalPages}
+                  onChange={(e) =>
+                    updateActiveExam({
+                      totalPages: Math.max(1, Number(e.target.value) || 1),
+                    })
+                  }
+                  className={`w-full rounded-xl border px-3 py-2 text-sm font-semibold ${inputMutedSurfaceClass}`}
+                />
+              </div>
+
+              <div>
+                <label
+                  className={`block text-xs font-semibold mb-1 ${
+                    isDark ? 'text-slate-300' : 'text-slate-600'
+                  }`}
+                >
+                  Giorni Ripasso Finale
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  max="60"
+                  value={activeExam.reviewDays}
+                  onChange={(e) =>
+                    updateActiveExam({
+                      reviewDays: Math.max(0, Number(e.target.value) || 0),
+                    })
+                  }
+                  className={`w-full rounded-xl border px-3 py-2 text-sm font-semibold ${inputMutedSurfaceClass}`}
+                />
+              </div>
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <label
+                  className={`block text-xs font-semibold ${
+                    isDark ? 'text-slate-300' : 'text-slate-600'
+                  }`}
+                >
+                  Giorni di Pausa Settimanali
+                </label>
+                <span
+                  className={`text-[11px] ${
+                    isDark ? 'text-slate-500' : 'text-slate-400'
+                  }`}
+                >
+                  {(activeExam.restDays || []).length} selezionati
+                </span>
+              </div>
+              <div className="grid grid-cols-7 gap-1">
+                {WEEKDAYS.map((day) => {
+                  const active = (activeExam.restDays || []).includes(day.id);
+                  return (
+                    <button
+                      key={day.id}
+                      type="button"
+                      onClick={() => toggleRestDay(day.id)}
+                      className={`py-2 rounded-lg text-xs font-bold transition cursor-pointer ${
+                        active
+                          ? 'bg-indigo-600 text-white shadow-xs'
+                          : isDark
+                          ? 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                          : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                      }`}
+                    >
+                      {day.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div
+              className={`rounded-xl p-3.5 border space-y-2 text-xs ${subPanelClass}`}
+            >
+              <div className="flex justify-between">
+                <span className={isDark ? 'text-slate-400' : 'text-slate-500'}>
+                  Termine prima lettura:
+                </span>
+                <span
+                  className={`font-bold ${
+                    isDark ? 'text-slate-200' : 'text-slate-800'
+                  }`}
+                >
+                  {formatShortDate(analytics.studyDeadline)}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className={isDark ? 'text-slate-400' : 'text-slate-500'}>
+                  Giorni utili studio totali:
+                </span>
+                <span
+                  className={`font-bold ${
+                    isDark ? 'text-slate-200' : 'text-slate-800'
+                  }`}
+                >
+                  {analytics.totalUsefulDays} giorni
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className={isDark ? 'text-slate-400' : 'text-slate-500'}>
+                  Giorni utili rimanenti:
+                </span>
+                <span
+                  className={`font-bold ${
+                    isDark ? 'text-indigo-400' : 'text-indigo-600'
+                  }`}
+                >
+                  {analytics.remainingUsefulDays} giorni
+                </span>
+              </div>
+            </div>
+
+            <div
+              className={`pt-2 border-t flex flex-wrap items-center justify-between gap-2 ${
+                isDark ? 'border-slate-800' : 'border-slate-100'
+              }`}
+            >
+              <button
+                type="button"
+                onClick={handleResetExam}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
+                  confirmReset
+                    ? 'bg-rose-600 text-white'
+                    : isDark
+                    ? 'text-slate-400 hover:text-rose-400 hover:bg-rose-950/60'
+                    : 'text-slate-600 hover:text-rose-600 hover:bg-rose-50'
+                }`}
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                {confirmReset
+                  ? 'Conferma azzeramento log?'
+                  : 'Azzera solo log esame'}
+              </button>
+
+              {state.exams.length > 1 && (
+                <button
+                  type="button"
+                  onClick={handleDeleteExam}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
+                    isDark
+                      ? 'text-rose-400 hover:bg-rose-950/60'
+                      : 'text-rose-600 hover:bg-rose-50'
+                  }`}
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  Elimina esame
+                </button>
+              )}
+            </div>
+          </div>
+        </section>
+      );
+    }
+
+    return (
+      <div
+        key={sectionId}
+        draggable={dragReadyId === sectionId}
+        onDragStart={(e) => {
+          setDraggedSection({ id: sectionId, fromCol: col });
+          e.dataTransfer.effectAllowed = 'move';
+        }}
+        onDragOver={(e) => {
+          e.preventDefault();
+          if (
+            dragOverTarget?.col !== col ||
+            dragOverTarget?.index !== index
+          ) {
+            setDragOverTarget({ col, index });
+          }
+        }}
+        onDrop={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          handleDropSection(col, index);
+        }}
+        onDragEnd={() => {
+          setDraggedSection(null);
+          setDragOverTarget(null);
+          setDragReadyId(null);
+        }}
+        className={`relative transition-all duration-200 ${
+          isBeingDragged ? 'opacity-45 scale-[0.99]' : ''
+        } ${
+          isDropTargetBefore
+            ? 'ring-2 ring-indigo-500 ring-offset-4 rounded-2xl'
+            : ''
+        } ${
+          isReorderMode
+            ? isDark
+              ? 'ring-2 ring-indigo-500/45 rounded-2xl'
+              : 'ring-2 ring-indigo-300/80 rounded-2xl'
+            : ''
+        }`}
+      >
+        {sectionContent}
+      </div>
+    );
+  };
+
+  return (
+    <div
+      className={`min-h-screen transition-colors duration-200 ${
+        isDark ? 'bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-900'
+      }`}
+    >
+      {/* --- HEADER --- */}
+      <header
+        className={`border-b sticky top-0 z-20 transition-colors duration-200 ${
+          isDark
+            ? 'bg-slate-900/95 border-slate-800 backdrop-blur-xs'
+            : 'bg-white border-slate-200'
+        }`}
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="bg-indigo-600 text-white p-2 rounded-xl shadow-xs shrink-0">
+              <BookOpen className="w-5 h-5" />
+            </div>
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs font-semibold uppercase tracking-wider text-indigo-500">
+                  StudyBurn
+                </span>
+                <span
+                  className={isDark ? 'text-slate-600' : 'text-slate-300'}
+                >
+                  •
+                </span>
+                <span
+                  className={`text-xs truncate ${
+                    isDark ? 'text-slate-400' : 'text-slate-500'
+                  }`}
+                >
+                  Tracker Esami Universitari
+                </span>
+              </div>
+
+              {isRenamingHeader ? (
+                <div className="flex items-center gap-1.5 mt-0.5">
+                  <input
+                    ref={headerRenameInputRef}
+                    type="text"
+                    value={activeExam.name}
+                    onChange={(e) =>
+                      updateActiveExam({ name: e.target.value })
+                    }
+                    onBlur={() => setIsRenamingHeader(false)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === 'Escape') {
+                        setIsRenamingHeader(false);
+                      }
+                    }}
+                    className={`text-base sm:text-lg font-bold border-b-2 border-indigo-500 bg-transparent focus:outline-none px-0.5 ${
+                      isDark ? 'text-slate-50' : 'text-slate-900'
+                    }`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setIsRenamingHeader(false)}
+                    className={`p-1 rounded cursor-pointer ${
+                      isDark
+                        ? 'text-emerald-400 hover:bg-emerald-950/60'
+                        : 'text-emerald-600 hover:bg-emerald-50'
+                    }`}
+                    title="Conferma nome"
+                  >
+                    <Check className="w-4 h-4" />
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setIsRenamingHeader(true)}
+                  className="group flex items-center gap-1.5 text-left mt-0.5 cursor-pointer"
+                  title="Clicca per rinominare l'esame"
+                >
+                  <h1
+                    className={`text-base sm:text-lg font-bold truncate group-hover:text-indigo-500 transition-colors ${
+                      isDark ? 'text-slate-50' : 'text-slate-900'
+                    }`}
+                  >
+                    {activeExam.name || 'Esame senza nome'}
+                  </h1>
+                  <Edit3
+                    className={`w-3.5 h-3.5 transition-colors shrink-0 ${
+                      isDark
+                        ? 'text-slate-500 group-hover:text-indigo-400'
+                        : 'text-slate-400 group-hover:text-indigo-500'
+                    }`}
+                  />
+                </button>
+              )}
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            {undoStack.length > 0 && (
+              <button
+                type="button"
+                onClick={handleUndo}
+                className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border transition cursor-pointer ${
+                  isDark
+                    ? 'text-slate-300 bg-slate-800 hover:bg-slate-700 border-slate-700'
+                    : 'text-slate-600 bg-slate-100 hover:bg-slate-200 border-slate-200'
+                }`}
+                title="Annulla ultima modifica"
+              >
+                <Undo2 className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Annulla</span>
+              </button>
+            )}
+
+            <button
+              type="button"
+              onClick={() => setShowCloudModal(true)}
+              className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold border transition cursor-pointer ${
+                cloudSession?.access_token
+                  ? cloudStatus === 'error'
+                    ? isDark
+                      ? 'bg-rose-950/70 text-rose-300 border-rose-800'
+                      : 'bg-rose-50 text-rose-700 border-rose-200'
+                    : isDark
+                    ? 'bg-emerald-950/70 text-emerald-300 border-emerald-800/80'
+                    : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                  : isDark
+                  ? 'text-slate-300 bg-slate-800 hover:bg-slate-700 border-slate-700'
+                  : 'text-slate-700 bg-white hover:bg-slate-50 border-slate-200'
+              }`}
+              title="Sincronizzazione Cloud tra MacBook e iPad"
+            >
+              {cloudSession?.access_token ? (
+                cloudStatus === 'syncing' ? (
+                  <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                ) : cloudStatus === 'error' ? (
+                  <CloudOff className="w-3.5 h-3.5" />
+                ) : (
+                  <Cloud className="w-3.5 h-3.5" />
+                )
+              ) : (
+                <Cloud className="w-3.5 h-3.5" />
+              )}
+              <span className="hidden sm:inline">
+                {cloudSession?.access_token
+                  ? cloudStatus === 'syncing'
+                    ? 'Sync...'
+                    : 'Cloud Attivo'
+                  : 'Sync Cloud'}
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setIsDark((d) => !d)}
+              className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold border transition cursor-pointer ${
+                isDark
+                  ? 'bg-slate-800 text-amber-300 border-slate-700 hover:bg-slate-700'
+                  : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+              }`}
+              title={
+                isDark ? 'Passa a modalità chiara' : 'Passa a modalità scura'
+              }
+            >
+              {isDark ? (
+                <Sun className="w-3.5 h-3.5" />
+              ) : (
+                <Moon className="w-3.5 h-3.5" />
+              )}
+              <span className="hidden md:inline">
+                {isDark ? 'Chiaro' : 'Scuro'}
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setIsReorderMode((v) => !v)}
+              className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold border transition cursor-pointer ${
+                isReorderMode
+                  ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs'
+                  : isCustomLayout
+                  ? isDark
+                    ? 'bg-indigo-950/70 text-indigo-300 border-indigo-800/80 hover:bg-indigo-900/70'
+                    : 'bg-indigo-50 text-indigo-700 border-indigo-200 hover:bg-indigo-100'
+                  : isDark
+                  ? 'text-slate-300 bg-slate-800 hover:bg-slate-700 border-slate-700'
+                  : 'text-slate-700 bg-white hover:bg-slate-50 border-slate-200'
+              }`}
+              title="Sposta o riordina le sezioni della pagina"
+            >
+              <LayoutGrid className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">
+                {isReorderMode ? 'Fine ordine' : 'Ordina sezioni'}
+              </span>
+            </button>
+
+            <select
+              aria-label="Seleziona esame"
+              value={activeExam.id}
+              onChange={(e) => {
+                setState((prev) => ({
+                  ...prev,
+                  activeExamId: e.target.value,
+                }));
+                setIsRenamingHeader(false);
+                setConfirmReset(false);
+              }}
+              className={`rounded-lg border text-xs sm:text-sm font-medium px-2.5 py-1.5 max-w-[170px] sm:max-w-[220px] truncate ${
+                isDark
+                  ? 'border-slate-700 bg-slate-800 text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500'
+                  : 'border-slate-300 bg-slate-50 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500'
+              }`}
+            >
+              {state.exams.map((ex) => (
+                <option key={ex.id} value={ex.id}>
+                  {ex.name || 'Senza nome'}
+                </option>
+              ))}
+            </select>
+
+            <button
+              type="button"
+              onClick={handleCreateExam}
+              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 shadow-xs transition cursor-pointer"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Nuovo</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={handleDuplicateExam}
+              className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium border transition cursor-pointer ${
+                isDark
+                  ? 'text-slate-300 bg-slate-800 hover:bg-slate-700 border-slate-700'
+                  : 'text-slate-700 bg-white hover:bg-slate-50 border-slate-200'
+              }`}
+              title="Duplica questo esame"
+            >
+              <Copy className="w-3.5 h-3.5" />
+              <span className="hidden md:inline">Duplica</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={handleLoadDemo}
+              className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium border transition cursor-pointer ${
+                isDark
+                  ? 'text-indigo-300 bg-indigo-950/70 hover:bg-indigo-900/70 border-indigo-800/80'
+                  : 'text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border-indigo-200'
+              }`}
+              title="Crea un esame dimostrativo già popolato"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              <span className="hidden md:inline">Carica Demo</span>
+            </button>
+          </div>
+        </div>
+      </header>
+
+      {/* --- MODALE SYNC CLOUD MULTI-DISPOSITIVO --- */}
+      {showCloudModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/65 backdrop-blur-xs"
+          onClick={() => setShowCloudModal(false)}
+        >
+          <div
+            className={`w-full max-w-lg rounded-2xl border p-5 sm:p-6 shadow-2xl space-y-5 max-h-[90vh] overflow-y-auto ${cardSurfaceClass}`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center gap-2.5">
+                <div
+                  className={`p-2 rounded-xl ${
+                    isDark
+                      ? 'bg-indigo-950/80 text-indigo-400'
+                      : 'bg-indigo-50 text-indigo-600'
+                  }`}
+                >
+                  <Cloud className="w-5 h-5" />
+                </div>
+                <div>
+                  <h2
+                    className={`text-base sm:text-lg font-bold ${
+                      isDark ? 'text-slate-100' : 'text-slate-900'
+                    }`}
+                  >
+                    Sincronizzazione Cloud (MacBook ↔ iPad)
+                  </h2>
+                  <p
+                    className={`text-xs ${
+                      isDark ? 'text-slate-400' : 'text-slate-500'
+                    }`}
+                  >
+                    Accedi con lo stesso account su tutti i tuoi dispositivi
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowCloudModal(false)}
+                className={`p-1.5 rounded-lg cursor-pointer ${
+                  isDark
+                    ? 'text-slate-400 hover:bg-slate-800'
+                    : 'text-slate-500 hover:bg-slate-100'
+                }`}
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {cloudConflictPayload && (
+              <div
+                className={`rounded-xl border p-4 space-y-3 ${
+                  isDark
+                    ? 'bg-amber-950/50 border-amber-800 text-amber-100'
+                    : 'bg-amber-50 border-amber-200 text-amber-950'
+                }`}
+              >
+                <p className="text-xs font-bold">
+                  Trovati dati sia su questo dispositivo che nel tuo account
+                  Cloud! Quali vuoi mantenere?
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      applyRemotePayload(cloudConflictPayload);
+                      cloudSyncReadyRef.current = true;
+                      setCloudConflictPayload(null);
+                      setLastSyncedAt(getCurrentTimeStr());
+                    }}
+                    className="px-3 py-1.5 rounded-lg text-xs font-bold bg-indigo-600 text-white hover:bg-indigo-700 cursor-pointer"
+                  >
+                    Scarica dati dal Cloud
+                  </button>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      cloudSyncReadyRef.current = true;
+                      setCloudConflictPayload(null);
+                      await pushToCloud();
+                    }}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold border cursor-pointer ${
+                      isDark
+                        ? 'bg-slate-800 border-slate-700 text-slate-200 hover:bg-slate-700'
+                        : 'bg-white border-slate-300 text-slate-800 hover:bg-slate-50'
+                    }`}
+                  >
+                    Carica dati di questo dispositivo sul Cloud
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {cloudSession?.access_token ? (
+              <div className="space-y-4">
+                <div
+                  className={`rounded-xl border p-4 space-y-2 ${
+                    isDark
+                      ? 'bg-emerald-950/35 border-emerald-800/70'
+                      : 'bg-emerald-50/70 border-emerald-200'
+                  }`}
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <span
+                      className={`text-xs font-bold ${
+                        isDark ? 'text-emerald-300' : 'text-emerald-800'
+                      }`}
+                    >
+                      Connesso come {cloudSession.user?.email}
+                    </span>
+                    {lastSyncedAt && (
+                      <span
+                        className={`text-[11px] ${
+                          isDark ? 'text-emerald-400' : 'text-emerald-700'
+                        }`}
+                      >
+                        Ultimo sync: {lastSyncedAt}
+                      </span>
+                    )}
+                  </div>
+                  <p
+                    className={`text-xs ${
+                      isDark ? 'text-slate-300' : 'text-slate-600'
+                    }`}
+                  >
+                    Ogni modifica a pagine, esami, timer e ripassi viene salvata
+                    automaticamente sul cloud e caricata quando apri
+                    l&apos;app su iPad o Mac.
+                  </p>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => pullFromCloud(cloudSession, false)}
+                    disabled={cloudStatus === 'syncing'}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50 cursor-pointer"
+                  >
+                    <RefreshCw
+                      className={`w-3.5 h-3.5 ${
+                        cloudStatus === 'syncing' ? 'animate-spin' : ''
+                      }`}
+                    />
+                    Sincronizza ora
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleCloudLogout}
+                    className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold border cursor-pointer ${
+                      isDark
+                        ? 'bg-slate-800 border-slate-700 text-rose-400 hover:bg-rose-950/60'
+                        : 'bg-white border-slate-200 text-rose-600 hover:bg-rose-50'
+                    }`}
+                  >
+                    <LogOut className="w-3.5 h-3.5" />
+                    Disconnetti
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <form onSubmit={handleCloudAuthSubmit} className="space-y-4">
+                <div className="space-y-3">
+                  <div
+                    className={`inline-flex rounded-xl p-1 ${
+                      isDark ? 'bg-slate-800' : 'bg-slate-100'
+                    }`}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setAuthMode('login');
+                        setCloudMessage('');
+                      }}
+                      className={`px-3 py-1 rounded-lg text-xs font-semibold cursor-pointer ${
+                        authMode === 'login'
+                          ? isDark
+                            ? 'bg-slate-900 text-indigo-400 shadow-xs'
+                            : 'bg-white text-indigo-600 shadow-xs'
+                          : isDark
+                          ? 'text-slate-400'
+                          : 'text-slate-600'
+                      }`}
+                    >
+                      Accedi
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setAuthMode('signup');
+                        setCloudMessage('');
+                      }}
+                      className={`px-3 py-1 rounded-lg text-xs font-semibold cursor-pointer ${
+                        authMode === 'signup'
+                          ? isDark
+                            ? 'bg-slate-900 text-indigo-400 shadow-xs'
+                            : 'bg-white text-indigo-600 shadow-xs'
+                          : isDark
+                          ? 'text-slate-400'
+                          : 'text-slate-600'
+                      }`}
+                    >
+                      Crea Account
+                    </button>
+                  </div>
+
+                  <div>
+                    <label
+                      className={`block text-xs font-semibold mb-1 ${
+                        isDark ? 'text-slate-300' : 'text-slate-600'
+                      }`}
+                    >
+                      Email
+                    </label>
+                    <input
+                      type="email"
+                      placeholder="nome@esempio.it"
+                      value={authEmail}
+                      onChange={(e) => setAuthEmail(e.target.value)}
+                      required
+                      className={`w-full rounded-xl border px-3 py-2 text-xs sm:text-sm ${inputMutedSurfaceClass}`}
+                    />
+                  </div>
+
+                  <div>
+                    <label
+                      className={`block text-xs font-semibold mb-1 ${
+                        isDark ? 'text-slate-300' : 'text-slate-600'
+                      }`}
+                    >
+                      Password (min. 6 caratteri)
+                    </label>
+                    <input
+                      type="password"
+                      placeholder="••••••••"
+                      value={authPassword}
+                      onChange={(e) => setAuthPassword(e.target.value)}
+                      required
+                      minLength={6}
+                      className={`w-full rounded-xl border px-3 py-2 text-xs sm:text-sm ${inputMutedSurfaceClass}`}
+                    />
+                  </div>
+                </div>
+
+                {SUPABASE_URL.trim() && SUPABASE_ANON_KEY.trim() && (
+                  <div>
+                    <button
+                      type="button"
+                      onClick={() => setShowAdvancedServerConfig((v) => !v)}
+                      className={`text-[11px] font-semibold cursor-pointer ${
+                        isDark
+                          ? 'text-slate-400 hover:text-slate-200'
+                          : 'text-slate-500 hover:text-slate-700'
+                      }`}
+                    >
+                      {showAdvancedServerConfig
+                        ? 'Nascondi configurazione server Supabase'
+                        : 'Configurazione server Supabase (già attiva)'}
+                    </button>
+                  </div>
+                )}
+
+                {showAdvancedServerConfig && (
+                  <div
+                    className={`rounded-xl border p-3.5 space-y-3 ${subPanelClass}`}
+                  >
+                    <p
+                      className={`text-[11px] font-bold uppercase tracking-wider ${
+                        isDark ? 'text-slate-300' : 'text-slate-600'
+                      }`}
+                    >
+                      Configurazione Database Supabase
+                    </p>
+                    <div>
+                      <label
+                        className={`block text-[11px] font-semibold mb-1 ${
+                          isDark ? 'text-slate-300' : 'text-slate-600'
+                        }`}
+                      >
+                        Project URL
+                      </label>
+                      <input
+                        type="url"
+                        placeholder="https://xyzproject.supabase.co"
+                        value={cloudUrl}
+                        onChange={(e) => setCloudUrl(e.target.value)}
+                        className={`w-full rounded-xl border px-3 py-1.5 text-xs ${inputSurfaceClass}`}
+                      />
+                    </div>
+                    <div>
+                      <label
+                        className={`block text-[11px] font-semibold mb-1 ${
+                          isDark ? 'text-slate-300' : 'text-slate-600'
+                        }`}
+                      >
+                        Anon / Publishable Key
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="sb_publishable_..."
+                        value={cloudAnonKey}
+                        onChange={(e) => setCloudAnonKey(e.target.value)}
+                        className={`w-full rounded-xl border px-3 py-1.5 text-xs ${inputSurfaceClass}`}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={authLoading}
+                  className="w-full py-2.5 rounded-xl text-xs sm:text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 transition cursor-pointer"
+                >
+                  {authLoading
+                    ? 'Connessione in corso...'
+                    : authMode === 'login'
+                    ? 'Accedi e Sincronizza'
+                    : 'Registrati e Sincronizza'}
+                </button>
+              </form>
+            )}
+
+            {cloudMessage && (
+              <div
+                className={`rounded-xl p-3 text-xs font-medium ${
+                  isDark
+                    ? 'bg-slate-800 text-amber-300 border border-slate-700'
+                    : 'bg-amber-50 text-amber-900 border border-amber-200'
+                }`}
+              >
+                {cloudMessage}
+              </div>
+            )}
+
+            <div
+              className={`pt-4 border-t flex flex-wrap items-center justify-between gap-2 ${
+                isDark ? 'border-slate-800' : 'border-slate-100'
+              }`}
+            >
+              <span
+                className={`text-xs font-medium ${
+                  isDark ? 'text-slate-400' : 'text-slate-500'
+                }`}
+              >
+                Backup locale rapido (.json):
+              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleExportBackupFile}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border cursor-pointer ${
+                    isDark
+                      ? 'bg-slate-800 border-slate-700 text-slate-200 hover:bg-slate-700'
+                      : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
+                  }`}
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  Esporta
+                </button>
+                <button
+                  type="button"
+                  onClick={() => importFileInputRef.current?.click()}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border cursor-pointer ${
+                    isDark
+                      ? 'bg-slate-800 border-slate-700 text-slate-200 hover:bg-slate-700'
+                      : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
+                  }`}
+                >
+                  <Upload className="w-3.5 h-3.5" />
+                  Importa
+                </button>
+                <input
+                  ref={importFileInputRef}
+                  type="file"
+                  accept=".json,application/json"
+                  onChange={handleImportBackupFile}
+                  className="hidden"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* --- MAIN DASHBOARD --- */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+        {isReorderMode && (
+          <div
+            className={`rounded-2xl border p-4 flex flex-wrap items-center justify-between gap-3 ${
+              isDark
+                ? 'bg-indigo-950/60 border-indigo-800/80 text-indigo-100'
+                : 'bg-indigo-50 border-indigo-200 text-indigo-950'
+            }`}
+          >
+            <div className="flex items-center gap-2.5">
+              <LayoutGrid
+                className={`w-5 h-5 shrink-0 ${
+                  isDark ? 'text-indigo-400' : 'text-indigo-600'
+                }`}
+              />
+              <div>
+                <p className="text-sm font-bold">
+                  Personalizzazione ordine sezioni attiva
+                </p>
+                <p
+                  className={`text-xs ${
+                    isDark ? 'text-indigo-300' : 'text-indigo-800'
+                  }`}
+                >
+                  Usa le frecce su/giù, sposta tra colonna sinistra e destra
+                  oppure trascina la maniglia di ogni riquadro.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              {isCustomLayout && (
+                <button
+                  type="button"
+                  onClick={handleResetLayout}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition cursor-pointer ${
+                    isDark
+                      ? 'bg-slate-900 text-slate-200 border-slate-700 hover:bg-slate-800'
+                      : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
+                  }`}
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                  Ripristina predefinito
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => setIsReorderMode(false)}
+                className="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-indigo-600 text-white hover:bg-indigo-700 transition cursor-pointer"
+              >
+                Fatto
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* 1. BANNER DINAMICO STATO STUDIO */}
+        <section
+          className={`rounded-2xl border p-4 sm:p-5 transition-colors ${statusStyles.wrapper}`}
+        >
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+            <div
+              className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 shadow-xs ${statusStyles.iconBg}`}
+            >
+              <StatusIcon className="w-6 h-6" />
+            </div>
+            <div className="space-y-1 flex-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <span
+                  className={`text-[11px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full border ${statusStyles.badge}`}
+                >
+                  {statusStyles.statusTitle}
+                </span>
+                {analytics.safeReviewDays > 0 && (
+                  <span className="text-xs opacity-75">
+                    Fine prima lettura prevista entro il{' '}
+                    <strong>{formatShortDate(analytics.studyDeadline)}</strong>{' '}
+                    ({analytics.safeReviewDays} gg di ripasso finale)
+                  </span>
+                )}
+              </div>
+              <h2 className="text-base sm:text-lg font-bold leading-snug">
+                {statusStyles.statusHeadline}
+              </h2>
+              <p className="text-xs sm:text-sm opacity-90 leading-relaxed">
+                {statusStyles.statusDetail}
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* 2. RIGA 4 KPI CARDS */}
+        <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div
+            className={`rounded-2xl border p-4 shadow-sm flex flex-col justify-between ${cardSurfaceClass}`}
+          >
+            <div className="flex items-center justify-between">
+              <span
+                className={`text-xs font-semibold uppercase tracking-wide ${
+                  isDark ? 'text-slate-400' : 'text-slate-500'
+                }`}
+              >
+                Completamento
+              </span>
+              <div
+                className={`p-2 rounded-lg ${
+                  isDark
+                    ? 'bg-indigo-950/80 text-indigo-400'
+                    : 'bg-indigo-50 text-indigo-600'
+                }`}
+              >
+                <Layers className="w-4 h-4" />
+              </div>
+            </div>
+            <div className="my-2">
+              <div
+                className={`text-2xl sm:text-3xl font-extrabold ${
+                  isDark ? 'text-slate-50' : 'text-slate-900'
+                }`}
+              >
+                {analytics.completionPct.toFixed(1)}%
+              </div>
+              <p
+                className={`text-xs mt-0.5 ${
+                  isDark ? 'text-slate-400' : 'text-slate-500'
+                }`}
+              >
+                <strong
+                  className={isDark ? 'text-slate-200' : 'text-slate-700'}
+                >
+                  {analytics.completedPages}
+                </strong>{' '}
+                / {analytics.totalPages} pagine
+              </p>
+            </div>
+            <div
+              className={`w-full h-2 rounded-full overflow-hidden ${
+                isDark ? 'bg-slate-800' : 'bg-slate-100'
+              }`}
+            >
+              <div
+                className="h-full bg-indigo-600 rounded-full transition-all duration-500"
+                style={{ width: `${analytics.completionPct}%` }}
+              />
+            </div>
+          </div>
+
+          <div
+            className={`rounded-2xl border p-4 shadow-sm flex flex-col justify-between ${cardSurfaceClass}`}
+          >
+            <div className="flex items-center justify-between">
+              <span
+                className={`text-xs font-semibold uppercase tracking-wide ${
+                  isDark ? 'text-slate-400' : 'text-slate-500'
+                }`}
+              >
+                Pagine Rimanenti
+              </span>
+              <div
+                className={`p-2 rounded-lg ${
+                  isDark
+                    ? 'bg-sky-950/80 text-sky-400'
+                    : 'bg-sky-50 text-sky-600'
+                }`}
+              >
+                <BookOpen className="w-4 h-4" />
+              </div>
+            </div>
+            <div className="my-2">
+              <div
+                className={`text-2xl sm:text-3xl font-extrabold ${
+                  isDark ? 'text-slate-50' : 'text-slate-900'
+                }`}
+              >
+                {analytics.remainingPages}
+              </div>
+              <p
+                className={`text-xs mt-0.5 ${
+                  isDark ? 'text-slate-400' : 'text-slate-500'
+                }`}
+              >
+                su {analytics.totalPages} pagine totali
+              </p>
+            </div>
+            <div
+              className={`text-xs font-medium ${
+                isDark ? 'text-slate-400' : 'text-slate-500'
+              }`}
+            >
+              Ritmo iniziale:{' '}
+              <span
+                className={`font-semibold ${
+                  isDark ? 'text-slate-200' : 'text-slate-700'
+                }`}
+              >
+                {analytics.initialMinPace.toFixed(1)} pag/gg
+              </span>
+            </div>
+          </div>
+
+          <div
+            className={`rounded-2xl border p-4 shadow-sm flex flex-col justify-between ${cardSurfaceClass}`}
+          >
+            <div className="flex items-center justify-between">
+              <span
+                className={`text-xs font-semibold uppercase tracking-wide ${
+                  isDark ? 'text-slate-400' : 'text-slate-500'
+                }`}
+              >
+                Ritmo Necessario
+              </span>
+              <div
+                className={`p-2 rounded-lg ${
+                  isDark
+                    ? 'bg-violet-950/80 text-violet-400'
+                    : 'bg-violet-50 text-violet-600'
+                }`}
+              >
+                <Target className="w-4 h-4" />
+              </div>
+            </div>
+            <div className="my-2">
+              <div
+                className={`text-2xl sm:text-3xl font-extrabold ${
+                  isDark ? 'text-slate-50' : 'text-slate-900'
+                }`}
+              >
+                {analytics.newRequiredPace.toFixed(1)}
+                <span
+                  className={`text-sm font-semibold ml-1 ${
+                    isDark ? 'text-slate-400' : 'text-slate-500'
+                  }`}
+                >
+                  pag/gg
+                </span>
+              </div>
+              <p
+                className={`text-xs mt-0.5 ${
+                  isDark ? 'text-slate-400' : 'text-slate-500'
+                }`}
+              >
+                Media reale attuale:{' '}
+                <strong
+                  className={isDark ? 'text-slate-200' : 'text-slate-700'}
+                >
+                  {analytics.realDailyAvg.toFixed(1)}
+                </strong>{' '}
+                pag/gg
+              </p>
+            </div>
+            <div
+              className={`text-xs font-medium ${
+                isDark ? 'text-slate-400' : 'text-slate-500'
+              }`}
+            >
+              Nei prossimi{' '}
+              <span
+                className={`font-semibold ${
+                  isDark ? 'text-slate-200' : 'text-slate-700'
+                }`}
+              >
+                {analytics.remainingUsefulDays} giorni utili
+              </span>
+            </div>
+          </div>
+
+          <div
+            className={`rounded-2xl border p-4 shadow-sm flex flex-col justify-between ${cardSurfaceClass}`}
+          >
+            <div className="flex items-center justify-between">
+              <span
+                className={`text-xs font-semibold uppercase tracking-wide ${
+                  isDark ? 'text-slate-400' : 'text-slate-500'
+                }`}
+              >
+                Countdown Appello
+              </span>
+              <div
+                className={`p-2 rounded-lg ${
+                  isDark
+                    ? 'bg-amber-950/80 text-amber-400'
+                    : 'bg-amber-50 text-amber-600'
+                }`}
+              >
+                <Calendar className="w-4 h-4" />
+              </div>
+            </div>
+            <div className="my-2">
+              <div
+                className={`text-2xl sm:text-3xl font-extrabold ${
+                  isDark ? 'text-slate-50' : 'text-slate-900'
+                }`}
+              >
+                -{analytics.daysToExam}
+                <span
+                  className={`text-sm font-semibold ml-1 ${
+                    isDark ? 'text-slate-400' : 'text-slate-500'
+                  }`}
+                >
+                  giorni
+                </span>
+              </div>
+              <p
+                className={`text-xs mt-0.5 ${
+                  isDark ? 'text-slate-400' : 'text-slate-500'
+                }`}
+              >
+                Appello il{' '}
+                <strong
+                  className={isDark ? 'text-slate-200' : 'text-slate-700'}
+                >
+                  {formatShortDate(activeExam.examDate)}
+                </strong>
+              </p>
+            </div>
+            <div
+              className={`text-xs font-medium flex items-center gap-1 ${
+                isDark ? 'text-slate-400' : 'text-slate-500'
+              }`}
+            >
+              <Clock className="w-3.5 h-3.5" />
+              <span>
+                {analytics.remainingUsefulDays} giorni utili di studio
+              </span>
+            </div>
+          </div>
+        </section>
+
+        {/* 3. GRIGLIA PRINCIPALE RIORDINABILE (2 COLONNE) */}
+        <div
+          className={`grid grid-cols-1 ${
+            layout.left.length > 0 && layout.right.length > 0
+              ? 'lg:grid-cols-12'
+              : ''
+          } gap-6 items-start`}
+        >
+          {layout.left.length > 0 && (
+            <div
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={(e) => {
+                e.preventDefault();
+                handleDropSection('left', layout.left.length);
+              }}
+              className={`${
+                layout.right.length > 0 ? 'lg:col-span-8' : ''
+              } space-y-6`}
+            >
+              {layout.left.map((secId, idx) =>
+                renderSection(secId, 'left', idx, layout.left.length)
+              )}
+            </div>
+          )}
+
+          {layout.right.length > 0 && (
+            <div
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={(e) => {
+                e.preventDefault();
+                handleDropSection('right', layout.right.length);
+              }}
+              className={`${
+                layout.left.length > 0 ? 'lg:col-span-4' : ''
+              } space-y-6`}
+            >
+              {layout.right.map((secId, idx) =>
+                renderSection(secId, 'right', idx, layout.right.length)
+              )}
+            </div>
+          )}
+        </div>
+      </main>
+    </div>
+  );
+}
