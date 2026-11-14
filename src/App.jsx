@@ -42,6 +42,8 @@ import {
   ArrowDown,
   ArrowLeftRight,
   LayoutGrid,
+  Sun,
+  Moon,
 } from 'lucide-react';
 
 // --- UTILITY DATE (Locale, senza slittamenti di fuso orario) ---
@@ -177,7 +179,6 @@ function sanitizeLayout(raw) {
     }
   });
 
-  // Aggiungi eventuali sezioni mancanti nella colonna di default
   ALL_SECTION_IDS.forEach((id) => {
     if (!seen.has(id)) {
       if (DEFAULT_LAYOUT.left.includes(id)) cleanLeft.push(id);
@@ -302,8 +303,38 @@ function createDemoExam() {
 
 const STORAGE_KEY = 'studyburn_state_v2';
 const LAYOUT_STORAGE_KEY = 'studyburn_layout_v1';
+const THEME_STORAGE_KEY = 'studyburn_theme_v1';
 
 export default function App() {
+  // --- STATO MODALITÀ SCURA ---
+  const [isDark, setIsDark] = useState(() => {
+    try {
+      const savedTheme = localStorage.getItem(THEME_STORAGE_KEY);
+      if (savedTheme === 'dark') return true;
+      if (savedTheme === 'light') return false;
+      if (
+        typeof window !== 'undefined' &&
+        window.matchMedia &&
+        window.matchMedia('(prefers-color-scheme: dark)').matches
+      ) {
+        return true;
+      }
+    } catch (e) {
+      console.error('Errore lettura tema:', e);
+    }
+    return false;
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(THEME_STORAGE_KEY, isDark ? 'dark' : 'light');
+      document.documentElement.style.colorScheme = isDark ? 'dark' : 'light';
+      document.documentElement.classList.toggle('dark', isDark);
+    } catch (e) {
+      console.error('Errore salvataggio tema:', e);
+    }
+  }, [isDark]);
+
   const [state, setState] = useState(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
@@ -338,8 +369,8 @@ export default function App() {
 
   const [isReorderMode, setIsReorderMode] = useState(false);
   const [dragReadyId, setDragReadyId] = useState(null);
-  const [draggedSection, setDraggedSection] = useState(null); // { id, fromCol }
-  const [dragOverTarget, setDragOverTarget] = useState(null); // { col, index }
+  const [draggedSection, setDraggedSection] = useState(null);
+  const [dragOverTarget, setDragOverTarget] = useState(null);
 
   useEffect(() => {
     try {
@@ -1220,22 +1251,34 @@ export default function App() {
 
   const statusStyles = {
     green: {
-      wrapper: 'bg-emerald-50/90 border-emerald-200 text-emerald-950',
-      badge: 'bg-emerald-100 text-emerald-800 border-emerald-200',
+      wrapper: isDark
+        ? 'bg-emerald-950/45 border-emerald-800/70 text-emerald-100'
+        : 'bg-emerald-50/90 border-emerald-200 text-emerald-950',
+      badge: isDark
+        ? 'bg-emerald-900/70 text-emerald-200 border-emerald-700/70'
+        : 'bg-emerald-100 text-emerald-800 border-emerald-200',
       iconBg: 'bg-emerald-600 text-white',
       lineColor: '#10b981',
       Icon: CheckCircle2,
     },
     yellow: {
-      wrapper: 'bg-amber-50/90 border-amber-200 text-amber-950',
-      badge: 'bg-amber-100 text-amber-800 border-amber-200',
+      wrapper: isDark
+        ? 'bg-amber-950/45 border-amber-800/70 text-amber-100'
+        : 'bg-amber-50/90 border-amber-200 text-amber-950',
+      badge: isDark
+        ? 'bg-amber-900/70 text-amber-200 border-amber-700/70'
+        : 'bg-amber-100 text-amber-800 border-amber-200',
       iconBg: 'bg-amber-500 text-white',
       lineColor: '#f59e0b',
       Icon: AlertTriangle,
     },
     red: {
-      wrapper: 'bg-rose-50/90 border-rose-200 text-rose-950',
-      badge: 'bg-rose-100 text-rose-800 border-rose-200',
+      wrapper: isDark
+        ? 'bg-rose-950/45 border-rose-800/70 text-rose-100'
+        : 'bg-rose-50/90 border-rose-200 text-rose-950',
+      badge: isDark
+        ? 'bg-rose-900/70 text-rose-200 border-rose-700/70'
+        : 'bg-rose-100 text-rose-800 border-rose-200',
       iconBg: 'bg-rose-600 text-white',
       lineColor: '#e11d48',
       Icon: AlertOctagon,
@@ -1250,12 +1293,34 @@ export default function App() {
   );
   const pomoSecondsDisplay = String(pomoSecondsLeft % 60).padStart(2, '0');
 
+  // --- CLASSI CONDIVISE TEMA CHIARO / SCURO ---
+  const cardSurfaceClass = isDark
+    ? 'bg-slate-900 border-slate-800'
+    : 'bg-white border-slate-200';
+  const subPanelClass = isDark
+    ? 'bg-slate-800/55 border-slate-700/80'
+    : 'bg-slate-50 border-slate-200/80';
+  const inputSurfaceClass = isDark
+    ? 'bg-slate-800 border-slate-700 text-slate-100 placeholder-slate-500 focus:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500'
+    : 'bg-white border-slate-300 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500';
+  const inputMutedSurfaceClass = isDark
+    ? 'bg-slate-800 border-slate-700 text-slate-100 placeholder-slate-500 focus:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500'
+    : 'bg-slate-50 border-slate-300 text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500';
+
+  const chartGridStroke = isDark ? '#1e293b' : '#e2e8f0';
+  const chartTickFill = isDark ? '#94a3b8' : '#64748b';
+  const chartAxisStroke = isDark ? '#334155' : '#cbd5e1';
+
   // --- BARRA CONTROLLI ORDINAMENTO SINGOLA SEZIONE ---
   const renderOrderControls = (sectionId, col, index, totalInCol) => (
     <div
       className={`inline-flex items-center gap-0.5 rounded-lg p-0.5 border transition shrink-0 ${
         isReorderMode
-          ? 'bg-indigo-50 border-indigo-300 text-indigo-700 shadow-xs'
+          ? isDark
+            ? 'bg-indigo-950/70 border-indigo-700 text-indigo-300 shadow-xs'
+            : 'bg-indigo-50 border-indigo-300 text-indigo-700 shadow-xs'
+          : isDark
+          ? 'bg-slate-800 border-slate-700 text-slate-400 hover:text-slate-200'
           : 'bg-slate-50 border-slate-200/80 text-slate-400 hover:text-slate-700'
       }`}
     >
@@ -1263,7 +1328,9 @@ export default function App() {
         type="button"
         onClick={() => moveSectionUp(col, index)}
         disabled={index === 0}
-        className="p-1 rounded hover:bg-white disabled:opacity-30 disabled:pointer-events-none transition"
+        className={`p-1 rounded disabled:opacity-30 disabled:pointer-events-none transition ${
+          isDark ? 'hover:bg-slate-700' : 'hover:bg-white'
+        }`}
         title="Sposta sezione in alto"
       >
         <ArrowUp className="w-3.5 h-3.5" />
@@ -1272,7 +1339,9 @@ export default function App() {
         type="button"
         onClick={() => moveSectionDown(col, index)}
         disabled={index === totalInCol - 1}
-        className="p-1 rounded hover:bg-white disabled:opacity-30 disabled:pointer-events-none transition"
+        className={`p-1 rounded disabled:opacity-30 disabled:pointer-events-none transition ${
+          isDark ? 'hover:bg-slate-700' : 'hover:bg-white'
+        }`}
         title="Sposta sezione in basso"
       >
         <ArrowDown className="w-3.5 h-3.5" />
@@ -1280,7 +1349,9 @@ export default function App() {
       <button
         type="button"
         onClick={() => moveSectionAcross(col, index)}
-        className="p-1 rounded hover:bg-white transition"
+        className={`p-1 rounded transition ${
+          isDark ? 'hover:bg-slate-700' : 'hover:bg-white'
+        }`}
         title={
           col === 'left'
             ? 'Sposta nella colonna laterale'
@@ -1292,7 +1363,9 @@ export default function App() {
       <span
         onMouseDown={() => setDragReadyId(sectionId)}
         onMouseUp={() => setDragReadyId(null)}
-        className="p-1 rounded hover:bg-white cursor-grab active:cursor-grabbing transition"
+        className={`p-1 rounded cursor-grab active:cursor-grabbing transition ${
+          isDark ? 'hover:bg-slate-700' : 'hover:bg-white'
+        }`}
         title="Trascina per riordinare"
       >
         <GripVertical className="w-3.5 h-3.5" />
@@ -1320,32 +1393,64 @@ export default function App() {
 
     if (sectionId === 'burndown') {
       sectionContent = (
-        <section className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-6 shadow-sm">
+        <section
+          className={`rounded-2xl border p-4 sm:p-6 shadow-sm ${cardSurfaceClass}`}
+        >
           <div className="flex flex-wrap items-start justify-between gap-3 mb-5">
             <div>
-              <h3 className="text-base sm:text-lg font-bold text-slate-900">
+              <h3
+                className={`text-base sm:text-lg font-bold ${
+                  isDark ? 'text-slate-100' : 'text-slate-900'
+                }`}
+              >
                 Burn-down Chart — {activeExam.name || 'Esame'}
               </h3>
-              <p className="text-xs text-slate-500">
+              <p
+                className={`text-xs ${
+                  isDark ? 'text-slate-400' : 'text-slate-500'
+                }`}
+              >
                 Confronto tra discesa ideale, pagine reali rimanenti e
                 proiezione futura
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <div className="flex flex-wrap items-center gap-1.5 text-xs font-medium">
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100 text-slate-700">
-                  <span className="w-3 h-0.5 border-t-2 border-dashed border-slate-500" />
+                <span
+                  className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full ${
+                    isDark
+                      ? 'bg-slate-800 text-slate-300'
+                      : 'bg-slate-100 text-slate-700'
+                  }`}
+                >
+                  <span
+                    className={`w-3 h-0.5 border-t-2 border-dashed ${
+                      isDark ? 'border-slate-400' : 'border-slate-500'
+                    }`}
+                  />
                   Ideale
                 </span>
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-800">
+                <span
+                  className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full ${
+                    isDark
+                      ? 'bg-emerald-950/70 text-emerald-300 border border-emerald-800/60'
+                      : 'bg-emerald-50 text-emerald-800'
+                  }`}
+                >
                   <span
                     className="w-2.5 h-2.5 rounded-full"
                     style={{ backgroundColor: statusStyles.lineColor }}
                   />
                   Reale
                 </span>
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-700">
-                  <span className="w-3 h-0.5 border-t-2 border-dotted border-indigo-500" />
+                <span
+                  className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full ${
+                    isDark
+                      ? 'bg-indigo-950/70 text-indigo-300 border border-indigo-800/60'
+                      : 'bg-indigo-50 text-indigo-700'
+                  }`}
+                >
+                  <span className="w-3 h-0.5 border-t-2 border-dotted border-indigo-400" />
                   Proiezione
                 </span>
               </div>
@@ -1366,29 +1471,29 @@ export default function App() {
                 <CartesianGrid
                   strokeDasharray="3 3"
                   vertical={false}
-                  stroke="#e2e8f0"
+                  stroke={chartGridStroke}
                 />
                 <XAxis
                   dataKey="date"
-                  tick={{ fontSize: 11, fill: '#64748b' }}
+                  tick={{ fontSize: 11, fill: chartTickFill }}
                   tickLine={false}
-                  axisLine={{ stroke: '#cbd5e1' }}
+                  axisLine={{ stroke: chartAxisStroke }}
                   minTickGap={22}
                 />
                 <YAxis
                   domain={[0, analytics.totalPages]}
-                  tick={{ fontSize: 11, fill: '#64748b' }}
+                  tick={{ fontSize: 11, fill: chartTickFill }}
                   tickLine={false}
                   axisLine={false}
                 />
                 <Tooltip
                   contentStyle={{
-                    backgroundColor: '#0f172a',
-                    border: 'none',
+                    backgroundColor: isDark ? '#020617' : '#0f172a',
+                    border: isDark ? '1px solid #1e293b' : 'none',
                     borderRadius: '12px',
                     color: '#f8fafc',
                     fontSize: '12px',
-                    boxShadow: '0 10px 15px -3px rgba(0,0,0,0.2)',
+                    boxShadow: '0 10px 15px -3px rgba(0,0,0,0.35)',
                   }}
                   labelStyle={{
                     fontWeight: 700,
@@ -1412,7 +1517,7 @@ export default function App() {
                   label={{
                     value: 'Oggi',
                     position: 'top',
-                    fill: '#4f46e5',
+                    fill: isDark ? '#818cf8' : '#4f46e5',
                     fontSize: 11,
                     fontWeight: 700,
                   }}
@@ -1426,7 +1531,7 @@ export default function App() {
                     label={{
                       value: 'Ripasso',
                       position: 'top',
-                      fill: '#d97706',
+                      fill: isDark ? '#fbbf24' : '#d97706',
                       fontSize: 11,
                       fontWeight: 700,
                     }}
@@ -1436,7 +1541,7 @@ export default function App() {
                 <Line
                   type="monotone"
                   dataKey="ideale"
-                  stroke="#64748b"
+                  stroke={isDark ? '#94a3b8' : '#64748b'}
                   strokeWidth={2}
                   strokeDasharray="6 4"
                   dot={false}
@@ -1456,7 +1561,7 @@ export default function App() {
                 <Line
                   type="monotone"
                   dataKey="proiezione"
-                  stroke="#6366f1"
+                  stroke={isDark ? '#818cf8' : '#6366f1'}
                   strokeWidth={2.5}
                   strokeDasharray="2 5"
                   dot={false}
@@ -1469,17 +1574,37 @@ export default function App() {
       );
     } else if (sectionId === 'spaced_repetition') {
       sectionContent = (
-        <section className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-6 shadow-sm space-y-5">
-          <div className="flex flex-wrap items-start justify-between gap-3 pb-3 border-b border-slate-100">
+        <section
+          className={`rounded-2xl border p-4 sm:p-6 shadow-sm space-y-5 ${cardSurfaceClass}`}
+        >
+          <div
+            className={`flex flex-wrap items-start justify-between gap-3 pb-3 border-b ${
+              isDark ? 'border-slate-800' : 'border-slate-100'
+            }`}
+          >
             <div className="flex items-start gap-2.5">
-              <div className="p-2 rounded-xl bg-indigo-50 text-indigo-600 mt-0.5 shrink-0">
+              <div
+                className={`p-2 rounded-xl mt-0.5 shrink-0 ${
+                  isDark
+                    ? 'bg-indigo-950/80 text-indigo-400'
+                    : 'bg-indigo-50 text-indigo-600'
+                }`}
+              >
                 <Repeat className="w-4 h-4" />
               </div>
               <div>
-                <h3 className="text-base sm:text-lg font-bold text-slate-900">
+                <h3
+                  className={`text-base sm:text-lg font-bold ${
+                    isDark ? 'text-slate-100' : 'text-slate-900'
+                  }`}
+                >
                   Spaced Repetition &amp; Piano Ripassi
                 </h3>
-                <p className="text-xs text-slate-500">
+                <p
+                  className={`text-xs ${
+                    isDark ? 'text-slate-400' : 'text-slate-500'
+                  }`}
+                >
                   Intervalli adattivi automatici (1g → 3g → 7g → 14g → 30g+)
                 </p>
               </div>
@@ -1489,25 +1614,49 @@ export default function App() {
               <span
                 className={`px-2.5 py-1 rounded-xl text-xs font-bold border ${
                   srAnalytics.dueTotalCount > 0
-                    ? 'bg-amber-50 text-amber-800 border-amber-200'
+                    ? isDark
+                      ? 'bg-amber-950/60 text-amber-300 border-amber-800/70'
+                      : 'bg-amber-50 text-amber-800 border-amber-200'
+                    : isDark
+                    ? 'bg-emerald-950/60 text-emerald-300 border-emerald-800/70'
                     : 'bg-emerald-50 text-emerald-700 border-emerald-200'
                 }`}
               >
                 Oggi: {srAnalytics.dueTotalCount}
               </span>
-              <span className="px-2.5 py-1 rounded-xl text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200">
+              <span
+                className={`px-2.5 py-1 rounded-xl text-xs font-semibold border ${
+                  isDark
+                    ? 'bg-slate-800 text-slate-300 border-slate-700'
+                    : 'bg-slate-100 text-slate-700 border-slate-200'
+                }`}
+              >
                 7gg: {srAnalytics.next7DaysCount}
               </span>
               {orderControls}
             </div>
           </div>
 
-          <div className="bg-slate-50/70 rounded-xl border border-slate-200/80 p-3.5 sm:p-4">
+          <div
+            className={`rounded-xl border p-3.5 sm:p-4 ${
+              isDark
+                ? 'bg-slate-800/45 border-slate-800'
+                : 'bg-slate-50/70 border-slate-200/80'
+            }`}
+          >
             <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-600">
+              <span
+                className={`text-xs font-bold uppercase tracking-wider ${
+                  isDark ? 'text-slate-300' : 'text-slate-600'
+                }`}
+              >
                 Carico Ripassi Programmati (14 Giorni)
               </span>
-              <div className="flex items-center gap-3 text-[11px] font-medium text-slate-500">
+              <div
+                className={`flex items-center gap-3 text-[11px] font-medium ${
+                  isDark ? 'text-slate-400' : 'text-slate-500'
+                }`}
+              >
                 <span className="inline-flex items-center gap-1.5">
                   <span className="w-2.5 h-2.5 rounded-sm bg-amber-500" />
                   Oggi / Scaduti
@@ -1528,27 +1677,36 @@ export default function App() {
                   <CartesianGrid
                     strokeDasharray="3 3"
                     vertical={false}
-                    stroke="#e2e8f0"
+                    stroke={chartGridStroke}
                   />
                   <XAxis
                     dataKey="date"
-                    tick={{ fontSize: 11, fill: '#64748b' }}
+                    tick={{ fontSize: 11, fill: chartTickFill }}
                     tickLine={false}
-                    axisLine={{ stroke: '#cbd5e1' }}
+                    axisLine={{ stroke: chartAxisStroke }}
                   />
                   <YAxis
                     allowDecimals={false}
-                    tick={{ fontSize: 11, fill: '#64748b' }}
+                    tick={{ fontSize: 11, fill: chartTickFill }}
                     tickLine={false}
                     axisLine={false}
                   />
                   <Tooltip
-                    cursor={{ fill: '#e2e8f0', opacity: 0.35 }}
+                    cursor={{
+                      fill: isDark ? '#1e293b' : '#e2e8f0',
+                      opacity: 0.45,
+                    }}
                     content={({ active, payload }) => {
                       if (!active || !payload || !payload.length) return null;
                       const item = payload[0].payload;
                       return (
-                        <div className="bg-slate-900 text-slate-50 rounded-xl p-3 text-xs shadow-lg max-w-[260px]">
+                        <div
+                          className={`rounded-xl p-3 text-xs shadow-lg max-w-[260px] ${
+                            isDark
+                              ? 'bg-slate-950 text-slate-50 border border-slate-800'
+                              : 'bg-slate-900 text-slate-50'
+                          }`}
+                        >
                           <div className="font-bold text-slate-200 mb-1">
                             {item.date} — {item.ripassi}{' '}
                             {item.ripassi === 1 ? 'argomento' : 'argomenti'}
@@ -1579,7 +1737,7 @@ export default function App() {
                       label={{
                         value: 'Appello',
                         position: 'top',
-                        fill: '#e11d48',
+                        fill: isDark ? '#fb7185' : '#e11d48',
                         fontSize: 10,
                         fontWeight: 700,
                       }}
@@ -1605,12 +1763,16 @@ export default function App() {
 
           <form
             onSubmit={handleAddSrTopic}
-            className={`grid gap-3 items-end bg-slate-50 p-3.5 rounded-xl border border-slate-200/80 ${
+            className={`grid gap-3 items-end p-3.5 rounded-xl border ${subPanelClass} ${
               isNarrow ? 'grid-cols-1' : 'grid-cols-1 sm:grid-cols-12'
             }`}
           >
             <div className={isNarrow ? '' : 'sm:col-span-5'}>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
+              <label
+                className={`block text-xs font-semibold mb-1 ${
+                  isDark ? 'text-slate-300' : 'text-slate-700'
+                }`}
+              >
                 Argomento / Capitolo studiato
               </label>
               <input
@@ -1618,14 +1780,18 @@ export default function App() {
                 placeholder="Es. Ciclo di Krebs, Asse Tiroideo..."
                 value={srTitleInput}
                 onChange={(e) => setSrTitleInput(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl bg-white border border-slate-300 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className={`w-full px-3 py-2 rounded-xl border text-sm ${inputSurfaceClass}`}
                 required
               />
             </div>
 
             <div className={isNarrow ? 'grid grid-cols-2 gap-2.5' : 'contents'}>
               <div className={isNarrow ? '' : 'sm:col-span-2'}>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                <label
+                  className={`block text-xs font-semibold mb-1 ${
+                    isDark ? 'text-slate-300' : 'text-slate-700'
+                  }`}
+                >
                   Pagine (opz.)
                 </label>
                 <input
@@ -1633,19 +1799,23 @@ export default function App() {
                   placeholder="pp. 40-58"
                   value={srPagesInput}
                   onChange={(e) => setSrPagesInput(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl bg-white border border-slate-300 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className={`w-full px-3 py-2 rounded-xl border text-sm ${inputSurfaceClass}`}
                 />
               </div>
 
               <div className={isNarrow ? '' : 'sm:col-span-3'}>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                <label
+                  className={`block text-xs font-semibold mb-1 ${
+                    isDark ? 'text-slate-300' : 'text-slate-700'
+                  }`}
+                >
                   Data studio
                 </label>
                 <input
                   type="date"
                   value={srStudyDateInput}
                   onChange={(e) => setSrStudyDateInput(e.target.value)}
-                  className="w-full px-2.5 py-2 rounded-xl bg-white border border-slate-300 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className={`w-full px-2.5 py-2 rounded-xl border text-sm ${inputSurfaceClass}`}
                   required
                 />
               </div>
@@ -1654,7 +1824,11 @@ export default function App() {
             <div className={isNarrow ? '' : 'sm:col-span-2'}>
               <button
                 type="submit"
-                className="w-full inline-flex items-center justify-center gap-1 px-3 py-2 rounded-xl bg-slate-900 text-white text-sm font-semibold hover:bg-slate-800 transition shadow-sm"
+                className={`w-full inline-flex items-center justify-center gap-1 px-3 py-2 rounded-xl text-sm font-semibold transition shadow-sm ${
+                  isDark
+                    ? 'bg-indigo-600 text-white hover:bg-indigo-500'
+                    : 'bg-slate-900 text-white hover:bg-slate-800'
+                }`}
               >
                 <Plus className="w-4 h-4" />
                 Aggiungi
@@ -1664,13 +1838,23 @@ export default function App() {
 
           <div className="space-y-3">
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <div className="inline-flex flex-wrap rounded-xl bg-slate-100 p-1 border border-slate-200">
+              <div
+                className={`inline-flex flex-wrap rounded-xl p-1 border ${
+                  isDark
+                    ? 'bg-slate-800 border-slate-700'
+                    : 'bg-slate-100 border-slate-200'
+                }`}
+              >
                 <button
                   type="button"
                   onClick={() => setSrFilter('due')}
                   className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold transition ${
                     srFilter === 'due'
-                      ? 'bg-white text-slate-900 shadow-sm'
+                      ? isDark
+                        ? 'bg-slate-900 text-slate-100 shadow-sm'
+                        : 'bg-white text-slate-900 shadow-sm'
+                      : isDark
+                      ? 'text-slate-400 hover:text-slate-200'
                       : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
@@ -1681,7 +1865,11 @@ export default function App() {
                   onClick={() => setSrFilter('upcoming')}
                   className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold transition ${
                     srFilter === 'upcoming'
-                      ? 'bg-white text-slate-900 shadow-sm'
+                      ? isDark
+                        ? 'bg-slate-900 text-slate-100 shadow-sm'
+                        : 'bg-white text-slate-900 shadow-sm'
+                      : isDark
+                      ? 'text-slate-400 hover:text-slate-200'
                       : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
@@ -1693,7 +1881,11 @@ export default function App() {
                   onClick={() => setSrFilter('all')}
                   className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold transition ${
                     srFilter === 'all'
-                      ? 'bg-white text-slate-900 shadow-sm'
+                      ? isDark
+                        ? 'bg-slate-900 text-slate-100 shadow-sm'
+                        : 'bg-white text-slate-900 shadow-sm'
+                      : isDark
+                      ? 'text-slate-400 hover:text-slate-200'
                       : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
@@ -1702,7 +1894,11 @@ export default function App() {
               </div>
 
               {!isNarrow && (
-                <span className="text-[11px] text-slate-400">
+                <span
+                  className={`text-[11px] ${
+                    isDark ? 'text-slate-500' : 'text-slate-400'
+                  }`}
+                >
                   Valuta il ricordo dopo il ripasso per aggiornare la prossima
                   data
                 </span>
@@ -1710,7 +1906,13 @@ export default function App() {
             </div>
 
             {filteredSrTopics.length === 0 ? (
-              <div className="text-center py-7 px-4 rounded-xl border border-dashed border-slate-200 text-slate-400 text-xs">
+              <div
+                className={`text-center py-7 px-4 rounded-xl border border-dashed text-xs ${
+                  isDark
+                    ? 'border-slate-800 text-slate-500'
+                    : 'border-slate-200 text-slate-400'
+                }`}
+              >
                 {srFilter === 'due'
                   ? srAnalytics.totalTopics === 0
                     ? 'Nessun argomento inserito finora. Aggiungi qui sopra i capitoli che hai studiato per programmare i ripassi!'
@@ -1718,11 +1920,21 @@ export default function App() {
                   : 'Nessun argomento in questa categoria.'}
               </div>
             ) : (
-              <div className="divide-y divide-slate-100 border border-slate-200 rounded-xl overflow-hidden">
+              <div
+                className={`divide-y border rounded-xl overflow-hidden ${
+                  isDark
+                    ? 'divide-slate-800 border-slate-800'
+                    : 'divide-slate-100 border-slate-200'
+                }`}
+              >
                 {filteredSrTopics.map((topic) => (
                   <div
                     key={topic.id}
-                    className={`p-3.5 bg-white hover:bg-slate-50/70 transition flex justify-between gap-3 ${
+                    className={`p-3.5 transition flex justify-between gap-3 ${
+                      isDark
+                        ? 'bg-slate-900 hover:bg-slate-800/60'
+                        : 'bg-white hover:bg-slate-50/70'
+                    } ${
                       isNarrow
                         ? 'flex-col'
                         : 'flex-col sm:flex-row sm:items-center'
@@ -1731,15 +1943,33 @@ export default function App() {
                     <div className="space-y-1 min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
                         {topic.isOverdue ? (
-                          <span className="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase bg-rose-100 text-rose-700 border border-rose-200">
+                          <span
+                            className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase border ${
+                              isDark
+                                ? 'bg-rose-950/70 text-rose-300 border-rose-800/70'
+                                : 'bg-rose-100 text-rose-700 border-rose-200'
+                            }`}
+                          >
                             Scaduto ({Math.abs(topic.deltaDays)}g fa)
                           </span>
                         ) : topic.isDueToday ? (
-                          <span className="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase bg-amber-100 text-amber-800 border border-amber-200">
+                          <span
+                            className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase border ${
+                              isDark
+                                ? 'bg-amber-950/70 text-amber-300 border-amber-800/70'
+                                : 'bg-amber-100 text-amber-800 border-amber-200'
+                            }`}
+                          >
                             Ripassa Oggi
                           </span>
                         ) : (
-                          <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                          <span
+                            className={`px-2 py-0.5 rounded-md text-[10px] font-bold border ${
+                              isDark
+                                ? 'bg-indigo-950/70 text-indigo-300 border-indigo-800/70'
+                                : 'bg-indigo-50 text-indigo-700 border-indigo-200'
+                            }`}
+                          >
                             Tra {topic.deltaDays}{' '}
                             {topic.deltaDays === 1 ? 'giorno' : 'giorni'} (
                             {formatShortDate(topic.nextReviewDate)})
@@ -1747,23 +1977,43 @@ export default function App() {
                         )}
 
                         {topic.pagesRef && (
-                          <span className="text-[11px] font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md">
+                          <span
+                            className={`text-[11px] font-semibold px-2 py-0.5 rounded-md ${
+                              isDark
+                                ? 'text-slate-300 bg-slate-800'
+                                : 'text-slate-500 bg-slate-100'
+                            }`}
+                          >
                             {topic.pagesRef}
                           </span>
                         )}
 
                         {topic.isAfterExam && (
-                          <span className="text-[10px] font-semibold text-rose-600 bg-rose-50 px-1.5 py-0.5 rounded border border-rose-200">
+                          <span
+                            className={`text-[10px] font-semibold px-1.5 py-0.5 rounded border ${
+                              isDark
+                                ? 'text-rose-300 bg-rose-950/60 border-rose-800/70'
+                                : 'text-rose-600 bg-rose-50 border-rose-200'
+                            }`}
+                          >
                             Oltre appello
                           </span>
                         )}
                       </div>
 
-                      <div className="text-sm font-bold text-slate-900 truncate">
+                      <div
+                        className={`text-sm font-bold truncate ${
+                          isDark ? 'text-slate-100' : 'text-slate-900'
+                        }`}
+                      >
                         {topic.title}
                       </div>
 
-                      <div className="text-[11px] text-slate-400 flex flex-wrap items-center gap-2">
+                      <div
+                        className={`text-[11px] flex flex-wrap items-center gap-2 ${
+                          isDark ? 'text-slate-400' : 'text-slate-400'
+                        }`}
+                      >
                         <span>
                           Ripassi: <strong>{topic.repetitions}</strong>
                         </span>
@@ -1786,7 +2036,11 @@ export default function App() {
                       <button
                         type="button"
                         onClick={() => handleReviewSrTopic(topic.id, 'hard')}
-                        className="px-2.5 py-1.5 rounded-lg bg-rose-50 text-rose-700 border border-rose-200 text-xs font-bold hover:bg-rose-100 transition"
+                        className={`px-2.5 py-1.5 rounded-lg border text-xs font-bold transition ${
+                          isDark
+                            ? 'bg-rose-950/60 text-rose-300 border-rose-800/80 hover:bg-rose-900/70'
+                            : 'bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100'
+                        }`}
                         title="Ricordo faticoso: anticipa il prossimo ripasso"
                       >
                         Difficile
@@ -1794,7 +2048,11 @@ export default function App() {
                       <button
                         type="button"
                         onClick={() => handleReviewSrTopic(topic.id, 'good')}
-                        className="px-2.5 py-1.5 rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-200 text-xs font-bold hover:bg-indigo-100 transition"
+                        className={`px-2.5 py-1.5 rounded-lg border text-xs font-bold transition ${
+                          isDark
+                            ? 'bg-indigo-950/60 text-indigo-300 border-indigo-800/80 hover:bg-indigo-900/70'
+                            : 'bg-indigo-50 text-indigo-700 border-indigo-200 hover:bg-indigo-100'
+                        }`}
                         title="Buon ricordo: progredisci regolarmente"
                       >
                         Bene
@@ -1802,7 +2060,11 @@ export default function App() {
                       <button
                         type="button"
                         onClick={() => handleReviewSrTopic(topic.id, 'easy')}
-                        className="px-2.5 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold hover:bg-emerald-100 transition"
+                        className={`px-2.5 py-1.5 rounded-lg border text-xs font-bold transition ${
+                          isDark
+                            ? 'bg-emerald-950/60 text-emerald-300 border-emerald-800/80 hover:bg-emerald-900/70'
+                            : 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
+                        }`}
                         title="Ricordo immediato: allunga l'intervallo"
                       >
                         Facile
@@ -1810,7 +2072,11 @@ export default function App() {
                       <button
                         type="button"
                         onClick={() => handleDeleteSrTopic(topic.id)}
-                        className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition ml-1"
+                        className={`p-1.5 rounded-lg transition ml-1 ${
+                          isDark
+                            ? 'text-slate-500 hover:text-rose-400 hover:bg-rose-950/60'
+                            : 'text-slate-400 hover:text-rose-600 hover:bg-rose-50'
+                        }`}
                         title="Rimuovi argomento"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
@@ -1825,26 +2091,46 @@ export default function App() {
       );
     } else if (sectionId === 'progress_log') {
       sectionContent = (
-        <section className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-6 shadow-sm space-y-5">
+        <section
+          className={`rounded-2xl border p-4 sm:p-6 shadow-sm space-y-5 ${cardSurfaceClass}`}
+        >
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <h3 className="text-base font-bold text-slate-900">
+              <h3
+                className={`text-base font-bold ${
+                  isDark ? 'text-slate-100' : 'text-slate-900'
+                }`}
+              >
                 Registro Avanzamento Reale
               </h3>
-              <p className="text-xs text-slate-500">
+              <p
+                className={`text-xs ${
+                  isDark ? 'text-slate-400' : 'text-slate-500'
+                }`}
+              >
                 Inserisci le pagine studiate oggi o aggiorna il totale
                 completato
               </p>
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
-              <div className="inline-flex rounded-xl bg-slate-100 p-1 border border-slate-200">
+              <div
+                className={`inline-flex rounded-xl p-1 border ${
+                  isDark
+                    ? 'bg-slate-800 border-slate-700'
+                    : 'bg-slate-100 border-slate-200'
+                }`}
+              >
                 <button
                   type="button"
                   onClick={() => setLogMode('daily')}
                   className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold transition ${
                     logMode === 'daily'
-                      ? 'bg-white text-slate-900 shadow-sm'
+                      ? isDark
+                        ? 'bg-slate-900 text-slate-100 shadow-sm'
+                        : 'bg-white text-slate-900 shadow-sm'
+                      : isDark
+                      ? 'text-slate-400 hover:text-slate-200'
                       : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
@@ -1855,7 +2141,11 @@ export default function App() {
                   onClick={() => setLogMode('cumulative')}
                   className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold transition ${
                     logMode === 'cumulative'
-                      ? 'bg-white text-slate-900 shadow-sm'
+                      ? isDark
+                        ? 'bg-slate-900 text-slate-100 shadow-sm'
+                        : 'bg-white text-slate-900 shadow-sm'
+                      : isDark
+                      ? 'text-slate-400 hover:text-slate-200'
                       : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
@@ -1868,25 +2158,33 @@ export default function App() {
 
           <form
             onSubmit={handleAddLog}
-            className={`grid gap-3 items-end bg-slate-50 p-3.5 rounded-xl border border-slate-200/80 ${
+            className={`grid gap-3 items-end p-3.5 rounded-xl border ${subPanelClass} ${
               isNarrow ? 'grid-cols-1' : 'grid-cols-1 sm:grid-cols-12'
             }`}
           >
             <div className={isNarrow ? '' : 'sm:col-span-4'}>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
+              <label
+                className={`block text-xs font-semibold mb-1 ${
+                  isDark ? 'text-slate-300' : 'text-slate-700'
+                }`}
+              >
                 Data studio
               </label>
               <input
                 type="date"
                 value={logDate}
                 onChange={(e) => setLogDate(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl bg-white border border-slate-300 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className={`w-full px-3 py-2 rounded-xl border text-sm ${inputSurfaceClass}`}
                 required
               />
             </div>
 
             <div className={isNarrow ? '' : 'sm:col-span-5'}>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
+              <label
+                className={`block text-xs font-semibold mb-1 ${
+                  isDark ? 'text-slate-300' : 'text-slate-700'
+                }`}
+              >
                 {logMode === 'daily'
                   ? 'Pagine studiate nella giornata'
                   : `Totale pagine completate (su ${analytics.totalPages})`}
@@ -1902,7 +2200,7 @@ export default function App() {
                 }
                 value={logPagesInput}
                 onChange={(e) => setLogPagesInput(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl bg-white border border-slate-300 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className={`w-full px-3 py-2 rounded-xl border text-sm ${inputSurfaceClass}`}
                 required
               />
             </div>
@@ -1910,7 +2208,7 @@ export default function App() {
             <div className={isNarrow ? '' : 'sm:col-span-3'}>
               <button
                 type="submit"
-                className="w-full inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 transition shadow-sm"
+                className="w-full inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-500 transition shadow-sm"
               >
                 <Plus className="w-4 h-4" />
                 Registra
@@ -1923,7 +2221,11 @@ export default function App() {
                   isNarrow ? '' : 'sm:col-span-12'
                 }`}
               >
-                <span className="text-[11px] font-medium text-slate-500">
+                <span
+                  className={`text-[11px] font-medium ${
+                    isDark ? 'text-slate-400' : 'text-slate-500'
+                  }`}
+                >
                   Aggiunta rapida:
                 </span>
                 {[5, 10, 20, 30].map((preset) => (
@@ -1935,7 +2237,11 @@ export default function App() {
                         String((Number(prev) || 0) + preset)
                       )
                     }
-                    className="px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-xs font-semibold text-slate-700 hover:border-indigo-300 hover:text-indigo-700 transition"
+                    className={`px-2.5 py-1 rounded-lg border text-xs font-semibold transition ${
+                      isDark
+                        ? 'bg-slate-800 border-slate-700 text-slate-300 hover:border-indigo-500 hover:text-indigo-300'
+                        : 'bg-white border-slate-200 text-slate-700 hover:border-indigo-300 hover:text-indigo-700'
+                    }`}
                   >
                     +{preset} pag
                   </button>
@@ -1946,14 +2252,22 @@ export default function App() {
 
           <div className="space-y-2.5">
             <div className="flex items-center justify-between">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500">
+              <h4
+                className={`text-xs font-bold uppercase tracking-wider ${
+                  isDark ? 'text-slate-400' : 'text-slate-500'
+                }`}
+              >
                 Storico Giornate Registrate ({historyRows.length})
               </h4>
               {undoStack.length > 0 && (
                 <button
                   type="button"
                   onClick={handleUndo}
-                  className="inline-flex items-center gap-1 text-xs font-semibold text-indigo-600 hover:text-indigo-800"
+                  className={`inline-flex items-center gap-1 text-xs font-semibold ${
+                    isDark
+                      ? 'text-indigo-400 hover:text-indigo-300'
+                      : 'text-indigo-600 hover:text-indigo-800'
+                  }`}
                 >
                   <Undo2 className="w-3.5 h-3.5" />
                   Annulla
@@ -1962,34 +2276,72 @@ export default function App() {
             </div>
 
             {historyRows.length === 0 ? (
-              <div className="text-center py-8 px-4 rounded-xl border border-dashed border-slate-200 text-slate-400 text-xs">
+              <div
+                className={`text-center py-8 px-4 rounded-xl border border-dashed text-xs ${
+                  isDark
+                    ? 'border-slate-800 text-slate-500'
+                    : 'border-slate-200 text-slate-400'
+                }`}
+              >
                 Nessuna sessione registrata finora. Inserisci le prime pagine
                 studiate qui sopra per attivare la linea reale e la proiezione.
               </div>
             ) : (
-              <div className="overflow-x-auto border border-slate-200 rounded-xl">
+              <div
+                className={`overflow-x-auto border rounded-xl ${
+                  isDark ? 'border-slate-800' : 'border-slate-200'
+                }`}
+              >
                 <table className="w-full text-left border-collapse text-xs sm:text-sm">
                   <thead>
-                    <tr className="bg-slate-50 border-b border-slate-200 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                    <tr
+                      className={`border-b text-[11px] font-bold uppercase tracking-wider ${
+                        isDark
+                          ? 'bg-slate-800/70 border-slate-800 text-slate-400'
+                          : 'bg-slate-50 border-slate-200 text-slate-500'
+                      }`}
+                    >
                       <th className="py-2.5 px-3">Data</th>
                       <th className="py-2.5 px-3">Pagine</th>
                       <th className="py-2.5 px-3">Cumulato</th>
                       <th className="py-2.5 px-3 text-right">Azioni</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100">
+                  <tbody
+                    className={`divide-y ${
+                      isDark ? 'divide-slate-800' : 'divide-slate-100'
+                    }`}
+                  >
                     {historyRows.map((row) => (
                       <tr
                         key={row.date}
-                        className="hover:bg-slate-50/80 transition"
+                        className={`transition ${
+                          isDark
+                            ? 'hover:bg-slate-800/50'
+                            : 'hover:bg-slate-50/80'
+                        }`}
                       >
-                        <td className="py-2.5 px-3 font-medium text-slate-800 whitespace-nowrap">
+                        <td
+                          className={`py-2.5 px-3 font-medium whitespace-nowrap ${
+                            isDark ? 'text-slate-200' : 'text-slate-800'
+                          }`}
+                        >
                           <span>{formatShortDate(row.date)}</span>
-                          <span className="ml-1.5 text-xs text-slate-400">
+                          <span
+                            className={`ml-1.5 text-xs ${
+                              isDark ? 'text-slate-500' : 'text-slate-400'
+                            }`}
+                          >
                             ({row.weekday})
                           </span>
                           {row.isRestDay && (
-                            <span className="ml-2 text-[10px] font-semibold px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200">
+                            <span
+                              className={`ml-2 text-[10px] font-semibold px-1.5 py-0.5 rounded border ${
+                                isDark
+                                  ? 'bg-amber-950/60 text-amber-300 border-amber-800/70'
+                                  : 'bg-amber-50 text-amber-700 border-amber-200'
+                              }`}
+                            >
                               Riposo
                             </span>
                           )}
@@ -2011,17 +2363,25 @@ export default function App() {
                                   setEditingLogDate(null);
                                 }
                               }}
-                              className="w-20 px-2 py-1 rounded-lg border border-indigo-300 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                              className={`w-20 px-2 py-1 rounded-lg border text-sm font-semibold ${inputSurfaceClass}`}
                               autoFocus
                             />
                           ) : (
-                            <span className="font-bold text-indigo-700">
+                            <span
+                              className={`font-bold ${
+                                isDark ? 'text-indigo-400' : 'text-indigo-700'
+                              }`}
+                            >
                               +{row.pages} pag
                             </span>
                           )}
                         </td>
 
-                        <td className="py-2.5 px-3 text-slate-600 whitespace-nowrap">
+                        <td
+                          className={`py-2.5 px-3 whitespace-nowrap ${
+                            isDark ? 'text-slate-400' : 'text-slate-600'
+                          }`}
+                        >
                           {row.cumulative} / {analytics.totalPages}
                         </td>
 
@@ -2031,7 +2391,7 @@ export default function App() {
                               <button
                                 type="button"
                                 onClick={() => handleSaveEditedLog(row.date)}
-                                className="p-1.5 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700"
+                                className="p-1.5 rounded-lg bg-emerald-600 text-white hover:bg-emerald-500"
                                 title="Salva"
                               >
                                 <Check className="w-3.5 h-3.5" />
@@ -2039,7 +2399,11 @@ export default function App() {
                               <button
                                 type="button"
                                 onClick={() => setEditingLogDate(null)}
-                                className="p-1.5 rounded-lg bg-slate-200 text-slate-700 hover:bg-slate-300"
+                                className={`p-1.5 rounded-lg ${
+                                  isDark
+                                    ? 'bg-slate-700 text-slate-200 hover:bg-slate-600'
+                                    : 'bg-slate-200 text-slate-700 hover:bg-slate-300'
+                                }`}
                                 title="Annulla"
                               >
                                 <X className="w-3.5 h-3.5" />
@@ -2053,7 +2417,11 @@ export default function App() {
                                   setEditingLogDate(row.date);
                                   setEditingLogPages(String(row.pages));
                                 }}
-                                className="p-1.5 rounded-lg text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 transition"
+                                className={`p-1.5 rounded-lg transition ${
+                                  isDark
+                                    ? 'text-slate-400 hover:text-indigo-400 hover:bg-indigo-950/60'
+                                    : 'text-slate-500 hover:text-indigo-600 hover:bg-indigo-50'
+                                }`}
                                 title="Modifica pagine"
                               >
                                 <Edit3 className="w-3.5 h-3.5" />
@@ -2061,7 +2429,11 @@ export default function App() {
                               <button
                                 type="button"
                                 onClick={() => handleDeleteLog(row.date)}
-                                className="p-1.5 rounded-lg text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition"
+                                className={`p-1.5 rounded-lg transition ${
+                                  isDark
+                                    ? 'text-slate-400 hover:text-rose-400 hover:bg-rose-950/60'
+                                    : 'text-slate-500 hover:text-rose-600 hover:bg-rose-50'
+                                }`}
                                 title="Elimina giornata"
                               >
                                 <Trash2 className="w-3.5 h-3.5" />
@@ -2080,13 +2452,23 @@ export default function App() {
       );
     } else if (sectionId === 'pomodoro') {
       sectionContent = (
-        <section className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-6 shadow-sm space-y-4">
-          <div className="flex items-center justify-between gap-2 pb-3 border-b border-slate-100">
+        <section
+          className={`rounded-2xl border p-4 sm:p-6 shadow-sm space-y-4 ${cardSurfaceClass}`}
+        >
+          <div
+            className={`flex items-center justify-between gap-2 pb-3 border-b ${
+              isDark ? 'border-slate-800' : 'border-slate-100'
+            }`}
+          >
             <div className="flex items-center gap-2.5 min-w-0">
               <div
                 className={`p-2 rounded-xl shrink-0 ${
                   pomoPhase === 'study'
-                    ? 'bg-indigo-50 text-indigo-600'
+                    ? isDark
+                      ? 'bg-indigo-950/80 text-indigo-400'
+                      : 'bg-indigo-50 text-indigo-600'
+                    : isDark
+                    ? 'bg-emerald-950/80 text-emerald-400'
                     : 'bg-emerald-50 text-emerald-600'
                 }`}
               >
@@ -2097,10 +2479,18 @@ export default function App() {
                 )}
               </div>
               <div className="min-w-0">
-                <h3 className="text-base font-bold text-slate-900">
+                <h3
+                  className={`text-base font-bold ${
+                    isDark ? 'text-slate-100' : 'text-slate-900'
+                  }`}
+                >
                   Timer Pomodoro
                 </h3>
-                <p className="text-xs text-slate-500 truncate">
+                <p
+                  className={`text-xs truncate ${
+                    isDark ? 'text-slate-400' : 'text-slate-500'
+                  }`}
+                >
                   {activeExam.name || 'Esame'}
                 </p>
               </div>
@@ -2110,7 +2500,11 @@ export default function App() {
               <button
                 type="button"
                 onClick={() => setPomoSound((s) => !s)}
-                className="p-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-600 hover:bg-slate-100 transition"
+                className={`p-2 rounded-xl border transition ${
+                  isDark
+                    ? 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700'
+                    : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
+                }`}
                 title={
                   pomoSound
                     ? 'Suono notifica attivo (clicca per silenziare)'
@@ -2118,9 +2512,17 @@ export default function App() {
                 }
               >
                 {pomoSound ? (
-                  <Volume2 className="w-4 h-4 text-indigo-600" />
+                  <Volume2
+                    className={`w-4 h-4 ${
+                      isDark ? 'text-indigo-400' : 'text-indigo-600'
+                    }`}
+                  />
                 ) : (
-                  <VolumeX className="w-4 h-4 text-slate-400" />
+                  <VolumeX
+                    className={`w-4 h-4 ${
+                      isDark ? 'text-slate-500' : 'text-slate-400'
+                    }`}
+                  />
                 )}
               </button>
               {orderControls}
@@ -2133,13 +2535,23 @@ export default function App() {
             }`}
           >
             <div className={!isNarrow ? 'md:col-span-7 space-y-3' : 'space-y-4'}>
-              <div className="grid grid-cols-2 gap-1.5 bg-slate-100 p-1 rounded-xl border border-slate-200">
+              <div
+                className={`grid grid-cols-2 gap-1.5 p-1 rounded-xl border ${
+                  isDark
+                    ? 'bg-slate-800 border-slate-700'
+                    : 'bg-slate-100 border-slate-200'
+                }`}
+              >
                 <button
                   type="button"
                   onClick={() => handlePomoSwitchPhase('study')}
                   className={`py-1.5 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 ${
                     pomoPhase === 'study'
-                      ? 'bg-white text-indigo-700 shadow-sm'
+                      ? isDark
+                        ? 'bg-slate-900 text-indigo-400 shadow-sm'
+                        : 'bg-white text-indigo-700 shadow-sm'
+                      : isDark
+                      ? 'text-slate-400 hover:text-slate-200'
                       : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
@@ -2151,7 +2563,11 @@ export default function App() {
                   onClick={() => handlePomoSwitchPhase('break')}
                   className={`py-1.5 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 ${
                     pomoPhase === 'break'
-                      ? 'bg-white text-emerald-700 shadow-sm'
+                      ? isDark
+                        ? 'bg-slate-900 text-emerald-400 shadow-sm'
+                        : 'bg-white text-emerald-700 shadow-sm'
+                      : isDark
+                      ? 'text-slate-400 hover:text-slate-200'
                       : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
@@ -2163,14 +2579,22 @@ export default function App() {
               <div
                 className={`rounded-2xl p-5 text-center border transition-colors ${
                   pomoPhase === 'study'
-                    ? 'bg-indigo-50/60 border-indigo-200/80'
+                    ? isDark
+                      ? 'bg-indigo-950/35 border-indigo-800/60'
+                      : 'bg-indigo-50/60 border-indigo-200/80'
+                    : isDark
+                    ? 'bg-emerald-950/35 border-emerald-800/60'
                     : 'bg-emerald-50/60 border-emerald-200/80'
                 }`}
               >
                 <span
                   className={`inline-block text-[10px] font-bold uppercase tracking-widest px-2.5 py-0.5 rounded-full mb-2 ${
                     pomoPhase === 'study'
-                      ? 'bg-indigo-100 text-indigo-700'
+                      ? isDark
+                        ? 'bg-indigo-900/70 text-indigo-300'
+                        : 'bg-indigo-100 text-indigo-700'
+                      : isDark
+                      ? 'bg-emerald-900/70 text-emerald-300'
                       : 'bg-emerald-100 text-emerald-700'
                   }`}
                 >
@@ -2179,14 +2603,24 @@ export default function App() {
                     : 'Pausa di Recupero'}
                 </span>
 
-                <div className="text-5xl font-extrabold tracking-tight text-slate-900 tabular-nums my-1">
+                <div
+                  className={`text-5xl font-extrabold tracking-tight tabular-nums my-1 ${
+                    isDark ? 'text-slate-50' : 'text-slate-900'
+                  }`}
+                >
                   {pomoMinutesDisplay}:{pomoSecondsDisplay}
                 </div>
 
-                <div className="w-full h-1.5 bg-white/80 rounded-full overflow-hidden mt-3 mb-4 border border-slate-200/60">
+                <div
+                  className={`w-full h-1.5 rounded-full overflow-hidden mt-3 mb-4 border ${
+                    isDark
+                      ? 'bg-slate-800 border-slate-700'
+                      : 'bg-white/80 border-slate-200/60'
+                  }`}
+                >
                   <div
                     className={`h-full transition-all duration-300 ${
-                      pomoPhase === 'study' ? 'bg-indigo-600' : 'bg-emerald-500'
+                      pomoPhase === 'study' ? 'bg-indigo-500' : 'bg-emerald-500'
                     }`}
                     style={{ width: `${pomoStats.progressPct}%` }}
                   />
@@ -2200,8 +2634,8 @@ export default function App() {
                       pomoRunning
                         ? 'bg-amber-500 hover:bg-amber-600'
                         : pomoPhase === 'study'
-                        ? 'bg-indigo-600 hover:bg-indigo-700'
-                        : 'bg-emerald-600 hover:bg-emerald-700'
+                        ? 'bg-indigo-600 hover:bg-indigo-500'
+                        : 'bg-emerald-600 hover:bg-emerald-500'
                     }`}
                   >
                     {pomoRunning ? (
@@ -2220,7 +2654,11 @@ export default function App() {
                   <button
                     type="button"
                     onClick={handlePomoReset}
-                    className="p-2.5 rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 transition"
+                    className={`p-2.5 rounded-xl border transition ${
+                      isDark
+                        ? 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700'
+                        : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
+                    }`}
                     title="Azzera timer corrente"
                   >
                     <RotateCcw className="w-4 h-4" />
@@ -2233,7 +2671,11 @@ export default function App() {
                         pomoPhase === 'study' ? 'break' : 'study'
                       )
                     }
-                    className="p-2.5 rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 transition"
+                    className={`p-2.5 rounded-xl border transition ${
+                      isDark
+                        ? 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700'
+                        : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
+                    }`}
                     title="Passa alla fase successiva"
                   >
                     <SkipForward className="w-4 h-4" />
@@ -2245,7 +2687,11 @@ export default function App() {
             <div className={!isNarrow ? 'md:col-span-5 space-y-3' : 'space-y-3'}>
               <div className="space-y-3 pt-1">
                 <div className="flex items-center justify-between gap-1.5">
-                  <span className="text-[11px] font-semibold text-slate-500">
+                  <span
+                    className={`text-[11px] font-semibold ${
+                      isDark ? 'text-slate-400' : 'text-slate-500'
+                    }`}
+                  >
                     Preset:
                   </span>
                   <div className="flex items-center gap-1.5">
@@ -2260,7 +2706,11 @@ export default function App() {
                         onClick={() => handlePomoPreset(pr.s, pr.b)}
                         className={`px-2 py-1 rounded-lg text-[11px] font-bold border transition ${
                           pomoStudyMin === pr.s && pomoBreakMin === pr.b
-                            ? 'bg-slate-900 text-white border-slate-900'
+                            ? isDark
+                              ? 'bg-indigo-600 text-white border-indigo-500'
+                              : 'bg-slate-900 text-white border-slate-900'
+                            : isDark
+                            ? 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'
                             : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
                         }`}
                       >
@@ -2272,7 +2722,11 @@ export default function App() {
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                    <label
+                      className={`block text-[11px] font-bold mb-1 ${
+                        isDark ? 'text-slate-300' : 'text-slate-700'
+                      }`}
+                    >
                       Studio (min)
                     </label>
                     <input
@@ -2290,12 +2744,16 @@ export default function App() {
                           setPomoSecondsLeft(val * 60);
                         }
                       }}
-                      className="w-full px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-300 text-sm font-semibold text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      className={`w-full px-3 py-1.5 rounded-xl border text-sm font-semibold ${inputMutedSurfaceClass}`}
                     />
                   </div>
 
                   <div>
-                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                    <label
+                      className={`block text-[11px] font-bold mb-1 ${
+                        isDark ? 'text-slate-300' : 'text-slate-700'
+                      }`}
+                    >
                       Pausa (min)
                     </label>
                     <input
@@ -2313,37 +2771,65 @@ export default function App() {
                           setPomoSecondsLeft(val * 60);
                         }
                       }}
-                      className="w-full px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-300 text-sm font-semibold text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      className={`w-full px-3 py-1.5 rounded-xl border text-sm font-semibold ${inputMutedSurfaceClass}`}
                     />
                   </div>
                 </div>
               </div>
 
-              <div className="pt-3 border-t border-slate-100 space-y-2.5">
+              <div
+                className={`pt-3 border-t space-y-2.5 ${
+                  isDark ? 'border-slate-800' : 'border-slate-100'
+                }`}
+              >
                 <div className="grid grid-cols-2 gap-2.5">
-                  <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/80">
-                    <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                  <div className={`p-2.5 rounded-xl border ${subPanelClass}`}>
+                    <div
+                      className={`text-[10px] font-bold uppercase tracking-wider ${
+                        isDark ? 'text-slate-400' : 'text-slate-500'
+                      }`}
+                    >
                       Sessioni Oggi
                     </div>
                     <div className="mt-0.5 flex items-baseline gap-1.5">
-                      <span className="text-lg font-extrabold text-indigo-700">
+                      <span
+                        className={`text-lg font-extrabold ${
+                          isDark ? 'text-indigo-400' : 'text-indigo-700'
+                        }`}
+                      >
                         {pomoStats.todayCount}
                       </span>
-                      <span className="text-xs font-medium text-slate-500">
+                      <span
+                        className={`text-xs font-medium ${
+                          isDark ? 'text-slate-400' : 'text-slate-500'
+                        }`}
+                      >
                         ({formatMinutesHuman(pomoStats.todayMinutes)})
                       </span>
                     </div>
                   </div>
 
-                  <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/80">
-                    <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                  <div className={`p-2.5 rounded-xl border ${subPanelClass}`}>
+                    <div
+                      className={`text-[10px] font-bold uppercase tracking-wider ${
+                        isDark ? 'text-slate-400' : 'text-slate-500'
+                      }`}
+                    >
                       Totale Esame
                     </div>
                     <div className="mt-0.5 flex items-baseline gap-1.5">
-                      <span className="text-lg font-extrabold text-slate-900">
+                      <span
+                        className={`text-lg font-extrabold ${
+                          isDark ? 'text-slate-100' : 'text-slate-900'
+                        }`}
+                      >
                         {pomoStats.totalCount}
                       </span>
-                      <span className="text-xs font-medium text-slate-500">
+                      <span
+                        className={`text-xs font-medium ${
+                          isDark ? 'text-slate-400' : 'text-slate-500'
+                        }`}
+                      >
                         ({formatMinutesHuman(pomoStats.totalMinutes)})
                       </span>
                     </div>
@@ -2354,7 +2840,11 @@ export default function App() {
                   <button
                     type="button"
                     onClick={() => setShowPomoHistory((h) => !h)}
-                    className="font-semibold text-indigo-600 hover:text-indigo-800"
+                    className={`font-semibold ${
+                      isDark
+                        ? 'text-indigo-400 hover:text-indigo-300'
+                        : 'text-indigo-600 hover:text-indigo-800'
+                    }`}
                   >
                     {showPomoHistory
                       ? 'Nascondi registro'
@@ -2364,7 +2854,11 @@ export default function App() {
                   <button
                     type="button"
                     onClick={handleAddManualPomoSession}
-                    className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-indigo-50 text-indigo-700 font-semibold hover:bg-indigo-100 transition"
+                    className={`inline-flex items-center gap-1 px-2 py-1 rounded-lg font-semibold transition ${
+                      isDark
+                        ? 'bg-indigo-950/70 text-indigo-300 hover:bg-indigo-900/70'
+                        : 'bg-indigo-50 text-indigo-700 hover:bg-indigo-100'
+                    }`}
                     title="Registra manualmente una sessione completata"
                   >
                     <Plus className="w-3 h-3" />
@@ -2373,35 +2867,67 @@ export default function App() {
                 </div>
 
                 {showPomoHistory && (
-                  <div className="max-h-40 overflow-y-auto border border-slate-200 rounded-xl divide-y divide-slate-100 text-xs">
+                  <div
+                    className={`max-h-40 overflow-y-auto border rounded-xl divide-y text-xs ${
+                      isDark
+                        ? 'border-slate-800 divide-slate-800'
+                        : 'border-slate-200 divide-slate-100'
+                    }`}
+                  >
                     {pomoStats.sessions.length === 0 ? (
-                      <div className="p-3 text-center text-slate-400">
+                      <div
+                        className={`p-3 text-center ${
+                          isDark ? 'text-slate-500' : 'text-slate-400'
+                        }`}
+                      >
                         Nessuna sessione Pomodoro registrata per questo esame.
                       </div>
                     ) : (
                       pomoStats.sessions.map((sess) => (
                         <div
                           key={sess.id}
-                          className="flex items-center justify-between px-3 py-2 hover:bg-slate-50"
+                          className={`flex items-center justify-between px-3 py-2 ${
+                            isDark
+                              ? 'hover:bg-slate-800/60'
+                              : 'hover:bg-slate-50'
+                          }`}
                         >
                           <div>
-                            <span className="font-semibold text-slate-800">
+                            <span
+                              className={`font-semibold ${
+                                isDark ? 'text-slate-200' : 'text-slate-800'
+                              }`}
+                            >
                               {formatShortDate(sess.date)}
                             </span>
                             {sess.time && (
-                              <span className="text-slate-400 ml-1.5">
+                              <span
+                                className={`ml-1.5 ${
+                                  isDark ? 'text-slate-500' : 'text-slate-400'
+                                }`}
+                              >
                                 alle {sess.time}
                               </span>
                             )}
                           </div>
                           <div className="flex items-center gap-2">
-                            <span className="px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 font-bold">
+                            <span
+                              className={`px-2 py-0.5 rounded-md font-bold ${
+                                isDark
+                                  ? 'bg-indigo-950/70 text-indigo-300'
+                                  : 'bg-indigo-50 text-indigo-700'
+                              }`}
+                            >
                               {sess.durationMin} min
                             </span>
                             <button
                               type="button"
                               onClick={() => handleDeletePomoSession(sess.id)}
-                              className="text-slate-400 hover:text-rose-600 transition"
+                              className={`transition ${
+                                isDark
+                                  ? 'text-slate-500 hover:text-rose-400'
+                                  : 'text-slate-400 hover:text-rose-600'
+                              }`}
                               title="Elimina sessione"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
@@ -2419,17 +2945,37 @@ export default function App() {
       );
     } else if (sectionId === 'parameters') {
       sectionContent = (
-        <aside className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-6 shadow-sm space-y-5">
-          <div className="flex items-start justify-between gap-2 pb-3 border-b border-slate-100">
+        <aside
+          className={`rounded-2xl border p-4 sm:p-6 shadow-sm space-y-5 ${cardSurfaceClass}`}
+        >
+          <div
+            className={`flex items-start justify-between gap-2 pb-3 border-b ${
+              isDark ? 'border-slate-800' : 'border-slate-100'
+            }`}
+          >
             <div className="flex items-start gap-2.5">
-              <div className="p-2 rounded-xl bg-indigo-50 text-indigo-600 mt-0.5 shrink-0">
+              <div
+                className={`p-2 rounded-xl mt-0.5 shrink-0 ${
+                  isDark
+                    ? 'bg-indigo-950/80 text-indigo-400'
+                    : 'bg-indigo-50 text-indigo-600'
+                }`}
+              >
                 <SlidersHorizontal className="w-4 h-4" />
               </div>
               <div>
-                <h3 className="text-base font-bold text-slate-900">
+                <h3
+                  className={`text-base font-bold ${
+                    isDark ? 'text-slate-100' : 'text-slate-900'
+                  }`}
+                >
                   Parametri Tabella di Marcia
                 </h3>
-                <p className="text-xs text-slate-500">
+                <p
+                  className={`text-xs ${
+                    isDark ? 'text-slate-400' : 'text-slate-500'
+                  }`}
+                >
                   Modifica in qualsiasi momento con ricalcolo istantaneo
                 </p>
               </div>
@@ -2444,7 +2990,11 @@ export default function App() {
           >
             <div className="space-y-4">
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                <label
+                  className={`block text-xs font-bold mb-1.5 ${
+                    isDark ? 'text-slate-300' : 'text-slate-700'
+                  }`}
+                >
                   Nome dell&apos;esame / materia
                 </label>
                 <input
@@ -2458,13 +3008,17 @@ export default function App() {
                       updateActiveExam({ name: 'Esame senza nome' });
                     }
                   }}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-sm font-semibold text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
+                  className={`w-full px-3.5 py-2.5 rounded-xl border text-sm font-semibold transition ${inputMutedSurfaceClass}`}
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                  <label
+                    className={`block text-xs font-bold mb-1.5 ${
+                      isDark ? 'text-slate-300' : 'text-slate-700'
+                    }`}
+                  >
                     Inizio studio
                   </label>
                   <input
@@ -2482,12 +3036,16 @@ export default function App() {
                             : ex.examDate,
                       }));
                     }}
-                    className="w-full px-2.5 py-2 rounded-xl bg-slate-50 border border-slate-300 text-xs sm:text-sm font-medium text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className={`w-full px-2.5 py-2 rounded-xl border text-xs sm:text-sm font-medium ${inputMutedSurfaceClass}`}
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                  <label
+                    className={`block text-xs font-bold mb-1.5 ${
+                      isDark ? 'text-slate-300' : 'text-slate-700'
+                    }`}
+                  >
                     Data appello
                   </label>
                   <input
@@ -2499,14 +3057,18 @@ export default function App() {
                       if (!newExamDate) return;
                       updateActiveExam({ examDate: newExamDate });
                     }}
-                    className="w-full px-2.5 py-2 rounded-xl bg-slate-50 border border-slate-300 text-xs sm:text-sm font-medium text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className={`w-full px-2.5 py-2 rounded-xl border text-xs sm:text-sm font-medium ${inputMutedSurfaceClass}`}
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                  <label
+                    className={`block text-xs font-bold mb-1.5 ${
+                      isDark ? 'text-slate-300' : 'text-slate-700'
+                    }`}
+                  >
                     Totale pagine
                   </label>
                   <input
@@ -2519,12 +3081,16 @@ export default function App() {
                         totalPages: Math.max(1, Number(e.target.value) || 0),
                       })
                     }
-                    className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-300 text-sm font-semibold text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className={`w-full px-3 py-2 rounded-xl border text-sm font-semibold ${inputMutedSurfaceClass}`}
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                  <label
+                    className={`block text-xs font-bold mb-1.5 ${
+                      isDark ? 'text-slate-300' : 'text-slate-700'
+                    }`}
+                  >
                     Giorni ripasso finale
                   </label>
                   <input
@@ -2537,7 +3103,7 @@ export default function App() {
                         reviewDays: Math.max(0, Number(e.target.value) || 0),
                       })
                     }
-                    className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-300 text-sm font-semibold text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className={`w-full px-3 py-2 rounded-xl border text-sm font-semibold ${inputMutedSurfaceClass}`}
                   />
                 </div>
               </div>
@@ -2546,10 +3112,18 @@ export default function App() {
             <div className="space-y-4">
               <div>
                 <div className="flex items-center justify-between mb-1.5">
-                  <label className="text-xs font-bold text-slate-700">
+                  <label
+                    className={`text-xs font-bold ${
+                      isDark ? 'text-slate-300' : 'text-slate-700'
+                    }`}
+                  >
                     Giorni di riposo settimanali
                   </label>
-                  <span className="text-[11px] text-slate-400">
+                  <span
+                    className={`text-[11px] ${
+                      isDark ? 'text-slate-500' : 'text-slate-400'
+                    }`}
+                  >
                     {(activeExam.restDays || []).length} off/sett
                   </span>
                 </div>
@@ -2565,7 +3139,11 @@ export default function App() {
                         onClick={() => toggleRestDay(day.id)}
                         className={`py-2 rounded-xl text-xs font-bold border transition ${
                           isSelected
-                            ? 'bg-slate-900 text-white border-slate-900 shadow-sm'
+                            ? isDark
+                              ? 'bg-indigo-600 text-white border-indigo-500 shadow-sm'
+                              : 'bg-slate-900 text-white border-slate-900 shadow-sm'
+                            : isDark
+                            ? 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'
                             : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
                         }`}
                       >
@@ -2578,14 +3156,26 @@ export default function App() {
 
               <div
                 className={`${
-                  isNarrow ? 'pt-2 border-t border-slate-100' : ''
+                  isNarrow
+                    ? `pt-2 border-t ${
+                        isDark ? 'border-slate-800' : 'border-slate-100'
+                      }`
+                    : ''
                 } space-y-2.5`}
               >
                 <div className="flex items-center justify-between">
-                  <label className="text-xs font-bold text-slate-700">
+                  <label
+                    className={`text-xs font-bold ${
+                      isDark ? 'text-slate-300' : 'text-slate-700'
+                    }`}
+                  >
                     Ritmo target iniziale (pag/giorno)
                   </label>
-                  <span className="text-[11px] font-semibold text-indigo-600">
+                  <span
+                    className={`text-[11px] font-semibold ${
+                      isDark ? 'text-indigo-400' : 'text-indigo-600'
+                    }`}
+                  >
                     Minimo: {analytics.initialMinPace.toFixed(1)} pag/gg
                   </span>
                 </div>
@@ -2600,14 +3190,18 @@ export default function App() {
                       targetPace: Math.max(1, Number(e.target.value) || 0),
                     })
                   }
-                  className="w-full px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-300 text-sm font-semibold text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className={`w-full px-3.5 py-2 rounded-xl border text-sm font-semibold ${inputMutedSurfaceClass}`}
                 />
 
                 <div
                   className={`p-3 rounded-xl border text-xs leading-relaxed ${
                     (Number(activeExam.targetPace) || 0) >=
                     analytics.initialMinPace
-                      ? 'bg-emerald-50/70 border-emerald-200 text-emerald-900'
+                      ? isDark
+                        ? 'bg-emerald-950/45 border-emerald-800/70 text-emerald-200'
+                        : 'bg-emerald-50/70 border-emerald-200 text-emerald-900'
+                      : isDark
+                      ? 'bg-amber-950/45 border-amber-800/70 text-amber-200'
                       : 'bg-amber-50/70 border-amber-200 text-amber-900'
                   }`}
                 >
@@ -2684,7 +3278,9 @@ export default function App() {
           isBeingDragged ? 'opacity-45 scale-[0.99]' : 'opacity-100'
         } ${
           isReorderMode
-            ? 'ring-2 ring-indigo-300/80 ring-offset-2 ring-offset-slate-50'
+            ? isDark
+              ? 'ring-2 ring-indigo-500/70 ring-offset-2 ring-offset-slate-950'
+              : 'ring-2 ring-indigo-300/80 ring-offset-2 ring-offset-slate-50'
             : ''
         }`}
       >
@@ -2697,7 +3293,11 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen w-full bg-slate-50 text-slate-900 font-sans pb-14">
+    <div
+      className={`min-h-screen w-full font-sans pb-14 transition-colors duration-200 ${
+        isDark ? 'bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-900'
+      }`}
+    >
       <style>{`
         html, body, #root {
           margin: 0 !important;
@@ -2706,28 +3306,54 @@ export default function App() {
           max-width: 100% !important;
           min-height: 100vh !important;
           display: block !important;
-          background-color: #f8fafc !important;
+          background-color: ${isDark ? '#020617' : '#f8fafc'} !important;
           text-align: left !important;
         }
       `}</style>
 
       {/* HEADER A LARGHEZZA PIENA */}
-      <header className="w-full bg-white border-b border-slate-200 sticky top-0 z-30">
+      <header
+        className={`w-full border-b sticky top-0 z-30 transition-colors ${
+          isDark
+            ? 'bg-slate-900/95 border-slate-800 backdrop-blur'
+            : 'bg-white border-slate-200'
+        }`}
+      >
         <div className="w-full px-4 sm:px-6 lg:px-8 py-3.5 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-slate-900 text-white flex items-center justify-center shadow-sm shrink-0">
+            <div
+              className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-sm shrink-0 ${
+                isDark
+                  ? 'bg-indigo-600 text-white'
+                  : 'bg-slate-900 text-white'
+              }`}
+            >
               <BookOpen className="w-5 h-5" />
             </div>
             <div>
               <div className="flex items-center gap-2 flex-wrap">
-                <h1 className="text-xl font-bold tracking-tight text-slate-900">
+                <h1
+                  className={`text-xl font-bold tracking-tight ${
+                    isDark ? 'text-slate-50' : 'text-slate-900'
+                  }`}
+                >
                   StudyBurn
                 </h1>
-                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-100">
+                <span
+                  className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${
+                    isDark
+                      ? 'bg-indigo-950/80 text-indigo-300 border-indigo-800/80'
+                      : 'bg-indigo-50 text-indigo-700 border-indigo-100'
+                  }`}
+                >
                   Simulatore Universitario
                 </span>
               </div>
-              <p className="text-xs text-slate-500">
+              <p
+                className={`text-xs ${
+                  isDark ? 'text-slate-400' : 'text-slate-500'
+                }`}
+              >
                 Burn-down Chart, Spaced Repetition adattiva e Timer Pomodoro
               </p>
             </div>
@@ -2735,7 +3361,13 @@ export default function App() {
 
           <div className="flex flex-wrap items-center gap-2">
             {isRenamingHeader ? (
-              <div className="flex items-center gap-1.5 bg-indigo-50 border border-indigo-300 rounded-xl px-2.5 py-1">
+              <div
+                className={`flex items-center gap-1.5 border rounded-xl px-2.5 py-1 ${
+                  isDark
+                    ? 'bg-indigo-950/60 border-indigo-700'
+                    : 'bg-indigo-50 border-indigo-300'
+                }`}
+              >
                 <input
                   ref={headerRenameInputRef}
                   type="text"
@@ -2756,7 +3388,11 @@ export default function App() {
                       setIsRenamingHeader(false);
                     }
                   }}
-                  className="bg-white text-sm font-semibold text-slate-900 px-2.5 py-1 rounded-lg border border-indigo-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 w-48 sm:w-56"
+                  className={`text-sm font-semibold px-2.5 py-1 rounded-lg border focus:outline-none focus:ring-2 focus:ring-indigo-500 w-48 sm:w-56 ${
+                    isDark
+                      ? 'bg-slate-900 text-slate-100 border-indigo-700'
+                      : 'bg-white text-slate-900 border-indigo-200'
+                  }`}
                 />
                 <button
                   type="button"
@@ -2767,16 +3403,26 @@ export default function App() {
                     }
                     setIsRenamingHeader(false);
                   }}
-                  className="p-1.5 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition"
+                  className="p-1.5 rounded-lg bg-indigo-600 text-white hover:bg-indigo-500 transition"
                   title="Conferma nome"
                 >
                   <Check className="w-3.5 h-3.5" />
                 </button>
               </div>
             ) : (
-              <div className="flex items-center gap-1 bg-slate-100 border border-slate-200 rounded-xl p-1">
+              <div
+                className={`flex items-center gap-1 border rounded-xl p-1 ${
+                  isDark
+                    ? 'bg-slate-800 border-slate-700'
+                    : 'bg-slate-100 border-slate-200'
+                }`}
+              >
                 <div className="flex items-center gap-1.5 pl-2">
-                  <Layers className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+                  <Layers
+                    className={`w-3.5 h-3.5 shrink-0 ${
+                      isDark ? 'text-slate-400' : 'text-slate-500'
+                    }`}
+                  />
                   <select
                     value={activeExam.id}
                     onChange={(e) =>
@@ -2785,7 +3431,11 @@ export default function App() {
                         activeExamId: e.target.value,
                       }))
                     }
-                    className="bg-transparent text-xs sm:text-sm font-semibold text-slate-800 pr-2 py-1 focus:outline-none cursor-pointer max-w-[180px] sm:max-w-[230px] truncate"
+                    className={`text-xs sm:text-sm font-semibold pr-2 py-1 focus:outline-none cursor-pointer max-w-[180px] sm:max-w-[230px] truncate rounded-lg ${
+                      isDark
+                        ? 'bg-slate-800 text-slate-100'
+                        : 'bg-transparent text-slate-800'
+                    }`}
                   >
                     {state.exams.map((ex) => {
                       const done = (ex.logs || []).reduce(
@@ -2807,7 +3457,11 @@ export default function App() {
                 <button
                   type="button"
                   onClick={() => setIsRenamingHeader(true)}
-                  className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium text-slate-600 hover:text-indigo-700 hover:bg-white transition"
+                  className={`flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium transition ${
+                    isDark
+                      ? 'text-slate-300 hover:text-indigo-300 hover:bg-slate-700'
+                      : 'text-slate-600 hover:text-indigo-700 hover:bg-white'
+                  }`}
                   title="Rinomina materia"
                 >
                   <Edit3 className="w-3.5 h-3.5" />
@@ -2819,7 +3473,11 @@ export default function App() {
             <button
               type="button"
               onClick={handleCreateExam}
-              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-900 text-white text-xs font-semibold hover:bg-slate-800 transition shadow-sm"
+              className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition shadow-sm ${
+                isDark
+                  ? 'bg-indigo-600 text-white hover:bg-indigo-500'
+                  : 'bg-slate-900 text-white hover:bg-slate-800'
+              }`}
             >
               <Plus className="w-3.5 h-3.5" />
               Nuovo Esame
@@ -2828,7 +3486,11 @@ export default function App() {
             <button
               type="button"
               onClick={handleLoadDemo}
-              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-indigo-50 text-indigo-700 border border-indigo-200 text-xs font-semibold hover:bg-indigo-100 transition"
+              className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border text-xs font-semibold transition ${
+                isDark
+                  ? 'bg-indigo-950/70 text-indigo-300 border-indigo-800/80 hover:bg-indigo-900/70'
+                  : 'bg-indigo-50 text-indigo-700 border-indigo-200 hover:bg-indigo-100'
+              }`}
             >
               <Sparkles className="w-3.5 h-3.5" />
               Carica Demo Avanzata
@@ -2840,6 +3502,8 @@ export default function App() {
               className={`inline-flex items-center gap-1.5 px-2.5 py-2 rounded-xl border text-xs font-semibold transition ${
                 isReorderMode
                   ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
+                  : isDark
+                  ? 'bg-slate-800 text-slate-200 border-slate-700 hover:bg-slate-700'
                   : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
               }`}
               title="Attiva o disattiva evidenziazione per spostare le sezioni"
@@ -2852,7 +3516,11 @@ export default function App() {
               <button
                 type="button"
                 onClick={handleResetLayout}
-                className="inline-flex items-center gap-1 px-2.5 py-2 rounded-xl bg-amber-50 text-amber-800 border border-amber-200 text-xs font-semibold hover:bg-amber-100 transition"
+                className={`inline-flex items-center gap-1 px-2.5 py-2 rounded-xl border text-xs font-semibold transition ${
+                  isDark
+                    ? 'bg-amber-950/60 text-amber-300 border-amber-800/70 hover:bg-amber-900/70'
+                    : 'bg-amber-50 text-amber-800 border-amber-200 hover:bg-amber-100'
+                }`}
                 title="Ripristina la disposizione predefinita delle sezioni"
               >
                 <RotateCcw className="w-3.5 h-3.5" />
@@ -2863,7 +3531,11 @@ export default function App() {
             <button
               type="button"
               onClick={handleDuplicateExam}
-              className="inline-flex items-center gap-1.5 px-2.5 py-2 rounded-xl bg-white text-slate-700 border border-slate-200 text-xs font-medium hover:bg-slate-50 transition"
+              className={`inline-flex items-center gap-1.5 px-2.5 py-2 rounded-xl border text-xs font-medium transition ${
+                isDark
+                  ? 'bg-slate-800 text-slate-200 border-slate-700 hover:bg-slate-700'
+                  : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+              }`}
               title="Duplica esame corrente"
             >
               <Copy className="w-3.5 h-3.5" />
@@ -2876,6 +3548,8 @@ export default function App() {
               className={`inline-flex items-center gap-1.5 px-2.5 py-2 rounded-xl border text-xs font-medium transition ${
                 confirmReset
                   ? 'bg-rose-600 text-white border-rose-600'
+                  : isDark
+                  ? 'bg-slate-800 text-slate-200 border-slate-700 hover:bg-slate-700'
                   : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
               }`}
               title="Azzera i progressi di questo esame"
@@ -2888,12 +3562,44 @@ export default function App() {
               <button
                 type="button"
                 onClick={handleDeleteExam}
-                className="inline-flex items-center p-2 rounded-xl bg-white text-rose-600 border border-slate-200 hover:bg-rose-50 transition"
+                className={`inline-flex items-center p-2 rounded-xl border transition ${
+                  isDark
+                    ? 'bg-slate-800 text-rose-400 border-slate-700 hover:bg-rose-950/60'
+                    : 'bg-white text-rose-600 border-slate-200 hover:bg-rose-50'
+                }`}
                 title="Elimina questo esame"
               >
                 <Trash2 className="w-3.5 h-3.5" />
               </button>
             )}
+
+            {/* PULSANTE MODALITÀ SCURA / CHIARA */}
+            <button
+              type="button"
+              onClick={() => setIsDark((d) => !d)}
+              className={`inline-flex items-center gap-1.5 px-2.5 py-2 rounded-xl border text-xs font-semibold transition ${
+                isDark
+                  ? 'bg-slate-800 text-amber-300 border-slate-700 hover:bg-slate-700'
+                  : 'bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200/70'
+              }`}
+              title={
+                isDark
+                  ? 'Passa alla modalità chiara'
+                  : 'Passa alla modalità scura'
+              }
+            >
+              {isDark ? (
+                <>
+                  <Sun className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Chiaro</span>
+                </>
+              ) : (
+                <>
+                  <Moon className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Scuro</span>
+                </>
+              )}
+            </button>
           </div>
         </div>
       </header>
@@ -2920,14 +3626,24 @@ export default function App() {
                 <button
                   type="button"
                   onClick={() => setIsRenamingHeader(true)}
-                  className="font-semibold text-slate-700 hover:text-indigo-700 inline-flex items-center gap-1 underline decoration-dotted underline-offset-4"
+                  className={`font-semibold inline-flex items-center gap-1 underline decoration-dotted underline-offset-4 ${
+                    isDark
+                      ? 'text-slate-200 hover:text-indigo-300'
+                      : 'text-slate-700 hover:text-indigo-700'
+                  }`}
                   title="Clicca per modificare il nome della materia"
                 >
                   Esame: {activeExam.name || 'Esame senza nome'}
                   <Edit3 className="w-3 h-3 opacity-70" />
                 </button>
-                <span className="text-slate-400">•</span>
-                <span className="font-semibold text-slate-700">
+                <span className={isDark ? 'text-slate-600' : 'text-slate-400'}>
+                  •
+                </span>
+                <span
+                  className={`font-semibold ${
+                    isDark ? 'text-slate-200' : 'text-slate-700'
+                  }`}
+                >
                   Appello: {formatShortDate(activeExam.examDate)}
                 </span>
               </div>
@@ -2943,89 +3659,189 @@ export default function App() {
 
         {/* 4 CARD KPI IN TEMPO REALE */}
         <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm flex flex-col justify-between">
-            <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-slate-500">
+          <div
+            className={`rounded-2xl border p-4 shadow-sm flex flex-col justify-between ${cardSurfaceClass}`}
+          >
+            <div
+              className={`flex items-center justify-between text-xs font-bold uppercase tracking-wider ${
+                isDark ? 'text-slate-400' : 'text-slate-500'
+              }`}
+            >
               <span>Pagine Rimanenti</span>
-              <BookOpen className="w-4 h-4 text-slate-400" />
+              <BookOpen
+                className={`w-4 h-4 ${
+                  isDark ? 'text-slate-500' : 'text-slate-400'
+                }`}
+              />
             </div>
             <div className="my-2 flex items-baseline gap-2">
-              <span className="text-3xl font-extrabold text-slate-900">
+              <span
+                className={`text-3xl font-extrabold ${
+                  isDark ? 'text-slate-50' : 'text-slate-900'
+                }`}
+              >
                 {analytics.remainingPages}
               </span>
-              <span className="text-sm font-medium text-slate-400">
+              <span
+                className={`text-sm font-medium ${
+                  isDark ? 'text-slate-500' : 'text-slate-400'
+                }`}
+              >
                 / {analytics.totalPages} pag
               </span>
             </div>
             <div className="space-y-1.5">
-              <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+              <div
+                className={`w-full h-1.5 rounded-full overflow-hidden ${
+                  isDark ? 'bg-slate-800' : 'bg-slate-100'
+                }`}
+              >
                 <div
-                  className="h-full bg-indigo-600 rounded-full transition-all duration-300"
+                  className="h-full bg-indigo-500 rounded-full transition-all duration-300"
                   style={{ width: `${analytics.completionPct}%` }}
                 />
               </div>
-              <div className="flex items-center justify-between text-xs text-slate-500">
+              <div
+                className={`flex items-center justify-between text-xs ${
+                  isDark ? 'text-slate-400' : 'text-slate-500'
+                }`}
+              >
                 <span>
                   Completate:{' '}
-                  <strong className="text-slate-700">
+                  <strong
+                    className={isDark ? 'text-slate-200' : 'text-slate-700'}
+                  >
                     {analytics.completedPages}
                   </strong>
                 </span>
-                <span className="font-semibold text-indigo-600">
+                <span
+                  className={`font-semibold ${
+                    isDark ? 'text-indigo-400' : 'text-indigo-600'
+                  }`}
+                >
                   {analytics.completionPct.toFixed(1)}%
                 </span>
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm flex flex-col justify-between">
-            <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-slate-500">
+          <div
+            className={`rounded-2xl border p-4 shadow-sm flex flex-col justify-between ${cardSurfaceClass}`}
+          >
+            <div
+              className={`flex items-center justify-between text-xs font-bold uppercase tracking-wider ${
+                isDark ? 'text-slate-400' : 'text-slate-500'
+              }`}
+            >
               <span>Giorni Utili Mancanti</span>
-              <Calendar className="w-4 h-4 text-slate-400" />
+              <Calendar
+                className={`w-4 h-4 ${
+                  isDark ? 'text-slate-500' : 'text-slate-400'
+                }`}
+              />
             </div>
             <div className="my-2 flex items-baseline gap-2">
-              <span className="text-3xl font-extrabold text-slate-900">
+              <span
+                className={`text-3xl font-extrabold ${
+                  isDark ? 'text-slate-50' : 'text-slate-900'
+                }`}
+              >
                 {analytics.remainingUsefulDays}
               </span>
-              <span className="text-sm font-medium text-slate-400">
+              <span
+                className={`text-sm font-medium ${
+                  isDark ? 'text-slate-500' : 'text-slate-400'
+                }`}
+              >
                 giorni utili
               </span>
             </div>
-            <div className="flex items-center justify-between text-xs text-slate-500 pt-1 border-t border-slate-100">
+            <div
+              className={`flex items-center justify-between text-xs pt-1 border-t ${
+                isDark
+                  ? 'text-slate-400 border-slate-800'
+                  : 'text-slate-500 border-slate-100'
+              }`}
+            >
               <span>
                 All&apos;appello:{' '}
-                <strong className="text-slate-700">
+                <strong
+                  className={isDark ? 'text-slate-200' : 'text-slate-700'}
+                >
                   {analytics.daysToExam} gg
                 </strong>
               </span>
-              <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 font-medium">
+              <span
+                className={`px-2 py-0.5 rounded-md font-medium ${
+                  isDark
+                    ? 'bg-slate-800 text-slate-300'
+                    : 'bg-slate-100 text-slate-700'
+                }`}
+              >
                 {analytics.safeReviewDays} gg ripasso
               </span>
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm flex flex-col justify-between">
-            <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-slate-500">
+          <div
+            className={`rounded-2xl border p-4 shadow-sm flex flex-col justify-between ${cardSurfaceClass}`}
+          >
+            <div
+              className={`flex items-center justify-between text-xs font-bold uppercase tracking-wider ${
+                isDark ? 'text-slate-400' : 'text-slate-500'
+              }`}
+            >
               <span>Media Reale</span>
-              <Clock className="w-4 h-4 text-slate-400" />
+              <Clock
+                className={`w-4 h-4 ${
+                  isDark ? 'text-slate-500' : 'text-slate-400'
+                }`}
+              />
             </div>
             <div className="my-2 flex items-baseline gap-2">
-              <span className="text-3xl font-extrabold text-slate-900">
+              <span
+                className={`text-3xl font-extrabold ${
+                  isDark ? 'text-slate-50' : 'text-slate-900'
+                }`}
+              >
                 {analytics.realDailyAvg.toFixed(1)}
               </span>
-              <span className="text-sm font-medium text-slate-400">
+              <span
+                className={`text-sm font-medium ${
+                  isDark ? 'text-slate-500' : 'text-slate-400'
+                }`}
+              >
                 pag/giorno
               </span>
             </div>
-            <div className="flex items-center justify-between text-xs text-slate-500 pt-1 border-t border-slate-100">
+            <div
+              className={`flex items-center justify-between text-xs pt-1 border-t ${
+                isDark
+                  ? 'text-slate-400 border-slate-800'
+                  : 'text-slate-500 border-slate-100'
+              }`}
+            >
               <span>Su {analytics.totalUsefulDays} gg utili</span>
-              <span className="px-2 py-0.5 rounded-md bg-amber-50 text-amber-800 font-semibold border border-amber-200/70">
+              <span
+                className={`px-2 py-0.5 rounded-md font-semibold border ${
+                  isDark
+                    ? 'bg-amber-950/60 text-amber-300 border-amber-800/70'
+                    : 'bg-amber-50 text-amber-800 border-amber-200/70'
+                }`}
+              >
                 Target {activeExam.targetPace || 0}
               </span>
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm flex flex-col justify-between">
-            <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-slate-500">
+          <div
+            className={`rounded-2xl border p-4 shadow-sm flex flex-col justify-between ${cardSurfaceClass}`}
+          >
+            <div
+              className={`flex items-center justify-between text-xs font-bold uppercase tracking-wider ${
+                isDark ? 'text-slate-400' : 'text-slate-500'
+              }`}
+            >
               <span>Nuova Media Richiesta</span>
               <Target className="w-4 h-4 text-rose-400" />
             </div>
@@ -3033,19 +3849,35 @@ export default function App() {
               <span
                 className={`text-3xl font-extrabold ${
                   analytics.newRequiredPace > analytics.initialMinPace * 1.15
-                    ? 'text-rose-600'
+                    ? isDark
+                      ? 'text-rose-400'
+                      : 'text-rose-600'
+                    : isDark
+                    ? 'text-emerald-400'
                     : 'text-emerald-600'
                 }`}
               >
                 {analytics.newRequiredPace.toFixed(1)}
               </span>
-              <span className="text-sm font-medium text-slate-400">
+              <span
+                className={`text-sm font-medium ${
+                  isDark ? 'text-slate-500' : 'text-slate-400'
+                }`}
+              >
                 pag/giorno
               </span>
             </div>
-            <div className="flex items-center justify-between text-xs text-slate-500 pt-1 border-t border-slate-100">
+            <div
+              className={`flex items-center justify-between text-xs pt-1 border-t ${
+                isDark
+                  ? 'text-slate-400 border-slate-800'
+                  : 'text-slate-500 border-slate-100'
+              }`}
+            >
               <span>Minimo iniziale:</span>
-              <strong className="text-slate-700">
+              <strong
+                className={isDark ? 'text-slate-200' : 'text-slate-700'}
+              >
                 {analytics.initialMinPace.toFixed(1)} pag/gg
               </strong>
             </div>
@@ -3081,7 +3913,13 @@ export default function App() {
               )}
 
               {layout.left.length === 0 && draggedSection && (
-                <div className="h-32 rounded-2xl border-2 border-dashed border-indigo-300 bg-indigo-50/40 flex items-center justify-center text-xs font-semibold text-indigo-600">
+                <div
+                  className={`h-32 rounded-2xl border-2 border-dashed flex items-center justify-center text-xs font-semibold ${
+                    isDark
+                      ? 'border-indigo-700 bg-indigo-950/30 text-indigo-300'
+                      : 'border-indigo-300 bg-indigo-50/40 text-indigo-600'
+                  }`}
+                >
                   Rilascia qui per inserire nella colonna principale
                 </div>
               )}
@@ -3118,7 +3956,13 @@ export default function App() {
               )}
 
               {layout.right.length === 0 && draggedSection && (
-                <div className="h-32 rounded-2xl border-2 border-dashed border-indigo-300 bg-indigo-50/40 flex items-center justify-center text-xs font-semibold text-indigo-600">
+                <div
+                  className={`h-32 rounded-2xl border-2 border-dashed flex items-center justify-center text-xs font-semibold ${
+                    isDark
+                      ? 'border-indigo-700 bg-indigo-950/30 text-indigo-300'
+                      : 'border-indigo-300 bg-indigo-50/40 text-indigo-600'
+                  }`}
+                >
                   Rilascia qui per inserire nella colonna laterale
                 </div>
               )}
