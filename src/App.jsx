@@ -4056,10 +4056,21 @@ export default function App() {
 
   return (
     <div
-      className={`min-h-screen w-full transition-colors duration-200 ${
+      className={`min-h-screen w-full text-left transition-colors duration-200 ${
         isDark ? 'bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-900'
       }`}
     >
+      <style>{`
+        html, body, #root {
+          width: 100% !important;
+          max-width: 100% !important;
+          margin: 0 !important;
+          padding: 0 !important;
+          display: block !important;
+          text-align: left !important;
+        }
+      `}</style>
+
       {/* --- HEADER FULL-WIDTH --- */}
       <header
         className={`border-b sticky top-0 z-20 w-full transition-colors duration-200 ${
