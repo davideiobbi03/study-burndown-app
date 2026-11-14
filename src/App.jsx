@@ -4056,19 +4056,19 @@ export default function App() {
 
   return (
     <div
-      className={`min-h-screen transition-colors duration-200 ${
+      className={`min-h-screen w-full transition-colors duration-200 ${
         isDark ? 'bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-900'
       }`}
     >
-      {/* --- HEADER --- */}
+      {/* --- HEADER FULL-WIDTH --- */}
       <header
-        className={`border-b sticky top-0 z-20 transition-colors duration-200 ${
+        className={`border-b sticky top-0 z-20 w-full transition-colors duration-200 ${
           isDark
             ? 'bg-slate-900/95 border-slate-800 backdrop-blur-xs'
             : 'bg-white border-slate-200'
         }`}
       >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-3">
+        <div className="w-full px-4 sm:px-6 lg:px-8 py-3 flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
             <div className="bg-indigo-600 text-white p-2 rounded-xl shadow-xs shrink-0">
               <BookOpen className="w-5 h-5" />
@@ -4699,8 +4699,8 @@ export default function App() {
         </div>
       )}
 
-      {/* --- MAIN DASHBOARD --- */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+      {/* --- MAIN DASHBOARD FULL-WIDTH --- */}
+      <main className="w-full px-4 sm:px-6 lg:px-8 py-6 space-y-6">
         {isReorderMode && (
           <div
             className={`rounded-2xl border p-4 flex flex-wrap items-center justify-between gap-3 ${
