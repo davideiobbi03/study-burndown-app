@@ -28,6 +28,12 @@ import {
   Layers,
   Undo2,
   SlidersHorizontal,
+  Play,
+  Pause,
+  SkipForward,
+  Coffee,
+  Volume2,
+  VolumeX,
 } from 'lucide-react';
 
 // --- UTILITY DATE (Locale, senza slittamenti di fuso orario) ---
@@ -37,6 +43,13 @@ function getTodayStr() {
   const m = String(now.getMonth() + 1).padStart(2, '0');
   const d = String(now.getDate()).padStart(2, '0');
   return `${y}-${m}-${d}`;
+}
+
+function getCurrentTimeStr() {
+  const now = new Date();
+  const hh = String(now.getHours()).padStart(2, '0');
+  const mm = String(now.getMinutes()).padStart(2, '0');
+  return `${hh}:${mm}`;
 }
 
 function parseLocalDate(dateStr) {
@@ -64,6 +77,45 @@ function formatShortDate(dateStr) {
   return `${d}/${m}`;
 }
 
+function formatMinutesHuman(totalMinutes) {
+  const mins = Math.max(0, Math.round(totalMinutes));
+  if (mins < 60) return `${mins}m`;
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  return m > 0 ? `${h}h ${m}m` : `${h}h`;
+}
+
+// --- SUONO NOTIFICA POMODORO (Web Audio API, senza file esterni) ---
+function playChime(type = 'study') {
+  try {
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (!AudioCtx) return;
+    const ctx = new AudioCtx();
+    const notes = type === 'study' ? [523.25, 659.25, 783.99] : [659.25, 523.25];
+    notes.forEach((freq, idx) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, ctx.currentTime + idx * 0.16);
+      gain.gain.setValueAtTime(0.001, ctx.currentTime + idx * 0.16);
+      gain.gain.exponentialRampToValueAtTime(
+        0.18,
+        ctx.currentTime + idx * 0.16 + 0.03
+      );
+      gain.gain.exponentialRampToValueAtTime(
+        0.0001,
+        ctx.currentTime + idx * 0.16 + 0.45
+      );
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(ctx.currentTime + idx * 0.16);
+      osc.stop(ctx.currentTime + idx * 0.16 + 0.48);
+    });
+  } catch (e) {
+    console.warn('Audio non disponibile:', e);
+  }
+}
+
 const WEEKDAYS = [
   { id: 1, label: 'Lun' },
   { id: 2, label: 'Mar' },
@@ -88,6 +140,7 @@ function createDefaultExam(name = 'Biochimica Clinica') {
     restDays: [0],
     targetPace: 20,
     logs: [],
+    pomodoroSessions: [],
   };
 }
 
@@ -116,6 +169,11 @@ function createDemoExam() {
     restDays: [0],
     targetPace: 22,
     logs,
+    pomodoroSessions: [
+      { id: 'p_1', date: addDays(today, -1), time: '16:30', durationMin: 50 },
+      { id: 'p_2', date: addDays(today, -1), time: '17:35', durationMin: 50 },
+      { id: 'p_3', date: today, time: '09:45', durationMin: 25 },
+    ],
   };
 }
 
@@ -145,6 +203,7 @@ export default function App() {
   const [isRenamingHeader, setIsRenamingHeader] = useState(false);
   const [confirmReset, setConfirmReset] = useState(false);
 
+  // Stato registro pagine
   const [logMode, setLogMode] = useState('daily');
   const [logDate, setLogDate] = useState(getTodayStr());
   const [logPagesInput, setLogPagesInput] = useState('');
@@ -152,12 +211,19 @@ export default function App() {
   const [editingLogDate, setEditingLogDate] = useState(null);
   const [editingLogPages, setEditingLogPages] = useState('');
 
+  // --- STATO TIMER POMODORO ---
+  const [pomoStudyMin, setPomoStudyMin] = useState(25);
+  const [pomoBreakMin, setPomoBreakMin] = useState(5);
+  const [pomoPhase, setPomoPhase] = useState('study'); // 'study' | 'break'
+  const [pomoSecondsLeft, setPomoSecondsLeft] = useState(25 * 60);
+  const [pomoRunning, setPomoRunning] = useState(false);
+  const [pomoSound, setPomoSound] = useState(true);
+  const [showPomoHistory, setShowPomoHistory] = useState(false);
+
+  const pomoEndTimeRef = useRef(null);
+  const pomoHandledRef = useRef(false);
   const headerRenameInputRef = useRef(null);
   const sidebarNameInputRef = useRef(null);
-
-  useEffect(() => {
-    document.title = 'StudyBurn — Simulatore Universitario';
-  }, []);
 
   useEffect(() => {
     try {
@@ -198,6 +264,149 @@ export default function App() {
     });
   };
 
+  // --- LOGICA TICK TIMER POMODORO ---
+  useEffect(() => {
+    if (!pomoRunning) {
+      document.title = 'StudyBurn — Simulatore Universitario';
+      return;
+    }
+
+    pomoEndTimeRef.current = Date.now() + pomoSecondsLeft * 1000;
+    pomoHandledRef.current = false;
+
+    const interval = setInterval(() => {
+      const remaining = Math.max(
+        0,
+        Math.ceil((pomoEndTimeRef.current - Date.now()) / 1000)
+      );
+      setPomoSecondsLeft(remaining);
+
+      const mm = String(Math.floor(remaining / 60)).padStart(2, '0');
+      const ss = String(remaining % 60).padStart(2, '0');
+      document.title = `${mm}:${ss} ${
+        pomoPhase === 'study' ? 'Studio' : 'Pausa'
+      } — StudyBurn`;
+
+      if (remaining === 0 && !pomoHandledRef.current) {
+        pomoHandledRef.current = true;
+        setPomoRunning(false);
+
+        if (pomoSound) {
+          playChime(pomoPhase);
+        }
+
+        if (pomoPhase === 'study') {
+          const completedDuration = Math.max(1, Number(pomoStudyMin) || 25);
+          const newSession = {
+            id: `pomo_${Date.now()}_${Math.random().toString(36).slice(2, 5)}`,
+            date: getTodayStr(),
+            time: getCurrentTimeStr(),
+            durationMin: completedDuration,
+          };
+          updateActiveExam((ex) => ({
+            ...ex,
+            pomodoroSessions: [newSession, ...(ex.pomodoroSessions || [])],
+          }));
+
+          // Passa automaticamente alla pausa pronta per partire
+          setPomoPhase('break');
+          setPomoSecondsLeft(Math.max(1, Number(pomoBreakMin) || 5) * 60);
+        } else {
+          // Fine pausa: torna pronto per una nuova sessione di studio
+          setPomoPhase('study');
+          setPomoSecondsLeft(Math.max(1, Number(pomoStudyMin) || 25) * 60);
+        }
+      }
+    }, 250);
+
+    return () => clearInterval(interval);
+  }, [pomoRunning, pomoPhase, pomoStudyMin, pomoBreakMin, pomoSound]);
+
+  const handlePomoSwitchPhase = (targetPhase) => {
+    setPomoRunning(false);
+    setPomoPhase(targetPhase);
+    const mins =
+      targetPhase === 'study'
+        ? Math.max(1, Number(pomoStudyMin) || 25)
+        : Math.max(1, Number(pomoBreakMin) || 5);
+    setPomoSecondsLeft(mins * 60);
+  };
+
+  const handlePomoReset = () => {
+    setPomoRunning(false);
+    const mins =
+      pomoPhase === 'study'
+        ? Math.max(1, Number(pomoStudyMin) || 25)
+        : Math.max(1, Number(pomoBreakMin) || 5);
+    setPomoSecondsLeft(mins * 60);
+  };
+
+  const handlePomoPreset = (studyMins, breakMins) => {
+    setPomoRunning(false);
+    setPomoStudyMin(studyMins);
+    setPomoBreakMin(breakMins);
+    setPomoPhase('study');
+    setPomoSecondsLeft(studyMins * 60);
+  };
+
+  const handleAddManualPomoSession = () => {
+    const duration = Math.max(1, Number(pomoStudyMin) || 25);
+    const manualSession = {
+      id: `pomo_${Date.now()}_${Math.random().toString(36).slice(2, 5)}`,
+      date: getTodayStr(),
+      time: getCurrentTimeStr(),
+      durationMin: duration,
+    };
+    updateActiveExam((ex) => ({
+      ...ex,
+      pomodoroSessions: [manualSession, ...(ex.pomodoroSessions || [])],
+    }));
+  };
+
+  const handleDeletePomoSession = (sessionId) => {
+    updateActiveExam((ex) => ({
+      ...ex,
+      pomodoroSessions: (ex.pomodoroSessions || []).filter(
+        (s) => s.id !== sessionId
+      ),
+    }));
+  };
+
+  const pomoStats = useMemo(() => {
+    const today = getTodayStr();
+    const sessions = activeExam.pomodoroSessions || [];
+    const todaySessions = sessions.filter((s) => s.date === today);
+    const totalMinutes = sessions.reduce(
+      (sum, s) => sum + Number(s.durationMin || 0),
+      0
+    );
+    const todayMinutes = todaySessions.reduce(
+      (sum, s) => sum + Number(s.durationMin || 0),
+      0
+    );
+    const phaseTotalSeconds =
+      (pomoPhase === 'study'
+        ? Math.max(1, Number(pomoStudyMin) || 25)
+        : Math.max(1, Number(pomoBreakMin) || 5)) * 60;
+    const progressPct = Math.min(
+      100,
+      Math.max(
+        0,
+        ((phaseTotalSeconds - pomoSecondsLeft) / phaseTotalSeconds) * 100
+      )
+    );
+
+    return {
+      sessions,
+      todayCount: todaySessions.length,
+      todayMinutes,
+      totalCount: sessions.length,
+      totalMinutes,
+      progressPct,
+    };
+  }, [activeExam, pomoPhase, pomoStudyMin, pomoBreakMin, pomoSecondsLeft]);
+
+  // --- GESTIONE ESAMI E REGISTRO PAGINE ---
   const handleUndo = () => {
     if (undoStack.length === 0) return;
     const [lastState, ...rest] = undoStack;
@@ -223,6 +432,9 @@ export default function App() {
       id: `exam_${Date.now()}`,
       name: `${activeExam.name || 'Esame'} (Copia)`,
       logs: activeExam.logs.map((l) => ({ ...l })),
+      pomodoroSessions: (activeExam.pomodoroSessions || []).map((s) => ({
+        ...s,
+      })),
     };
     setUndoStack((u) => [state, ...u.slice(0, 9)]);
     setState((prev) => ({
@@ -261,7 +473,7 @@ export default function App() {
       setTimeout(() => setConfirmReset(false), 4000);
       return;
     }
-    updateActiveExam({ logs: [] }, true);
+    updateActiveExam({ logs: [], pomodoroSessions: [] }, true);
     setConfirmReset(false);
   };
 
@@ -646,9 +858,14 @@ export default function App() {
 
   const StatusIcon = statusStyles.Icon;
 
+  const pomoMinutesDisplay = String(Math.floor(pomoSecondsLeft / 60)).padStart(
+    2,
+    '0'
+  );
+  const pomoSecondsDisplay = String(pomoSecondsLeft % 60).padStart(2, '0');
+
   return (
     <div className="min-h-screen w-full bg-slate-50 text-slate-900 font-sans pb-14">
-      {/* Reset stili predefiniti Vite per occupare il 100% dello schermo senza fasce scure */}
       <style>{`
         html, body, #root {
           margin: 0 !important;
@@ -665,7 +882,6 @@ export default function App() {
       {/* HEADER A LARGHEZZA PIENA */}
       <header className="w-full bg-white border-b border-slate-200 sticky top-0 z-30">
         <div className="w-full px-4 sm:px-6 lg:px-8 py-3.5 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
-          {/* Brand */}
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-slate-900 text-white flex items-center justify-center shadow-sm shrink-0">
               <BookOpen className="w-5 h-5" />
@@ -680,13 +896,11 @@ export default function App() {
                 </span>
               </div>
               <p className="text-xs text-slate-500">
-                Tabella di marcia adattiva, Burn-down Chart e proiezione
-                d&apos;esame
+                Tabella di marcia adattiva, Burn-down Chart e Timer Pomodoro
               </p>
             </div>
           </div>
 
-          {/* Controlli Multi-Esame & Rinomina Rapida */}
           <div className="flex flex-wrap items-center gap-2">
             {isRenamingHeader ? (
               <div className="flex items-center gap-1.5 bg-indigo-50 border border-indigo-300 rounded-xl px-2.5 py-1">
@@ -871,7 +1085,6 @@ export default function App() {
 
         {/* 4 CARD KPI IN TEMPO REALE */}
         <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* KPI 1 */}
           <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm flex flex-col justify-between">
             <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-slate-500">
               <span>Pagine Rimanenti</span>
@@ -906,7 +1119,6 @@ export default function App() {
             </div>
           </div>
 
-          {/* KPI 2 */}
           <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm flex flex-col justify-between">
             <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-slate-500">
               <span>Giorni Utili Mancanti</span>
@@ -933,7 +1145,6 @@ export default function App() {
             </div>
           </div>
 
-          {/* KPI 3 */}
           <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm flex flex-col justify-between">
             <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-slate-500">
               <span>Media Reale</span>
@@ -955,7 +1166,6 @@ export default function App() {
             </div>
           </div>
 
-          {/* KPI 4 */}
           <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm flex flex-col justify-between">
             <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-slate-500">
               <span>Nuova Media Richiesta</span>
@@ -984,7 +1194,7 @@ export default function App() {
           </div>
         </section>
 
-        {/* GRIGLIA PRINCIPALE: GRAFICO + REGISTRO A SINISTRA | PARAMETRI A DESTRA */}
+        {/* GRIGLIA PRINCIPALE: GRAFICO + REGISTRO A SINISTRA | POMODORO + PARAMETRI A DESTRA */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           {/* COLONNA SINISTRA (8 col) */}
           <div className="lg:col-span-8 space-y-6">
@@ -1378,221 +1588,558 @@ export default function App() {
             </section>
           </div>
 
-          {/* COLONNA DESTRA: PANNELLO CONFIGURAZIONE (4 col) */}
-          <aside className="lg:col-span-4 bg-white rounded-2xl border border-slate-200 p-4 sm:p-6 shadow-sm space-y-5">
-            <div className="flex items-start gap-2.5 pb-3 border-b border-slate-100">
-              <div className="p-2 rounded-xl bg-indigo-50 text-indigo-600 mt-0.5">
-                <SlidersHorizontal className="w-4 h-4" />
-              </div>
-              <div>
-                <h3 className="text-base font-bold text-slate-900">
-                  Parametri Tabella di Marcia
-                </h3>
-                <p className="text-xs text-slate-500">
-                  Modifica in qualsiasi momento con ricalcolo istantaneo
-                </p>
-              </div>
-            </div>
+          {/* COLONNA DESTRA: TIMER POMODORO + PARAMETRI TABELLA DI MARCIA (4 col) */}
+          <div className="lg:col-span-4 space-y-6">
+            {/* SEZIONE TIMER POMODORO */}
+            <section className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-6 shadow-sm space-y-4">
+              {/* Intestazione Pomodoro */}
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                <div className="flex items-center gap-2.5">
+                  <div
+                    className={`p-2 rounded-xl ${
+                      pomoPhase === 'study'
+                        ? 'bg-indigo-50 text-indigo-600'
+                        : 'bg-emerald-50 text-emerald-600'
+                    }`}
+                  >
+                    {pomoPhase === 'study' ? (
+                      <Clock className="w-4 h-4" />
+                    ) : (
+                      <Coffee className="w-4 h-4" />
+                    )}
+                  </div>
+                  <div>
+                    <h3 className="text-base font-bold text-slate-900">
+                      Timer Pomodoro
+                    </h3>
+                    <p className="text-xs text-slate-500 truncate max-w-[190px]">
+                      {activeExam.name || 'Esame'}
+                    </p>
+                  </div>
+                </div>
 
-            <div className="space-y-4">
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                  Nome dell&apos;esame / materia
-                </label>
-                <input
-                  ref={sidebarNameInputRef}
-                  type="text"
-                  value={activeExam.name ?? ''}
-                  placeholder="Es. Biochimica Clinica, Endocrinologia..."
-                  onChange={(e) => updateActiveExam({ name: e.target.value })}
-                  onBlur={() => {
-                    if (!activeExam.name || !activeExam.name.trim()) {
-                      updateActiveExam({ name: 'Esame senza nome' });
+                <button
+                  type="button"
+                  onClick={() => setPomoSound((s) => !s)}
+                  className="p-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-600 hover:bg-slate-100 transition"
+                  title={
+                    pomoSound
+                      ? 'Suono notifica attivo (clicca per silenziare)'
+                      : 'Suono silenziato (clicca per attivare)'
+                  }
+                >
+                  {pomoSound ? (
+                    <Volume2 className="w-4 h-4 text-indigo-600" />
+                  ) : (
+                    <VolumeX className="w-4 h-4 text-slate-400" />
+                  )}
+                </button>
+              </div>
+
+              {/* Selettore Modalità Studio / Pausa */}
+              <div className="grid grid-cols-2 gap-1.5 bg-slate-100 p-1 rounded-xl border border-slate-200">
+                <button
+                  type="button"
+                  onClick={() => handlePomoSwitchPhase('study')}
+                  className={`py-1.5 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 ${
+                    pomoPhase === 'study'
+                      ? 'bg-white text-indigo-700 shadow-sm'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  <BookOpen className="w-3.5 h-3.5" />
+                  Studio ({pomoStudyMin}m)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handlePomoSwitchPhase('break')}
+                  className={`py-1.5 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 ${
+                    pomoPhase === 'break'
+                      ? 'bg-white text-emerald-700 shadow-sm'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  <Coffee className="w-3.5 h-3.5" />
+                  Pausa ({pomoBreakMin}m)
+                </button>
+              </div>
+
+              {/* Display Timer + Barra Avanzamento */}
+              <div
+                className={`rounded-2xl p-5 text-center border transition-colors ${
+                  pomoPhase === 'study'
+                    ? 'bg-indigo-50/60 border-indigo-200/80'
+                    : 'bg-emerald-50/60 border-emerald-200/80'
+                }`}
+              >
+                <span
+                  className={`inline-block text-[10px] font-bold uppercase tracking-widest px-2.5 py-0.5 rounded-full mb-2 ${
+                    pomoPhase === 'study'
+                      ? 'bg-indigo-100 text-indigo-700'
+                      : 'bg-emerald-100 text-emerald-700'
+                  }`}
+                >
+                  {pomoPhase === 'study'
+                    ? 'Sessione di Concentrazione'
+                    : 'Pausa di Recupero'}
+                </span>
+
+                <div className="text-5xl font-extrabold tracking-tight text-slate-900 tabular-nums my-1">
+                  {pomoMinutesDisplay}:{pomoSecondsDisplay}
+                </div>
+
+                {/* Barra progresso blocco */}
+                <div className="w-full h-1.5 bg-white/80 rounded-full overflow-hidden mt-3 mb-4 border border-slate-200/60">
+                  <div
+                    className={`h-full transition-all duration-300 ${
+                      pomoPhase === 'study' ? 'bg-indigo-600' : 'bg-emerald-500'
+                    }`}
+                    style={{ width: `${pomoStats.progressPct}%` }}
+                  />
+                </div>
+
+                {/* Pulsanti Play/Pausa, Reset, Salta */}
+                <div className="flex items-center justify-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setPomoRunning((r) => !r)}
+                    className={`flex-1 inline-flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-sm font-bold text-white shadow-sm transition ${
+                      pomoRunning
+                        ? 'bg-amber-500 hover:bg-amber-600'
+                        : pomoPhase === 'study'
+                        ? 'bg-indigo-600 hover:bg-indigo-700'
+                        : 'bg-emerald-600 hover:bg-emerald-700'
+                    }`}
+                  >
+                    {pomoRunning ? (
+                      <>
+                        <Pause className="w-4 h-4" />
+                        Pausa
+                      </>
+                    ) : (
+                      <>
+                        <Play className="w-4 h-4" />
+                        Avvia
+                      </>
+                    )}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handlePomoReset}
+                    className="p-2.5 rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 transition"
+                    title="Azzera timer corrente"
+                  >
+                    <RotateCcw className="w-4 h-4" />
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      handlePomoSwitchPhase(
+                        pomoPhase === 'study' ? 'break' : 'study'
+                      )
                     }
-                  }}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-sm font-semibold text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                    Inizio studio
-                  </label>
-                  <input
-                    type="date"
-                    value={activeExam.startDate}
-                    onChange={(e) => {
-                      const newStart = e.target.value;
-                      if (!newStart) return;
-                      updateActiveExam((ex) => ({
-                        ...ex,
-                        startDate: newStart,
-                        examDate:
-                          ex.examDate < newStart
-                            ? addDays(newStart, 7)
-                            : ex.examDate,
-                      }));
-                    }}
-                    className="w-full px-2.5 py-2 rounded-xl bg-slate-50 border border-slate-300 text-xs sm:text-sm font-medium text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                    Data appello
-                  </label>
-                  <input
-                    type="date"
-                    value={activeExam.examDate}
-                    min={activeExam.startDate}
-                    onChange={(e) => {
-                      const newExamDate = e.target.value;
-                      if (!newExamDate) return;
-                      updateActiveExam({ examDate: newExamDate });
-                    }}
-                    className="w-full px-2.5 py-2 rounded-xl bg-slate-50 border border-slate-300 text-xs sm:text-sm font-medium text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  />
+                    className="p-2.5 rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 transition"
+                    title="Passa alla fase successiva"
+                  >
+                    <SkipForward className="w-4 h-4" />
+                  </button>
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                    Totale pagine
-                  </label>
-                  <input
-                    type="number"
-                    min="1"
-                    max="10000"
-                    value={activeExam.totalPages}
-                    onChange={(e) =>
-                      updateActiveExam({
-                        totalPages: Math.max(1, Number(e.target.value) || 0),
-                      })
-                    }
-                    className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-300 text-sm font-semibold text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                    Giorni ripasso finale
-                  </label>
-                  <input
-                    type="number"
-                    min="0"
-                    max="60"
-                    value={activeExam.reviewDays}
-                    onChange={(e) =>
-                      updateActiveExam({
-                        reviewDays: Math.max(0, Number(e.target.value) || 0),
-                      })
-                    }
-                    className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-300 text-sm font-semibold text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <div className="flex items-center justify-between mb-1.5">
-                  <label className="text-xs font-bold text-slate-700">
-                    Giorni di riposo settimanali
-                  </label>
-                  <span className="text-[11px] text-slate-400">
-                    {(activeExam.restDays || []).length} off/sett
+              {/* Preset Rapidi + Impostazione Minuti Studio e Pausa */}
+              <div className="space-y-3 pt-1">
+                <div className="flex items-center justify-between gap-1.5">
+                  <span className="text-[11px] font-semibold text-slate-500">
+                    Preset:
                   </span>
-                </div>
-                <div className="grid grid-cols-7 gap-1.5">
-                  {WEEKDAYS.map((day) => {
-                    const isSelected = (activeExam.restDays || []).includes(
-                      day.id
-                    );
-                    return (
+                  <div className="flex items-center gap-1.5">
+                    {[
+                      { s: 25, b: 5 },
+                      { s: 45, b: 10 },
+                      { s: 50, b: 10 },
+                    ].map((pr) => (
                       <button
-                        key={day.id}
+                        key={`${pr.s}-${pr.b}`}
                         type="button"
-                        onClick={() => toggleRestDay(day.id)}
-                        className={`py-2 rounded-xl text-xs font-bold border transition ${
-                          isSelected
-                            ? 'bg-slate-900 text-white border-slate-900 shadow-sm'
+                        onClick={() => handlePomoPreset(pr.s, pr.b)}
+                        className={`px-2 py-1 rounded-lg text-[11px] font-bold border transition ${
+                          pomoStudyMin === pr.s && pomoBreakMin === pr.b
+                            ? 'bg-slate-900 text-white border-slate-900'
                             : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
                         }`}
                       >
-                        {day.label}
+                        {pr.s}/{pr.b}m
                       </button>
-                    );
-                  })}
+                    ))}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                      Tempo Studio (min)
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      max="180"
+                      value={pomoStudyMin}
+                      onChange={(e) => {
+                        const val = Math.max(
+                          1,
+                          Math.min(180, Number(e.target.value) || 1)
+                        );
+                        setPomoStudyMin(val);
+                        if (!pomoRunning && pomoPhase === 'study') {
+                          setPomoSecondsLeft(val * 60);
+                        }
+                      }}
+                      className="w-full px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-300 text-sm font-semibold text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                      Tempo Pausa (min)
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      max="60"
+                      value={pomoBreakMin}
+                      onChange={(e) => {
+                        const val = Math.max(
+                          1,
+                          Math.min(60, Number(e.target.value) || 1)
+                        );
+                        setPomoBreakMin(val);
+                        if (!pomoRunning && pomoPhase === 'break') {
+                          setPomoSecondsLeft(val * 60);
+                        }
+                      }}
+                      className="w-full px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-300 text-sm font-semibold text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    />
+                  </div>
                 </div>
               </div>
 
-              <div className="pt-2 border-t border-slate-100 space-y-2.5">
-                <div className="flex items-center justify-between">
-                  <label className="text-xs font-bold text-slate-700">
-                    Ritmo target iniziale (pag/giorno)
+              {/* Tracciamento Sessioni di Studio */}
+              <div className="pt-3 border-t border-slate-100 space-y-2.5">
+                <div className="grid grid-cols-2 gap-2.5">
+                  <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/80">
+                    <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                      Sessioni Oggi
+                    </div>
+                    <div className="mt-0.5 flex items-baseline gap-1.5">
+                      <span className="text-lg font-extrabold text-indigo-700">
+                        {pomoStats.todayCount}
+                      </span>
+                      <span className="text-xs font-medium text-slate-500">
+                        ({formatMinutesHuman(pomoStats.todayMinutes)})
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/80">
+                    <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                      Totale Esame
+                    </div>
+                    <div className="mt-0.5 flex items-baseline gap-1.5">
+                      <span className="text-lg font-extrabold text-slate-900">
+                        {pomoStats.totalCount}
+                      </span>
+                      <span className="text-xs font-medium text-slate-500">
+                        ({formatMinutesHuman(pomoStats.totalMinutes)})
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Azioni rapide storico sessioni */}
+                <div className="flex items-center justify-between text-xs pt-0.5">
+                  <button
+                    type="button"
+                    onClick={() => setShowPomoHistory((h) => !h)}
+                    className="font-semibold text-indigo-600 hover:text-indigo-800"
+                  >
+                    {showPomoHistory
+                      ? 'Nascondi registro sessioni'
+                      : `Vedi registro sessioni (${pomoStats.totalCount})`}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleAddManualPomoSession}
+                    className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-indigo-50 text-indigo-700 font-semibold hover:bg-indigo-100 transition"
+                    title="Registra manualmente una sessione completata"
+                  >
+                    <Plus className="w-3 h-3" />
+                    1 sessione ({pomoStudyMin}m)
+                  </button>
+                </div>
+
+                {/* Lista sessioni completate */}
+                {showPomoHistory && (
+                  <div className="max-h-44 overflow-y-auto border border-slate-200 rounded-xl divide-y divide-slate-100 text-xs">
+                    {pomoStats.sessions.length === 0 ? (
+                      <div className="p-3 text-center text-slate-400">
+                        Nessuna sessione Pomodoro registrata per questo esame.
+                      </div>
+                    ) : (
+                      pomoStats.sessions.map((sess) => (
+                        <div
+                          key={sess.id}
+                          className="flex items-center justify-between px-3 py-2 hover:bg-slate-50"
+                        >
+                          <div>
+                            <span className="font-semibold text-slate-800">
+                              {formatShortDate(sess.date)}
+                            </span>
+                            {sess.time && (
+                              <span className="text-slate-400 ml-1.5">
+                                alle {sess.time}
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 font-bold">
+                              {sess.durationMin} min
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => handleDeletePomoSession(sess.id)}
+                              className="text-slate-400 hover:text-rose-600 transition"
+                              title="Elimina sessione"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                )}
+              </div>
+            </section>
+
+            {/* PANNELLO CONFIGURAZIONE TABELLA DI MARCIA */}
+            <aside className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-6 shadow-sm space-y-5">
+              <div className="flex items-start gap-2.5 pb-3 border-b border-slate-100">
+                <div className="p-2 rounded-xl bg-indigo-50 text-indigo-600 mt-0.5">
+                  <SlidersHorizontal className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-slate-900">
+                    Parametri Tabella di Marcia
+                  </h3>
+                  <p className="text-xs text-slate-500">
+                    Modifica in qualsiasi momento con ricalcolo istantaneo
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                    Nome dell&apos;esame / materia
                   </label>
-                  <span className="text-[11px] font-semibold text-indigo-600">
-                    Minimo: {analytics.initialMinPace.toFixed(1)} pag/gg
-                  </span>
+                  <input
+                    ref={sidebarNameInputRef}
+                    type="text"
+                    value={activeExam.name ?? ''}
+                    placeholder="Es. Biochimica Clinica, Endocrinologia..."
+                    onChange={(e) => updateActiveExam({ name: e.target.value })}
+                    onBlur={() => {
+                      if (!activeExam.name || !activeExam.name.trim()) {
+                        updateActiveExam({ name: 'Esame senza nome' });
+                      }
+                    }}
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-sm font-semibold text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
+                  />
                 </div>
 
-                <input
-                  type="number"
-                  min="1"
-                  max="500"
-                  value={activeExam.targetPace}
-                  onChange={(e) =>
-                    updateActiveExam({
-                      targetPace: Math.max(1, Number(e.target.value) || 0),
-                    })
-                  }
-                  className="w-full px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-300 text-sm font-semibold text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                />
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                      Inizio studio
+                    </label>
+                    <input
+                      type="date"
+                      value={activeExam.startDate}
+                      onChange={(e) => {
+                        const newStart = e.target.value;
+                        if (!newStart) return;
+                        updateActiveExam((ex) => ({
+                          ...ex,
+                          startDate: newStart,
+                          examDate:
+                            ex.examDate < newStart
+                              ? addDays(newStart, 7)
+                              : ex.examDate,
+                        }));
+                      }}
+                      className="w-full px-2.5 py-2 rounded-xl bg-slate-50 border border-slate-300 text-xs sm:text-sm font-medium text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    />
+                  </div>
 
-                <div
-                  className={`p-3 rounded-xl border text-xs leading-relaxed ${
-                    (Number(activeExam.targetPace) || 0) >=
-                    analytics.initialMinPace
-                      ? 'bg-emerald-50/70 border-emerald-200 text-emerald-900'
-                      : 'bg-amber-50/70 border-amber-200 text-amber-900'
-                  }`}
-                >
-                  {(Number(activeExam.targetPace) || 0) >=
-                  analytics.initialMinPace ? (
-                    <>
-                      <strong>Target sostenibile:</strong> con{' '}
-                      <strong>{activeExam.targetPace} pag/giorno</strong>{' '}
-                      superi il minimo necessario di{' '}
-                      <strong>
-                        +
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                      Data appello
+                    </label>
+                    <input
+                      type="date"
+                      value={activeExam.examDate}
+                      min={activeExam.startDate}
+                      onChange={(e) => {
+                        const newExamDate = e.target.value;
+                        if (!newExamDate) return;
+                        updateActiveExam({ examDate: newExamDate });
+                      }}
+                      className="w-full px-2.5 py-2 rounded-xl bg-slate-50 border border-slate-300 text-xs sm:text-sm font-medium text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                      Totale pagine
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      max="10000"
+                      value={activeExam.totalPages}
+                      onChange={(e) =>
+                        updateActiveExam({
+                          totalPages: Math.max(1, Number(e.target.value) || 0),
+                        })
+                      }
+                      className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-300 text-sm font-semibold text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                      Giorni ripasso finale
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      max="60"
+                      value={activeExam.reviewDays}
+                      onChange={(e) =>
+                        updateActiveExam({
+                          reviewDays: Math.max(0, Number(e.target.value) || 0),
+                        })
+                      }
+                      className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-300 text-sm font-semibold text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="text-xs font-bold text-slate-700">
+                      Giorni di riposo settimanali
+                    </label>
+                    <span className="text-[11px] text-slate-400">
+                      {(activeExam.restDays || []).length} off/sett
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-7 gap-1.5">
+                    {WEEKDAYS.map((day) => {
+                      const isSelected = (activeExam.restDays || []).includes(
+                        day.id
+                      );
+                      return (
+                        <button
+                          key={day.id}
+                          type="button"
+                          onClick={() => toggleRestDay(day.id)}
+                          className={`py-2 rounded-xl text-xs font-bold border transition ${
+                            isSelected
+                              ? 'bg-slate-900 text-white border-slate-900 shadow-sm'
+                              : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
+                          }`}
+                        >
+                          {day.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="pt-2 border-t border-slate-100 space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-bold text-slate-700">
+                      Ritmo target iniziale (pag/giorno)
+                    </label>
+                    <span className="text-[11px] font-semibold text-indigo-600">
+                      Minimo: {analytics.initialMinPace.toFixed(1)} pag/gg
+                    </span>
+                  </div>
+
+                  <input
+                    type="number"
+                    min="1"
+                    max="500"
+                    value={activeExam.targetPace}
+                    onChange={(e) =>
+                      updateActiveExam({
+                        targetPace: Math.max(1, Number(e.target.value) || 0),
+                      })
+                    }
+                    className="w-full px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-300 text-sm font-semibold text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+
+                  <div
+                    className={`p-3 rounded-xl border text-xs leading-relaxed ${
+                      (Number(activeExam.targetPace) || 0) >=
+                      analytics.initialMinPace
+                        ? 'bg-emerald-50/70 border-emerald-200 text-emerald-900'
+                        : 'bg-amber-50/70 border-amber-200 text-amber-900'
+                    }`}
+                  >
+                    {(Number(activeExam.targetPace) || 0) >=
+                    analytics.initialMinPace ? (
+                      <>
+                        <strong>Target sostenibile:</strong> con{' '}
+                        <strong>{activeExam.targetPace} pag/giorno</strong>{' '}
+                        superi il minimo necessario di{' '}
+                        <strong>
+                          +
+                          {(
+                            (Number(activeExam.targetPace) || 0) -
+                            analytics.initialMinPace
+                          ).toFixed(1)}{' '}
+                          pag/gg
+                        </strong>{' '}
+                        su {analytics.totalUsefulDays} giorni utili.
+                      </>
+                    ) : (
+                      <>
+                        <strong>Target inferiore al minimo:</strong> per finire{' '}
+                        {analytics.totalPages} pagine in{' '}
+                        {analytics.totalUsefulDays} giorni utili servono almeno{' '}
+                        <strong>
+                          {analytics.initialMinPace.toFixed(1)} pag/giorno
+                        </strong>{' '}
+                        (+
                         {(
-                          (Number(activeExam.targetPace) || 0) -
-                          analytics.initialMinPace
+                          analytics.initialMinPace -
+                          (Number(activeExam.targetPace) || 0)
                         ).toFixed(1)}{' '}
-                        pag/gg
-                      </strong>{' '}
-                      su {analytics.totalUsefulDays} giorni utili.
-                    </>
-                  ) : (
-                    <>
-                      <strong>Target inferiore al minimo:</strong> per finire{' '}
-                      {analytics.totalPages} pagine in{' '}
-                      {analytics.totalUsefulDays} giorni utili servono almeno{' '}
-                      <strong>
-                        {analytics.initialMinPace.toFixed(1)} pag/giorno
-                      </strong>{' '}
-                      (+
-                      {(
-                        analytics.initialMinPace -
-                        (Number(activeExam.targetPace) || 0)
-                      ).toFixed(1)}{' '}
-                      pag/gg rispetto al target).
-                    </>
-                  )}
+                        pag/gg rispetto al target).
+                      </>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
-          </aside>
+            </aside>
+          </div>
         </div>
       </main>
     </div>
