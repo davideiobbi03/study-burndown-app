@@ -44,6 +44,7 @@ import {
   LayoutGrid,
   Sun,
   Moon,
+  Bell,
 } from 'lucide-react';
 
 // --- UTILITY DATE (Locale, senza slittamenti di fuso orario) ---
@@ -102,34 +103,124 @@ function formatMinutesHuman(totalMinutes) {
   return m > 0 ? `${h}h ${m}m` : `${h}h`;
 }
 
-// --- SUONO NOTIFICA POMODORO (Web Audio API, senza file esterni) ---
-function playChime(type = 'study') {
+// --- MOTORE AUDIO POMODORO (Web Audio API con sblocco contesto e 5 suoni) ---
+const POMO_SOUNDS = [
+  { id: 'bell', label: 'Campanella Zen' },
+  { id: 'chime', label: 'Accordo Armonico' },
+  { id: 'digital', label: 'Doppio Bip Digitale' },
+  { id: 'marimba', label: 'Marimba Soft' },
+  { id: 'gong', label: 'Gong Profondo' },
+];
+
+let sharedAudioCtx = null;
+
+function getUnlockedAudioContext() {
   try {
     const AudioCtx = window.AudioContext || window.webkitAudioContext;
-    if (!AudioCtx) return;
-    const ctx = new AudioCtx();
-    const notes = type === 'study' ? [523.25, 659.25, 783.99] : [659.25, 523.25];
-    notes.forEach((freq, idx) => {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(freq, ctx.currentTime + idx * 0.16);
-      gain.gain.setValueAtTime(0.001, ctx.currentTime + idx * 0.16);
-      gain.gain.exponentialRampToValueAtTime(
-        0.18,
-        ctx.currentTime + idx * 0.16 + 0.03
-      );
-      gain.gain.exponentialRampToValueAtTime(
-        0.0001,
-        ctx.currentTime + idx * 0.16 + 0.45
-      );
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start(ctx.currentTime + idx * 0.16);
-      osc.stop(ctx.currentTime + idx * 0.16 + 0.48);
-    });
+    if (!AudioCtx) return null;
+    if (!sharedAudioCtx) {
+      sharedAudioCtx = new AudioCtx();
+    }
+    if (sharedAudioCtx.state === 'suspended') {
+      sharedAudioCtx.resume();
+    }
+    return sharedAudioCtx;
   } catch (e) {
-    console.warn('Audio non disponibile:', e);
+    console.warn('AudioContext non disponibile:', e);
+    return null;
+  }
+}
+
+function playPomodoroSound(soundType = 'bell', phase = 'study') {
+  try {
+    const ctx = getUnlockedAudioContext();
+    if (!ctx) return;
+
+    const now = ctx.currentTime;
+    const isStudyEnd = phase === 'study';
+
+    if (soundType === 'bell') {
+      const freqs = isStudyEnd ? [880, 1318.51] : [659.25, 880];
+      freqs.forEach((freq, idx) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, now + idx * 0.28);
+        gain.gain.setValueAtTime(0.001, now + idx * 0.28);
+        gain.gain.exponentialRampToValueAtTime(0.24, now + idx * 0.28 + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + idx * 0.28 + 1.15);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now + idx * 0.28);
+        osc.stop(now + idx * 0.28 + 1.2);
+      });
+    } else if (soundType === 'chime') {
+      const notes = isStudyEnd
+        ? [523.25, 659.25, 783.99, 1046.5]
+        : [783.99, 659.25, 523.25];
+      notes.forEach((freq, idx) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(freq, now + idx * 0.14);
+        gain.gain.setValueAtTime(0.001, now + idx * 0.14);
+        gain.gain.exponentialRampToValueAtTime(0.2, now + idx * 0.14 + 0.03);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + idx * 0.14 + 0.55);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now + idx * 0.14);
+        osc.stop(now + idx * 0.14 + 0.58);
+      });
+    } else if (soundType === 'digital') {
+      const beeps = isStudyEnd ? [0, 0.18, 0.45, 0.63] : [0, 0.22];
+      const freq = isStudyEnd ? 987.77 : 783.99;
+      beeps.forEach((offset) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, now + offset);
+        gain.gain.setValueAtTime(0.001, now + offset);
+        gain.gain.exponentialRampToValueAtTime(0.18, now + offset + 0.015);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + offset + 0.13);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now + offset);
+        osc.stop(now + offset + 0.14);
+      });
+    } else if (soundType === 'marimba') {
+      const notes = isStudyEnd ? [440, 554.37, 659.25] : [659.25, 440];
+      notes.forEach((freq, idx) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, now + idx * 0.17);
+        gain.gain.setValueAtTime(0.001, now + idx * 0.17);
+        gain.gain.exponentialRampToValueAtTime(0.26, now + idx * 0.17 + 0.015);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + idx * 0.17 + 0.35);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now + idx * 0.17);
+        osc.stop(now + idx * 0.17 + 0.38);
+      });
+    } else if (soundType === 'gong') {
+      const baseFreq = isStudyEnd ? 220 : 196;
+      [baseFreq, baseFreq * 1.5, baseFreq * 2].forEach((freq, idx) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, now);
+        const peak = 0.22 / (idx + 1);
+        gain.gain.setValueAtTime(0.001, now);
+        gain.gain.exponentialRampToValueAtTime(peak, now + 0.04);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + 1.6);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 1.65);
+      });
+    }
+  } catch (e) {
+    console.warn('Errore riproduzione suono:', e);
   }
 }
 
@@ -304,6 +395,7 @@ function createDemoExam() {
 const STORAGE_KEY = 'studyburn_state_v2';
 const LAYOUT_STORAGE_KEY = 'studyburn_layout_v1';
 const THEME_STORAGE_KEY = 'studyburn_theme_v1';
+const POMO_PREFS_STORAGE_KEY = 'studyburn_pomo_prefs_v1';
 
 export default function App() {
   // --- STATO MODALITÀ SCURA ---
@@ -460,14 +552,83 @@ export default function App() {
   const [editingLogDate, setEditingLogDate] = useState(null);
   const [editingLogPages, setEditingLogPages] = useState('');
 
-  // --- STATO TIMER POMODORO ---
-  const [pomoStudyMin, setPomoStudyMin] = useState(25);
-  const [pomoBreakMin, setPomoBreakMin] = useState(5);
-  const [pomoPhase, setPomoPhase] = useState('study');
-  const [pomoSecondsLeft, setPomoSecondsLeft] = useState(25 * 60);
+  // --- STATO TIMER POMODORO CLASSICO (4 sessioni + Pausa Lunga + Auto-start + Suoni) ---
+  const initialPomoPrefs = useMemo(() => {
+    try {
+      const saved = localStorage.getItem(POMO_PREFS_STORAGE_KEY);
+      if (saved) return JSON.parse(saved);
+    } catch (e) {
+      console.error('Errore lettura preferenze Pomodoro:', e);
+    }
+    return {};
+  }, []);
+
+  const [pomoStudyMin, setPomoStudyMin] = useState(
+    initialPomoPrefs.studyMin || 25
+  );
+  const [pomoShortBreakMin, setPomoShortBreakMin] = useState(
+    initialPomoPrefs.shortBreakMin || 5
+  );
+  const [pomoLongBreakMin, setPomoLongBreakMin] = useState(
+    initialPomoPrefs.longBreakMin || 15
+  );
+  const [pomoPhase, setPomoPhase] = useState('study'); // 'study' | 'short_break' | 'long_break'
+  const [pomoSecondsLeft, setPomoSecondsLeft] = useState(
+    (initialPomoPrefs.studyMin || 25) * 60
+  );
   const [pomoRunning, setPomoRunning] = useState(false);
-  const [pomoSound, setPomoSound] = useState(true);
+  const [pomoCycleCount, setPomoCycleCount] = useState(0); // 0..4 sessioni nel ciclo
+  const [pomoAutoContinue, setPomoAutoContinue] = useState(
+    Boolean(initialPomoPrefs.autoContinue)
+  );
+  const [pomoSound, setPomoSound] = useState(
+    initialPomoPrefs.soundEnabled !== undefined
+      ? Boolean(initialPomoPrefs.soundEnabled)
+      : true
+  );
+  const [pomoSoundType, setPomoSoundType] = useState(
+    initialPomoPrefs.soundType || 'bell'
+  );
   const [showPomoHistory, setShowPomoHistory] = useState(false);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(
+        POMO_PREFS_STORAGE_KEY,
+        JSON.stringify({
+          studyMin: pomoStudyMin,
+          shortBreakMin: pomoShortBreakMin,
+          longBreakMin: pomoLongBreakMin,
+          autoContinue: pomoAutoContinue,
+          soundEnabled: pomoSound,
+          soundType: pomoSoundType,
+        })
+      );
+    } catch (e) {
+      console.error('Errore salvataggio preferenze Pomodoro:', e);
+    }
+  }, [
+    pomoStudyMin,
+    pomoShortBreakMin,
+    pomoLongBreakMin,
+    pomoAutoContinue,
+    pomoSound,
+    pomoSoundType,
+  ]);
+
+  // Ref per evitare interruzioni del tick quando si cambiano opzioni al volo
+  const pomoAutoContinueRef = useRef(pomoAutoContinue);
+  const pomoSoundRef = useRef(pomoSound);
+  const pomoSoundTypeRef = useRef(pomoSoundType);
+  useEffect(() => {
+    pomoAutoContinueRef.current = pomoAutoContinue;
+  }, [pomoAutoContinue]);
+  useEffect(() => {
+    pomoSoundRef.current = pomoSound;
+  }, [pomoSound]);
+  useEffect(() => {
+    pomoSoundTypeRef.current = pomoSoundType;
+  }, [pomoSoundType]);
 
   // --- STATO SPACED REPETITION ---
   const [srTitleInput, setSrTitleInput] = useState('');
@@ -475,8 +636,6 @@ export default function App() {
   const [srStudyDateInput, setSrStudyDateInput] = useState(getTodayStr());
   const [srFilter, setSrFilter] = useState('due');
 
-  const pomoEndTimeRef = useRef(null);
-  const pomoHandledRef = useRef(false);
   const headerRenameInputRef = useRef(null);
   const sidebarNameInputRef = useRef(null);
 
@@ -519,36 +678,40 @@ export default function App() {
     });
   };
 
-  // --- LOGICA TICK TIMER POMODORO ---
+  // --- LOGICA TICK TIMER POMODORO CLASSICO ---
   useEffect(() => {
     if (!pomoRunning) {
-      document.title = 'StudyBurn — Simulatore Universitario';
+      document.title = 'StudyBurn';
       return;
     }
 
-    pomoEndTimeRef.current = Date.now() + pomoSecondsLeft * 1000;
-    pomoHandledRef.current = false;
+    const endTime = Date.now() + pomoSecondsLeft * 1000;
+    let handled = false;
+
+    const phaseLabel =
+      pomoPhase === 'study'
+        ? 'Studio'
+        : pomoPhase === 'short_break'
+        ? 'Pausa'
+        : 'Pausa Lunga';
 
     const interval = setInterval(() => {
-      const remaining = Math.max(
-        0,
-        Math.ceil((pomoEndTimeRef.current - Date.now()) / 1000)
-      );
+      const remaining = Math.max(0, Math.ceil((endTime - Date.now()) / 1000));
       setPomoSecondsLeft(remaining);
 
       const mm = String(Math.floor(remaining / 60)).padStart(2, '0');
       const ss = String(remaining % 60).padStart(2, '0');
-      document.title = `${mm}:${ss} ${
-        pomoPhase === 'study' ? 'Studio' : 'Pausa'
-      } — StudyBurn`;
+      document.title = `${mm}:${ss} ${phaseLabel} — StudyBurn`;
 
-      if (remaining === 0 && !pomoHandledRef.current) {
-        pomoHandledRef.current = true;
-        setPomoRunning(false);
+      if (remaining === 0 && !handled) {
+        handled = true;
+        clearInterval(interval);
 
-        if (pomoSound) {
-          playChime(pomoPhase);
+        if (pomoSoundRef.current) {
+          playPomodoroSound(pomoSoundTypeRef.current, pomoPhase);
         }
+
+        const shouldAutoContinue = pomoAutoContinueRef.current;
 
         if (pomoPhase === 'study') {
           const completedDuration = Math.max(1, Number(pomoStudyMin) || 25);
@@ -563,41 +726,93 @@ export default function App() {
             pomodoroSessions: [newSession, ...(ex.pomodoroSessions || [])],
           }));
 
-          setPomoPhase('break');
-          setPomoSecondsLeft(Math.max(1, Number(pomoBreakMin) || 5) * 60);
+          const nextCycle = pomoCycleCount + 1;
+          if (nextCycle >= 4) {
+            setPomoCycleCount(4);
+            setPomoPhase('long_break');
+            setPomoSecondsLeft(Math.max(1, Number(pomoLongBreakMin) || 15) * 60);
+          } else {
+            setPomoCycleCount(nextCycle);
+            setPomoPhase('short_break');
+            setPomoSecondsLeft(
+              Math.max(1, Number(pomoShortBreakMin) || 5) * 60
+            );
+          }
+          setPomoRunning(shouldAutoContinue);
         } else {
+          if (pomoPhase === 'long_break' || pomoCycleCount >= 4) {
+            setPomoCycleCount(0);
+          }
           setPomoPhase('study');
           setPomoSecondsLeft(Math.max(1, Number(pomoStudyMin) || 25) * 60);
+          setPomoRunning(shouldAutoContinue);
         }
       }
-    }, 250);
+    }, 200);
 
     return () => clearInterval(interval);
-  }, [pomoRunning, pomoPhase, pomoStudyMin, pomoBreakMin, pomoSound]);
+  }, [
+    pomoRunning,
+    pomoPhase,
+    pomoCycleCount,
+    pomoStudyMin,
+    pomoShortBreakMin,
+    pomoLongBreakMin,
+  ]);
+
+  const getPhaseMinutes = (phase) => {
+    if (phase === 'study') return Math.max(1, Number(pomoStudyMin) || 25);
+    if (phase === 'short_break')
+      return Math.max(1, Number(pomoShortBreakMin) || 5);
+    return Math.max(1, Number(pomoLongBreakMin) || 15);
+  };
+
+  const handleTogglePomoRunning = () => {
+    getUnlockedAudioContext();
+    setPomoRunning((r) => !r);
+  };
 
   const handlePomoSwitchPhase = (targetPhase) => {
     setPomoRunning(false);
+    if (targetPhase === 'study' && pomoCycleCount >= 4) {
+      setPomoCycleCount(0);
+    }
     setPomoPhase(targetPhase);
-    const mins =
-      targetPhase === 'study'
-        ? Math.max(1, Number(pomoStudyMin) || 25)
-        : Math.max(1, Number(pomoBreakMin) || 5);
-    setPomoSecondsLeft(mins * 60);
+    setPomoSecondsLeft(getPhaseMinutes(targetPhase) * 60);
+  };
+
+  const handlePomoSkipPhase = () => {
+    setPomoRunning(false);
+    if (pomoPhase === 'study') {
+      const nextCycle = pomoCycleCount + 1;
+      if (nextCycle >= 4) {
+        setPomoCycleCount(4);
+        setPomoPhase('long_break');
+        setPomoSecondsLeft(getPhaseMinutes('long_break') * 60);
+      } else {
+        setPomoCycleCount(nextCycle);
+        setPomoPhase('short_break');
+        setPomoSecondsLeft(getPhaseMinutes('short_break') * 60);
+      }
+    } else {
+      if (pomoPhase === 'long_break' || pomoCycleCount >= 4) {
+        setPomoCycleCount(0);
+      }
+      setPomoPhase('study');
+      setPomoSecondsLeft(getPhaseMinutes('study') * 60);
+    }
   };
 
   const handlePomoReset = () => {
     setPomoRunning(false);
-    const mins =
-      pomoPhase === 'study'
-        ? Math.max(1, Number(pomoStudyMin) || 25)
-        : Math.max(1, Number(pomoBreakMin) || 5);
-    setPomoSecondsLeft(mins * 60);
+    setPomoSecondsLeft(getPhaseMinutes(pomoPhase) * 60);
   };
 
-  const handlePomoPreset = (studyMins, breakMins) => {
+  const handlePomoPreset = (studyMins, shortBreakMins, longBreakMins) => {
     setPomoRunning(false);
     setPomoStudyMin(studyMins);
-    setPomoBreakMin(breakMins);
+    setPomoShortBreakMin(shortBreakMins);
+    setPomoLongBreakMin(longBreakMins);
     setPomoPhase('study');
     setPomoSecondsLeft(studyMins * 60);
   };
@@ -614,6 +829,7 @@ export default function App() {
       ...ex,
       pomodoroSessions: [manualSession, ...(ex.pomodoroSessions || [])],
     }));
+    setPomoCycleCount((c) => (c >= 4 ? 1 : c + 1));
   };
 
   const handleDeletePomoSession = (sessionId) => {
@@ -640,7 +856,9 @@ export default function App() {
     const phaseTotalSeconds =
       (pomoPhase === 'study'
         ? Math.max(1, Number(pomoStudyMin) || 25)
-        : Math.max(1, Number(pomoBreakMin) || 5)) * 60;
+        : pomoPhase === 'short_break'
+        ? Math.max(1, Number(pomoShortBreakMin) || 5)
+        : Math.max(1, Number(pomoLongBreakMin) || 15)) * 60;
     const progressPct = Math.min(
       100,
       Math.max(
@@ -657,7 +875,14 @@ export default function App() {
       totalMinutes,
       progressPct,
     };
-  }, [activeExam, pomoPhase, pomoStudyMin, pomoBreakMin, pomoSecondsLeft]);
+  }, [
+    activeExam,
+    pomoPhase,
+    pomoStudyMin,
+    pomoShortBreakMin,
+    pomoLongBreakMin,
+    pomoSecondsLeft,
+  ]);
 
   // --- LOGICA SPACED REPETITION ---
   const handleAddSrTopic = (e) => {
@@ -2451,10 +2676,14 @@ export default function App() {
         </section>
       );
     } else if (sectionId === 'pomodoro') {
+      const isBreakPhase =
+        pomoPhase === 'short_break' || pomoPhase === 'long_break';
+
       sectionContent = (
         <section
           className={`rounded-2xl border p-4 sm:p-6 shadow-sm space-y-4 ${cardSurfaceClass}`}
         >
+          {/* Intestazione Pomodoro */}
           <div
             className={`flex items-center justify-between gap-2 pb-3 border-b ${
               isDark ? 'border-slate-800' : 'border-slate-100'
@@ -2467,9 +2696,13 @@ export default function App() {
                     ? isDark
                       ? 'bg-indigo-950/80 text-indigo-400'
                       : 'bg-indigo-50 text-indigo-600'
+                    : pomoPhase === 'short_break'
+                    ? isDark
+                      ? 'bg-emerald-950/80 text-emerald-400'
+                      : 'bg-emerald-50 text-emerald-600'
                     : isDark
-                    ? 'bg-emerald-950/80 text-emerald-400'
-                    : 'bg-emerald-50 text-emerald-600'
+                    ? 'bg-sky-950/80 text-sky-400'
+                    : 'bg-sky-50 text-sky-600'
                 }`}
               >
                 {pomoPhase === 'study' ? (
@@ -2499,7 +2732,13 @@ export default function App() {
             <div className="flex items-center gap-1.5 shrink-0">
               <button
                 type="button"
-                onClick={() => setPomoSound((s) => !s)}
+                onClick={() => {
+                  const next = !pomoSound;
+                  setPomoSound(next);
+                  if (next) {
+                    getUnlockedAudioContext();
+                  }
+                }}
                 className={`p-2 rounded-xl border transition ${
                   isDark
                     ? 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700'
@@ -2531,12 +2770,14 @@ export default function App() {
 
           <div
             className={`grid gap-4 ${
-              !isNarrow ? 'grid-cols-1 md:grid-cols-12 items-center' : ''
+              !isNarrow ? 'grid-cols-1 md:grid-cols-12 items-start' : ''
             }`}
           >
-            <div className={!isNarrow ? 'md:col-span-7 space-y-3' : 'space-y-4'}>
+            {/* Colonna Timer Principale */}
+            <div className={!isNarrow ? 'md:col-span-7 space-y-3' : 'space-y-3.5'}>
+              {/* Selettore 3 Fasi Classiche */}
               <div
-                className={`grid grid-cols-2 gap-1.5 p-1 rounded-xl border ${
+                className={`grid grid-cols-3 gap-1 p-1 rounded-xl border ${
                   isDark
                     ? 'bg-slate-800 border-slate-700'
                     : 'bg-slate-100 border-slate-200'
@@ -2545,7 +2786,7 @@ export default function App() {
                 <button
                   type="button"
                   onClick={() => handlePomoSwitchPhase('study')}
-                  className={`py-1.5 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 ${
+                  className={`py-1.5 px-2 rounded-lg text-[11px] sm:text-xs font-bold transition flex items-center justify-center gap-1 ${
                     pomoPhase === 'study'
                       ? isDark
                         ? 'bg-slate-900 text-indigo-400 shadow-sm'
@@ -2555,14 +2796,13 @@ export default function App() {
                       : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
-                  <BookOpen className="w-3.5 h-3.5" />
-                  Studio ({pomoStudyMin}m)
+                  <span>Studio ({pomoStudyMin}m)</span>
                 </button>
                 <button
                   type="button"
-                  onClick={() => handlePomoSwitchPhase('break')}
-                  className={`py-1.5 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 ${
-                    pomoPhase === 'break'
+                  onClick={() => handlePomoSwitchPhase('short_break')}
+                  className={`py-1.5 px-2 rounded-lg text-[11px] sm:text-xs font-bold transition flex items-center justify-center gap-1 ${
+                    pomoPhase === 'short_break'
                       ? isDark
                         ? 'bg-slate-900 text-emerald-400 shadow-sm'
                         : 'bg-white text-emerald-700 shadow-sm'
@@ -2571,37 +2811,112 @@ export default function App() {
                       : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
-                  <Coffee className="w-3.5 h-3.5" />
-                  Pausa ({pomoBreakMin}m)
+                  <span>Pausa ({pomoShortBreakMin}m)</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handlePomoSwitchPhase('long_break')}
+                  className={`py-1.5 px-2 rounded-lg text-[11px] sm:text-xs font-bold transition flex items-center justify-center gap-1 ${
+                    pomoPhase === 'long_break'
+                      ? isDark
+                        ? 'bg-slate-900 text-sky-400 shadow-sm'
+                        : 'bg-white text-sky-700 shadow-sm'
+                      : isDark
+                      ? 'text-slate-400 hover:text-slate-200'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  <span>Lunga ({pomoLongBreakMin}m)</span>
                 </button>
               </div>
 
+              {/* Box Quadrante Timer + Ciclo 4 Sessioni */}
               <div
-                className={`rounded-2xl p-5 text-center border transition-colors ${
+                className={`rounded-2xl p-4 sm:p-5 text-center border transition-colors ${
                   pomoPhase === 'study'
                     ? isDark
                       ? 'bg-indigo-950/35 border-indigo-800/60'
                       : 'bg-indigo-50/60 border-indigo-200/80'
+                    : pomoPhase === 'short_break'
+                    ? isDark
+                      ? 'bg-emerald-950/35 border-emerald-800/60'
+                      : 'bg-emerald-50/60 border-emerald-200/80'
                     : isDark
-                    ? 'bg-emerald-950/35 border-emerald-800/60'
-                    : 'bg-emerald-50/60 border-emerald-200/80'
+                    ? 'bg-sky-950/35 border-sky-800/60'
+                    : 'bg-sky-50/60 border-sky-200/80'
                 }`}
               >
-                <span
-                  className={`inline-block text-[10px] font-bold uppercase tracking-widest px-2.5 py-0.5 rounded-full mb-2 ${
-                    pomoPhase === 'study'
-                      ? isDark
-                        ? 'bg-indigo-900/70 text-indigo-300'
-                        : 'bg-indigo-100 text-indigo-700'
-                      : isDark
-                      ? 'bg-emerald-900/70 text-emerald-300'
-                      : 'bg-emerald-100 text-emerald-700'
-                  }`}
-                >
-                  {pomoPhase === 'study'
-                    ? 'Sessione di Concentrazione'
-                    : 'Pausa di Recupero'}
-                </span>
+                <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+                  <span
+                    className={`inline-block text-[10px] font-bold uppercase tracking-widest px-2.5 py-0.5 rounded-full ${
+                      pomoPhase === 'study'
+                        ? isDark
+                          ? 'bg-indigo-900/70 text-indigo-300'
+                          : 'bg-indigo-100 text-indigo-700'
+                        : pomoPhase === 'short_break'
+                        ? isDark
+                          ? 'bg-emerald-900/70 text-emerald-300'
+                          : 'bg-emerald-100 text-emerald-700'
+                        : isDark
+                        ? 'bg-sky-900/70 text-sky-300'
+                        : 'bg-sky-100 text-sky-700'
+                    }`}
+                  >
+                    {pomoPhase === 'study'
+                      ? 'Sessione di Studio'
+                      : pomoPhase === 'short_break'
+                      ? 'Pausa Breve'
+                      : 'Pausa Lunga'}
+                  </span>
+
+                  {/* Indicatore Ciclo 4 Sessioni */}
+                  <div className="inline-flex items-center gap-1.5">
+                    <div className="flex items-center gap-1" title="Progresso verso la Pausa Lunga (4 sessioni)">
+                      {[1, 2, 3, 4].map((step) => {
+                        const completed = step <= pomoCycleCount;
+                        const activeCurrent =
+                          pomoPhase === 'study' && step === pomoCycleCount + 1;
+                        return (
+                          <span
+                            key={step}
+                            className={`w-2.5 h-2.5 rounded-full transition-all ${
+                              completed
+                                ? 'bg-indigo-500 scale-105'
+                                : activeCurrent
+                                ? isDark
+                                  ? 'bg-indigo-400/40 ring-2 ring-indigo-400'
+                                  : 'bg-indigo-200 ring-2 ring-indigo-500'
+                                : isDark
+                                ? 'bg-slate-700'
+                                : 'bg-slate-300/80'
+                            }`}
+                          />
+                        );
+                      })}
+                    </div>
+                    <span
+                      className={`text-[11px] font-bold ${
+                        isDark ? 'text-slate-300' : 'text-slate-600'
+                      }`}
+                    >
+                      {pomoCycleCount}/4
+                    </span>
+                    {pomoCycleCount > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => setPomoCycleCount(0)}
+                        className={`p-0.5 rounded transition ${
+                          isDark
+                            ? 'text-slate-500 hover:text-slate-300'
+                            : 'text-slate-400 hover:text-slate-700'
+                        }`}
+                        title="Azzera conteggio ciclo (0/4)"
+                      >
+                        <RotateCcw className="w-3 h-3" />
+                      </button>
+                    )}
+                  </div>
+                </div>
 
                 <div
                   className={`text-5xl font-extrabold tracking-tight tabular-nums my-1 ${
@@ -2620,7 +2935,11 @@ export default function App() {
                 >
                   <div
                     className={`h-full transition-all duration-300 ${
-                      pomoPhase === 'study' ? 'bg-indigo-500' : 'bg-emerald-500'
+                      pomoPhase === 'study'
+                        ? 'bg-indigo-500'
+                        : pomoPhase === 'short_break'
+                        ? 'bg-emerald-500'
+                        : 'bg-sky-500'
                     }`}
                     style={{ width: `${pomoStats.progressPct}%` }}
                   />
@@ -2629,12 +2948,14 @@ export default function App() {
                 <div className="flex items-center justify-center gap-2">
                   <button
                     type="button"
-                    onClick={() => setPomoRunning((r) => !r)}
+                    onClick={handleTogglePomoRunning}
                     className={`flex-1 inline-flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-sm font-bold text-white shadow-sm transition ${
                       pomoRunning
                         ? 'bg-amber-500 hover:bg-amber-600'
                         : pomoPhase === 'study'
                         ? 'bg-indigo-600 hover:bg-indigo-500'
+                        : isBreakPhase && pomoPhase === 'long_break'
+                        ? 'bg-sky-600 hover:bg-sky-500'
                         : 'bg-emerald-600 hover:bg-emerald-500'
                     }`}
                   >
@@ -2666,26 +2987,125 @@ export default function App() {
 
                   <button
                     type="button"
-                    onClick={() =>
-                      handlePomoSwitchPhase(
-                        pomoPhase === 'study' ? 'break' : 'study'
-                      )
-                    }
+                    onClick={handlePomoSkipPhase}
                     className={`p-2.5 rounded-xl border transition ${
                       isDark
                         ? 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700'
                         : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
                     }`}
-                    title="Passa alla fase successiva"
+                    title="Passa alla fase successiva del ciclo"
                   >
                     <SkipForward className="w-4 h-4" />
                   </button>
                 </div>
               </div>
+
+              {/* Opzione Continuazione Automatica + Scelta Suono */}
+              <div className={`p-3 rounded-xl border space-y-2.5 ${subPanelClass}`}>
+                {/* Toggle Auto-start */}
+                <div className="flex items-center justify-between gap-2">
+                  <div className="min-w-0">
+                    <div
+                      className={`text-xs font-bold ${
+                        isDark ? 'text-slate-200' : 'text-slate-800'
+                      }`}
+                    >
+                      Continuazione automatica
+                    </div>
+                    <div
+                      className={`text-[11px] leading-tight ${
+                        isDark ? 'text-slate-400' : 'text-slate-500'
+                      }`}
+                    >
+                      Avvia da solo pause e sessioni successive
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={pomoAutoContinue}
+                    onClick={() => setPomoAutoContinue((a) => !a)}
+                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                      pomoAutoContinue
+                        ? 'bg-indigo-600'
+                        : isDark
+                        ? 'bg-slate-700'
+                        : 'bg-slate-300'
+                    }`}
+                    title="Attiva o disattiva l'avvio automatico delle fasi successive"
+                  >
+                    <span
+                      className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                        pomoAutoContinue ? 'translate-x-5' : 'translate-x-0'
+                      }`}
+                    />
+                  </button>
+                </div>
+
+                {/* Selettore Suono di Completamento */}
+                <div
+                  className={`pt-2 border-t flex items-center justify-between gap-2 ${
+                    isDark ? 'border-slate-700/70' : 'border-slate-200/80'
+                  }`}
+                >
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <Bell
+                      className={`w-3.5 h-3.5 ${
+                        isDark ? 'text-indigo-400' : 'text-indigo-600'
+                      }`}
+                    />
+                    <span
+                      className={`text-xs font-bold ${
+                        isDark ? 'text-slate-200' : 'text-slate-800'
+                      }`}
+                    >
+                      Suono fine:
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-1.5 flex-1 justify-end min-w-0">
+                    <select
+                      value={pomoSoundType}
+                      disabled={!pomoSound}
+                      onChange={(e) => {
+                        const chosen = e.target.value;
+                        setPomoSoundType(chosen);
+                        if (pomoSound) {
+                          playPomodoroSound(chosen, 'study');
+                        }
+                      }}
+                      className={`px-2 py-1 rounded-lg border text-xs font-semibold truncate max-w-[155px] disabled:opacity-50 ${inputSurfaceClass}`}
+                    >
+                      {POMO_SOUNDS.map((snd) => (
+                        <option key={snd.id} value={snd.id}>
+                          {snd.label}
+                        </option>
+                      ))}
+                    </select>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (!pomoSound) setPomoSound(true);
+                        playPomodoroSound(pomoSoundType, 'study');
+                      }}
+                      className={`px-2 py-1 rounded-lg border text-[11px] font-bold transition shrink-0 ${
+                        isDark
+                          ? 'bg-slate-800 border-slate-700 text-indigo-300 hover:bg-slate-700'
+                          : 'bg-white border-slate-200 text-indigo-700 hover:bg-indigo-50'
+                      }`}
+                      title="Ascolta anteprima del suono selezionato"
+                    >
+                      Prova
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
 
+            {/* Colonna Impostazioni Tempi & Statistiche */}
             <div className={!isNarrow ? 'md:col-span-5 space-y-3' : 'space-y-3'}>
-              <div className="space-y-3 pt-1">
+              <div className="space-y-2.5 pt-0.5">
                 <div className="flex items-center justify-between gap-1.5">
                   <span
                     className={`text-[11px] font-semibold ${
@@ -2694,18 +3114,20 @@ export default function App() {
                   >
                     Preset:
                   </span>
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex items-center gap-1">
                     {[
-                      { s: 25, b: 5 },
-                      { s: 45, b: 10 },
-                      { s: 50, b: 10 },
+                      { s: 25, sb: 5, lb: 15 },
+                      { s: 45, sb: 10, lb: 20 },
+                      { s: 50, sb: 10, lb: 30 },
                     ].map((pr) => (
                       <button
-                        key={`${pr.s}-${pr.b}`}
+                        key={`${pr.s}-${pr.sb}-${pr.lb}`}
                         type="button"
-                        onClick={() => handlePomoPreset(pr.s, pr.b)}
-                        className={`px-2 py-1 rounded-lg text-[11px] font-bold border transition ${
-                          pomoStudyMin === pr.s && pomoBreakMin === pr.b
+                        onClick={() => handlePomoPreset(pr.s, pr.sb, pr.lb)}
+                        className={`px-2 py-1 rounded-lg text-[10px] font-bold border transition ${
+                          pomoStudyMin === pr.s &&
+                          pomoShortBreakMin === pr.sb &&
+                          pomoLongBreakMin === pr.lb
                             ? isDark
                               ? 'bg-indigo-600 text-white border-indigo-500'
                               : 'bg-slate-900 text-white border-slate-900'
@@ -2714,20 +3136,20 @@ export default function App() {
                             : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
                         }`}
                       >
-                        {pr.s}/{pr.b}m
+                        {pr.s}/{pr.sb}/{pr.lb}
                       </button>
                     ))}
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-3 gap-2">
                   <div>
                     <label
-                      className={`block text-[11px] font-bold mb-1 ${
+                      className={`block text-[10px] font-bold mb-1 ${
                         isDark ? 'text-slate-300' : 'text-slate-700'
                       }`}
                     >
-                      Studio (min)
+                      Studio (m)
                     </label>
                     <input
                       type="number"
@@ -2744,34 +3166,61 @@ export default function App() {
                           setPomoSecondsLeft(val * 60);
                         }
                       }}
-                      className={`w-full px-3 py-1.5 rounded-xl border text-sm font-semibold ${inputMutedSurfaceClass}`}
+                      className={`w-full px-2.5 py-1.5 rounded-xl border text-xs sm:text-sm font-semibold ${inputMutedSurfaceClass}`}
                     />
                   </div>
 
                   <div>
                     <label
-                      className={`block text-[11px] font-bold mb-1 ${
+                      className={`block text-[10px] font-bold mb-1 ${
                         isDark ? 'text-slate-300' : 'text-slate-700'
                       }`}
                     >
-                      Pausa (min)
+                      Pausa (m)
                     </label>
                     <input
                       type="number"
                       min="1"
                       max="60"
-                      value={pomoBreakMin}
+                      value={pomoShortBreakMin}
                       onChange={(e) => {
                         const val = Math.max(
                           1,
                           Math.min(60, Number(e.target.value) || 1)
                         );
-                        setPomoBreakMin(val);
-                        if (!pomoRunning && pomoPhase === 'break') {
+                        setPomoShortBreakMin(val);
+                        if (!pomoRunning && pomoPhase === 'short_break') {
                           setPomoSecondsLeft(val * 60);
                         }
                       }}
-                      className={`w-full px-3 py-1.5 rounded-xl border text-sm font-semibold ${inputMutedSurfaceClass}`}
+                      className={`w-full px-2.5 py-1.5 rounded-xl border text-xs sm:text-sm font-semibold ${inputMutedSurfaceClass}`}
+                    />
+                  </div>
+
+                  <div>
+                    <label
+                      className={`block text-[10px] font-bold mb-1 ${
+                        isDark ? 'text-slate-300' : 'text-slate-700'
+                      }`}
+                    >
+                      Lunga (m)
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      max="90"
+                      value={pomoLongBreakMin}
+                      onChange={(e) => {
+                        const val = Math.max(
+                          1,
+                          Math.min(90, Number(e.target.value) || 1)
+                        );
+                        setPomoLongBreakMin(val);
+                        if (!pomoRunning && pomoPhase === 'long_break') {
+                          setPomoSecondsLeft(val * 60);
+                        }
+                      }}
+                      className={`w-full px-2.5 py-1.5 rounded-xl border text-xs sm:text-sm font-semibold ${inputMutedSurfaceClass}`}
                     />
                   </div>
                 </div>
@@ -3331,24 +3780,13 @@ export default function App() {
               <BookOpen className="w-5 h-5" />
             </div>
             <div>
-              <div className="flex items-center gap-2 flex-wrap">
-                <h1
-                  className={`text-xl font-bold tracking-tight ${
-                    isDark ? 'text-slate-50' : 'text-slate-900'
-                  }`}
-                >
-                  StudyBurn
-                </h1>
-                <span
-                  className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${
-                    isDark
-                      ? 'bg-indigo-950/80 text-indigo-300 border-indigo-800/80'
-                      : 'bg-indigo-50 text-indigo-700 border-indigo-100'
-                  }`}
-                >
-                  Simulatore Universitario
-                </span>
-              </div>
+              <h1
+                className={`text-xl font-bold tracking-tight ${
+                  isDark ? 'text-slate-50' : 'text-slate-900'
+                }`}
+              >
+                StudyBurn
+              </h1>
               <p
                 className={`text-xs ${
                   isDark ? 'text-slate-400' : 'text-slate-500'
