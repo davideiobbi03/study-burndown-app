@@ -3,6 +3,8 @@ import {
   ResponsiveContainer,
   ComposedChart,
   Line,
+  Bar,
+  Cell,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -34,6 +36,7 @@ import {
   Coffee,
   Volume2,
   VolumeX,
+  Repeat,
 } from 'lucide-react';
 
 // --- UTILITY DATE (Locale, senza slittamenti di fuso orario) ---
@@ -69,6 +72,13 @@ function addDays(dateStr, days) {
   const dt = parseLocalDate(dateStr);
   dt.setDate(dt.getDate() + days);
   return formatDateStr(dt);
+}
+
+function diffDays(fromDateStr, toDateStr) {
+  const a = parseLocalDate(fromDateStr);
+  const b = parseLocalDate(toDateStr);
+  const msPerDay = 1000 * 60 * 60 * 24;
+  return Math.round((b - a) / msPerDay);
 }
 
 function formatShortDate(dateStr) {
@@ -141,6 +151,7 @@ function createDefaultExam(name = 'Biochimica Clinica') {
     targetPace: 20,
     logs: [],
     pomodoroSessions: [],
+    srTopics: [],
   };
 }
 
@@ -173,6 +184,68 @@ function createDemoExam() {
       { id: 'p_1', date: addDays(today, -1), time: '16:30', durationMin: 50 },
       { id: 'p_2', date: addDays(today, -1), time: '17:35', durationMin: 50 },
       { id: 'p_3', date: today, time: '09:45', durationMin: 25 },
+    ],
+    srTopics: [
+      {
+        id: 'sr_1',
+        title: 'Marcatori cardiaci (Troponine, BNP)',
+        pagesRef: 'pp. 18-42',
+        createdDate: addDays(today, -8),
+        lastReviewDate: addDays(today, -4),
+        nextReviewDate: addDays(today, -1),
+        intervalDays: 3,
+        repetitions: 1,
+        easeFactor: 2.3,
+        lastRating: 'hard',
+      },
+      {
+        id: 'sr_2',
+        title: 'Emocromo e anemie microcitiche',
+        pagesRef: 'pp. 43-78',
+        createdDate: addDays(today, -7),
+        lastReviewDate: addDays(today, -3),
+        nextReviewDate: today,
+        intervalDays: 3,
+        repetitions: 1,
+        easeFactor: 2.5,
+        lastRating: 'good',
+      },
+      {
+        id: 'sr_3',
+        title: 'Cascata coagulativa e PT/aPTT',
+        pagesRef: 'pp. 79-110',
+        createdDate: addDays(today, -1),
+        lastReviewDate: addDays(today, -1),
+        nextReviewDate: today,
+        intervalDays: 1,
+        repetitions: 0,
+        easeFactor: 2.5,
+        lastRating: null,
+      },
+      {
+        id: 'sr_4',
+        title: 'Funzionalità renale, eGFR e proteinuria',
+        pagesRef: 'pp. 111-145',
+        createdDate: addDays(today, -5),
+        lastReviewDate: addDays(today, -2),
+        nextReviewDate: addDays(today, 2),
+        intervalDays: 4,
+        repetitions: 2,
+        easeFactor: 2.6,
+        lastRating: 'easy',
+      },
+      {
+        id: 'sr_5',
+        title: 'Enzimi epatici e itteri',
+        pagesRef: 'pp. 146-180',
+        createdDate: addDays(today, -6),
+        lastReviewDate: addDays(today, -1),
+        nextReviewDate: addDays(today, 5),
+        intervalDays: 6,
+        repetitions: 2,
+        easeFactor: 2.5,
+        lastRating: 'good',
+      },
     ],
   };
 }
@@ -219,6 +292,12 @@ export default function App() {
   const [pomoRunning, setPomoRunning] = useState(false);
   const [pomoSound, setPomoSound] = useState(true);
   const [showPomoHistory, setShowPomoHistory] = useState(false);
+
+  // --- STATO SPACED REPETITION ---
+  const [srTitleInput, setSrTitleInput] = useState('');
+  const [srPagesInput, setSrPagesInput] = useState('');
+  const [srStudyDateInput, setSrStudyDateInput] = useState(getTodayStr());
+  const [srFilter, setSrFilter] = useState('due'); // 'due' | 'upcoming' | 'all'
 
   const pomoEndTimeRef = useRef(null);
   const pomoHandledRef = useRef(false);
@@ -308,11 +387,9 @@ export default function App() {
             pomodoroSessions: [newSession, ...(ex.pomodoroSessions || [])],
           }));
 
-          // Passa automaticamente alla pausa pronta per partire
           setPomoPhase('break');
           setPomoSecondsLeft(Math.max(1, Number(pomoBreakMin) || 5) * 60);
         } else {
-          // Fine pausa: torna pronto per una nuova sessione di studio
           setPomoPhase('study');
           setPomoSecondsLeft(Math.max(1, Number(pomoStudyMin) || 25) * 60);
         }
@@ -406,6 +483,165 @@ export default function App() {
     };
   }, [activeExam, pomoPhase, pomoStudyMin, pomoBreakMin, pomoSecondsLeft]);
 
+  // --- LOGICA SPACED REPETITION ---
+  const handleAddSrTopic = (e) => {
+    e.preventDefault();
+    const cleanTitle = srTitleInput.trim();
+    if (!cleanTitle) return;
+
+    const baseDate = srStudyDateInput || getTodayStr();
+    const newTopic = {
+      id: `sr_${Date.now()}_${Math.random().toString(36).slice(2, 5)}`,
+      title: cleanTitle,
+      pagesRef: srPagesInput.trim(),
+      createdDate: baseDate,
+      lastReviewDate: baseDate,
+      nextReviewDate: addDays(baseDate, 1), // Primo ripasso dopo 24h
+      intervalDays: 1,
+      repetitions: 0,
+      easeFactor: 2.5,
+      lastRating: null,
+    };
+
+    updateActiveExam(
+      (ex) => ({
+        ...ex,
+        srTopics: [newTopic, ...(ex.srTopics || [])],
+      }),
+      true
+    );
+
+    setSrTitleInput('');
+    setSrPagesInput('');
+  };
+
+  const handleReviewSrTopic = (topicId, rating) => {
+    const today = getTodayStr();
+    updateActiveExam(
+      (ex) => ({
+        ...ex,
+        srTopics: (ex.srTopics || []).map((topic) => {
+          if (topic.id !== topicId) return topic;
+
+          const currentReps = Number(topic.repetitions || 0);
+          const currentInterval = Math.max(1, Number(topic.intervalDays || 1));
+          const currentEase = Number(topic.easeFactor || 2.5);
+
+          let nextInterval = 1;
+          let nextReps = currentReps;
+          let nextEase = currentEase;
+
+          if (rating === 'hard') {
+            nextInterval = currentReps <= 1 ? 1 : Math.max(1, Math.round(currentInterval * 0.6));
+            nextReps = Math.max(0, currentReps);
+            nextEase = Math.max(1.3, Number((currentEase - 0.2).toFixed(2)));
+          } else if (rating === 'good') {
+            if (currentReps === 0) nextInterval = 1;
+            else if (currentReps === 1) nextInterval = 3;
+            else if (currentReps === 2) nextInterval = 7;
+            else nextInterval = Math.round(currentInterval * currentEase);
+            nextReps = currentReps + 1;
+          } else if (rating === 'easy') {
+            if (currentReps === 0) nextInterval = 3;
+            else if (currentReps === 1) nextInterval = 6;
+            else nextInterval = Math.round(currentInterval * currentEase * 1.3);
+            nextReps = currentReps + 1;
+            nextEase = Math.min(3.2, Number((currentEase + 0.15).toFixed(2)));
+          }
+
+          return {
+            ...topic,
+            lastReviewDate: today,
+            nextReviewDate: addDays(today, nextInterval),
+            intervalDays: nextInterval,
+            repetitions: nextReps,
+            easeFactor: nextEase,
+            lastRating: rating,
+          };
+        }),
+      }),
+      true
+    );
+  };
+
+  const handleDeleteSrTopic = (topicId) => {
+    updateActiveExam(
+      (ex) => ({
+        ...ex,
+        srTopics: (ex.srTopics || []).filter((t) => t.id !== topicId),
+      }),
+      true
+    );
+  };
+
+  const srAnalytics = useMemo(() => {
+    const today = getTodayStr();
+    const topics = activeExam.srTopics || [];
+
+    const enriched = topics
+      .map((t) => {
+        const deltaDays = diffDays(today, t.nextReviewDate); // <0 scaduto, 0 oggi, >0 futuro
+        return {
+          ...t,
+          deltaDays,
+          isOverdue: deltaDays < 0,
+          isDueToday: deltaDays === 0,
+          isDue: deltaDays <= 0,
+          isAfterExam:
+            activeExam.examDate && t.nextReviewDate > activeExam.examDate,
+        };
+      })
+      .sort((a, b) => a.nextReviewDate.localeCompare(b.nextReviewDate));
+
+    const overdueCount = enriched.filter((t) => t.isOverdue).length;
+    const dueTodayCount = enriched.filter((t) => t.isDueToday).length;
+    const dueTotalCount = overdueCount + dueTodayCount;
+    const next7DaysCount = enriched.filter(
+      (t) => t.deltaDays > 0 && t.deltaDays <= 7
+    ).length;
+
+    // Costruzione serie 14 giorni per grafico carico ripassi (Oggi -> +13 giorni)
+    const forecastChart = [];
+    for (let i = 0; i < 14; i++) {
+      const dateStr = addDays(today, i);
+      const scheduledForDay = enriched.filter((t) =>
+        i === 0 ? t.nextReviewDate <= today : t.nextReviewDate === dateStr
+      );
+      forecastChart.push({
+        date: i === 0 ? 'Oggi' : formatShortDate(dateStr),
+        rawDate: dateStr,
+        ripassi: scheduledForDay.length,
+        topicsList: scheduledForDay.map((t) => t.title),
+        isToday: i === 0,
+      });
+    }
+
+    const examShort = activeExam.examDate
+      ? formatShortDate(activeExam.examDate)
+      : null;
+
+    return {
+      allTopics: enriched,
+      overdueCount,
+      dueTodayCount,
+      dueTotalCount,
+      next7DaysCount,
+      totalTopics: enriched.length,
+      forecastChart,
+      examShort,
+    };
+  }, [activeExam]);
+
+  const filteredSrTopics = useMemo(() => {
+    if (srFilter === 'due') {
+      return srAnalytics.allTopics.filter((t) => t.isDue);
+    }
+    if (srFilter === 'upcoming') {
+      return srAnalytics.allTopics.filter((t) => !t.isDue);
+    }
+    return srAnalytics.allTopics;
+  }, [srAnalytics, srFilter]);
+
   // --- GESTIONE ESAMI E REGISTRO PAGINE ---
   const handleUndo = () => {
     if (undoStack.length === 0) return;
@@ -423,6 +659,7 @@ export default function App() {
       activeExamId: newExam.id,
     }));
     setLogDate(getTodayStr());
+    setSrStudyDateInput(getTodayStr());
     setIsRenamingHeader(true);
   };
 
@@ -435,6 +672,7 @@ export default function App() {
       pomodoroSessions: (activeExam.pomodoroSessions || []).map((s) => ({
         ...s,
       })),
+      srTopics: (activeExam.srTopics || []).map((t) => ({ ...t })),
     };
     setUndoStack((u) => [state, ...u.slice(0, 9)]);
     setState((prev) => ({
@@ -452,6 +690,7 @@ export default function App() {
       activeExamId: demo.id,
     }));
     setLogDate(getTodayStr());
+    setSrStudyDateInput(getTodayStr());
     setIsRenamingHeader(false);
   };
 
@@ -473,7 +712,7 @@ export default function App() {
       setTimeout(() => setConfirmReset(false), 4000);
       return;
     }
-    updateActiveExam({ logs: [], pomodoroSessions: [] }, true);
+    updateActiveExam({ logs: [], pomodoroSessions: [], srTopics: [] }, true);
     setConfirmReset(false);
   };
 
@@ -896,7 +1135,7 @@ export default function App() {
                 </span>
               </div>
               <p className="text-xs text-slate-500">
-                Tabella di marcia adattiva, Burn-down Chart e Timer Pomodoro
+                Burn-down Chart, Spaced Repetition adattiva e Timer Pomodoro
               </p>
             </div>
           </div>
@@ -1194,11 +1433,11 @@ export default function App() {
           </div>
         </section>
 
-        {/* GRIGLIA PRINCIPALE: GRAFICO + REGISTRO A SINISTRA | POMODORO + PARAMETRI A DESTRA */}
+        {/* GRIGLIA PRINCIPALE: GRAFICI + SPACED REPETITION + REGISTRO A SINISTRA | POMODORO + PARAMETRI A DESTRA */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           {/* COLONNA SINISTRA (8 col) */}
           <div className="lg:col-span-8 space-y-6">
-            {/* BURN-DOWN CHART */}
+            {/* 1. BURN-DOWN CHART */}
             <section className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-6 shadow-sm">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
                 <div>
@@ -1229,7 +1468,7 @@ export default function App() {
                 </div>
               </div>
 
-              <div className="h-[340px] sm:h-[380px] w-full">
+              <div className="h-[320px] sm:h-[360px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <ComposedChart
                     data={analytics.chartData}
@@ -1339,7 +1578,352 @@ export default function App() {
               </div>
             </section>
 
-            {/* REGISTRO AVANZAMENTO REALE E STORICO */}
+            {/* 2. SEZIONE SPACED REPETITION & GRAFICO CARICO RIPASSI */}
+            <section className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-6 shadow-sm space-y-5">
+              {/* Intestazione Spaced Repetition + Contatori */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+                <div className="flex items-start gap-2.5">
+                  <div className="p-2 rounded-xl bg-indigo-50 text-indigo-600 mt-0.5">
+                    <Repeat className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h3 className="text-base sm:text-lg font-bold text-slate-900">
+                      Spaced Repetition &amp; Piano Ripassi
+                    </h3>
+                    <p className="text-xs text-slate-500">
+                      Pianificazione automatica degli argomenti da ripassare (1g → 3g → 7g → 14g → 30g+)
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2">
+                  <span
+                    className={`px-2.5 py-1 rounded-xl text-xs font-bold border ${
+                      srAnalytics.dueTotalCount > 0
+                        ? 'bg-amber-50 text-amber-800 border-amber-200'
+                        : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                    }`}
+                  >
+                    Oggi: {srAnalytics.dueTotalCount}{' '}
+                    {srAnalytics.dueTotalCount === 1 ? 'argomento' : 'argomenti'}
+                  </span>
+                  <span className="px-2.5 py-1 rounded-xl text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200">
+                    Prossimi 7gg: {srAnalytics.next7DaysCount}
+                  </span>
+                </div>
+              </div>
+
+              {/* Grafico Previsionale Ripassi (14 Giorni) */}
+              <div className="bg-slate-50/70 rounded-xl border border-slate-200/80 p-3.5 sm:p-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+                  <span className="text-xs font-bold uppercase tracking-wider text-slate-600">
+                    Carico Ripassi Programmati (Prossimi 14 Giorni)
+                  </span>
+                  <div className="flex items-center gap-3 text-[11px] font-medium text-slate-500">
+                    <span className="inline-flex items-center gap-1.5">
+                      <span className="w-2.5 h-2.5 rounded-sm bg-amber-500" />
+                      Oggi / Scaduti
+                    </span>
+                    <span className="inline-flex items-center gap-1.5">
+                      <span className="w-2.5 h-2.5 rounded-sm bg-indigo-500" />
+                      In programma
+                    </span>
+                  </div>
+                </div>
+
+                <div className="h-[190px] w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <ComposedChart
+                      data={srAnalytics.forecastChart}
+                      margin={{ top: 14, right: 12, left: -22, bottom: 0 }}
+                    >
+                      <CartesianGrid
+                        strokeDasharray="3 3"
+                        vertical={false}
+                        stroke="#e2e8f0"
+                      />
+                      <XAxis
+                        dataKey="date"
+                        tick={{ fontSize: 11, fill: '#64748b' }}
+                        tickLine={false}
+                        axisLine={{ stroke: '#cbd5e1' }}
+                      />
+                      <YAxis
+                        allowDecimals={false}
+                        tick={{ fontSize: 11, fill: '#64748b' }}
+                        tickLine={false}
+                        axisLine={false}
+                      />
+                      <Tooltip
+                        cursor={{ fill: '#e2e8f0', opacity: 0.35 }}
+                        content={({ active, payload }) => {
+                          if (!active || !payload || !payload.length) return null;
+                          const item = payload[0].payload;
+                          return (
+                            <div className="bg-slate-900 text-slate-50 rounded-xl p-3 text-xs shadow-lg max-w-[260px]">
+                              <div className="font-bold text-slate-200 mb-1">
+                                {item.date} — {item.ripassi}{' '}
+                                {item.ripassi === 1 ? 'argomento' : 'argomenti'}
+                              </div>
+                              {item.topicsList && item.topicsList.length > 0 ? (
+                                <ul className="space-y-0.5 text-[11px] text-slate-300 list-disc pl-3.5">
+                                  {item.topicsList.map((title, idx) => (
+                                    <li key={idx} className="truncate">
+                                      {title}
+                                    </li>
+                                  ))}
+                                </ul>
+                              ) : (
+                                <p className="text-[11px] text-slate-400">
+                                  Nessun ripasso previsto in questa data.
+                                </p>
+                              )}
+                            </div>
+                          );
+                        }}
+                      />
+
+                      {srAnalytics.examShort && (
+                        <ReferenceLine
+                          x={srAnalytics.examShort}
+                          stroke="#e11d48"
+                          strokeDasharray="4 4"
+                          label={{
+                            value: 'Appello',
+                            position: 'top',
+                            fill: '#e11d48',
+                            fontSize: 10,
+                            fontWeight: 700,
+                          }}
+                        />
+                      )}
+
+                      <Bar dataKey="ripassi" radius={[6, 6, 0, 0]} maxBarSize={32}>
+                        {srAnalytics.forecastChart.map((entry, idx) => (
+                          <Cell
+                            key={`cell-${idx}`}
+                            fill={
+                              entry.isToday && entry.ripassi > 0
+                                ? '#f59e0b'
+                                : '#6366f1'
+                            }
+                          />
+                        ))}
+                      </Bar>
+                    </ComposedChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              {/* Form Aggiunta Nuovo Argomento Studia-e-Ripassa */}
+              <form
+                onSubmit={handleAddSrTopic}
+                className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end bg-slate-50 p-3.5 rounded-xl border border-slate-200/80"
+              >
+                <div className="sm:col-span-5">
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Argomento / Capitolo studiato
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Es. Ciclo di Krebs, Asse Tiroideo..."
+                    value={srTitleInput}
+                    onChange={(e) => setSrTitleInput(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl bg-white border border-slate-300 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    required
+                  />
+                </div>
+
+                <div className="sm:col-span-2">
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Pagine (opz.)
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="pp. 40-58"
+                    value={srPagesInput}
+                    onChange={(e) => setSrPagesInput(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl bg-white border border-slate-300 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+
+                <div className="sm:col-span-3">
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Data studio
+                  </label>
+                  <input
+                    type="date"
+                    value={srStudyDateInput}
+                    onChange={(e) => setSrStudyDateInput(e.target.value)}
+                    className="w-full px-2.5 py-2 rounded-xl bg-white border border-slate-300 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    required
+                  />
+                </div>
+
+                <div className="sm:col-span-2">
+                  <button
+                    type="submit"
+                    className="w-full inline-flex items-center justify-center gap-1 px-3 py-2 rounded-xl bg-slate-900 text-white text-sm font-semibold hover:bg-slate-800 transition shadow-sm"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Aggiungi
+                  </button>
+                </div>
+              </form>
+
+              {/* Filtri + Coda Argomenti da Ripassare */}
+              <div className="space-y-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="inline-flex rounded-xl bg-slate-100 p-1 border border-slate-200">
+                    <button
+                      type="button"
+                      onClick={() => setSrFilter('due')}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
+                        srFilter === 'due'
+                          ? 'bg-white text-slate-900 shadow-sm'
+                          : 'text-slate-600 hover:text-slate-900'
+                      }`}
+                    >
+                      Da ripassare oggi ({srAnalytics.dueTotalCount})
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSrFilter('upcoming')}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
+                        srFilter === 'upcoming'
+                          ? 'bg-white text-slate-900 shadow-sm'
+                          : 'text-slate-600 hover:text-slate-900'
+                      }`}
+                    >
+                      In programma (
+                      {srAnalytics.totalTopics - srAnalytics.dueTotalCount})
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSrFilter('all')}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
+                        srFilter === 'all'
+                          ? 'bg-white text-slate-900 shadow-sm'
+                          : 'text-slate-600 hover:text-slate-900'
+                      }`}
+                    >
+                      Tutti ({srAnalytics.totalTopics})
+                    </button>
+                  </div>
+
+                  <span className="text-[11px] text-slate-400">
+                    Valuta il ricordo dopo il ripasso per aggiornare la prossima data
+                  </span>
+                </div>
+
+                {filteredSrTopics.length === 0 ? (
+                  <div className="text-center py-7 px-4 rounded-xl border border-dashed border-slate-200 text-slate-400 text-xs">
+                    {srFilter === 'due'
+                      ? srAnalytics.totalTopics === 0
+                        ? 'Nessun argomento inserito finora. Aggiungi qui sopra i capitoli che hai studiato per programmare i ripassi!'
+                        : 'Ottimo lavoro! Hai completato tutti i ripassi previsti per oggi.'
+                      : 'Nessun argomento in questa categoria.'}
+                  </div>
+                ) : (
+                  <div className="divide-y divide-slate-100 border border-slate-200 rounded-xl overflow-hidden">
+                    {filteredSrTopics.map((topic) => (
+                      <div
+                        key={topic.id}
+                        className="p-3.5 bg-white hover:bg-slate-50/70 transition flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                      >
+                        <div className="space-y-1 min-w-0">
+                          <div className="flex flex-wrap items-center gap-2">
+                            {topic.isOverdue ? (
+                              <span className="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase bg-rose-100 text-rose-700 border border-rose-200">
+                                Scaduto ({Math.abs(topic.deltaDays)}g fa)
+                              </span>
+                            ) : topic.isDueToday ? (
+                              <span className="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase bg-amber-100 text-amber-800 border border-amber-200">
+                                Ripassa Oggi
+                              </span>
+                            ) : (
+                              <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                                Tra {topic.deltaDays}{' '}
+                                {topic.deltaDays === 1 ? 'giorno' : 'giorni'} (
+                                {formatShortDate(topic.nextReviewDate)})
+                              </span>
+                            )}
+
+                            {topic.pagesRef && (
+                              <span className="text-[11px] font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md">
+                                {topic.pagesRef}
+                              </span>
+                            )}
+
+                            {topic.isAfterExam && (
+                              <span className="text-[10px] font-semibold text-rose-600 bg-rose-50 px-1.5 py-0.5 rounded border border-rose-200">
+                                Oltre appello
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="text-sm font-bold text-slate-900 truncate">
+                            {topic.title}
+                          </div>
+
+                          <div className="text-[11px] text-slate-400 flex flex-wrap items-center gap-2">
+                            <span>
+                              Ripassi completati: <strong>{topic.repetitions}</strong>
+                            </span>
+                            <span>•</span>
+                            <span>
+                              Intervallo attuale: <strong>{topic.intervalDays}g</strong>
+                            </span>
+                            <span>•</span>
+                            <span>
+                              Ultimo: {formatShortDate(topic.lastReviewDate)}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Azioni valutazione ricordo + elimina */}
+                        <div className="flex items-center gap-1.5 shrink-0 self-start sm:self-center">
+                          <button
+                            type="button"
+                            onClick={() => handleReviewSrTopic(topic.id, 'hard')}
+                            className="px-2.5 py-1.5 rounded-lg bg-rose-50 text-rose-700 border border-rose-200 text-xs font-bold hover:bg-rose-100 transition"
+                            title="Ricordo faticoso: anticipa il prossimo ripasso"
+                          >
+                            Difficile
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleReviewSrTopic(topic.id, 'good')}
+                            className="px-2.5 py-1.5 rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-200 text-xs font-bold hover:bg-indigo-100 transition"
+                            title="Buon ricordo: progredisci regolarmente"
+                          >
+                            Bene
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleReviewSrTopic(topic.id, 'easy')}
+                            className="px-2.5 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold hover:bg-emerald-100 transition"
+                            title="Ricordo immediato: allunga l'intervallo"
+                          >
+                            Facile
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteSrTopic(topic.id)}
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition ml-1"
+                            title="Rimuovi argomento"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </section>
+
+            {/* 3. REGISTRO AVANZAMENTO REALE E STORICO */}
             <section className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-6 shadow-sm space-y-5">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
@@ -1592,7 +2176,6 @@ export default function App() {
           <div className="lg:col-span-4 space-y-6">
             {/* SEZIONE TIMER POMODORO */}
             <section className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-6 shadow-sm space-y-4">
-              {/* Intestazione Pomodoro */}
               <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                 <div className="flex items-center gap-2.5">
                   <div
@@ -1636,7 +2219,6 @@ export default function App() {
                 </button>
               </div>
 
-              {/* Selettore Modalità Studio / Pausa */}
               <div className="grid grid-cols-2 gap-1.5 bg-slate-100 p-1 rounded-xl border border-slate-200">
                 <button
                   type="button"
@@ -1664,7 +2246,6 @@ export default function App() {
                 </button>
               </div>
 
-              {/* Display Timer + Barra Avanzamento */}
               <div
                 className={`rounded-2xl p-5 text-center border transition-colors ${
                   pomoPhase === 'study'
@@ -1688,7 +2269,6 @@ export default function App() {
                   {pomoMinutesDisplay}:{pomoSecondsDisplay}
                 </div>
 
-                {/* Barra progresso blocco */}
                 <div className="w-full h-1.5 bg-white/80 rounded-full overflow-hidden mt-3 mb-4 border border-slate-200/60">
                   <div
                     className={`h-full transition-all duration-300 ${
@@ -1698,7 +2278,6 @@ export default function App() {
                   />
                 </div>
 
-                {/* Pulsanti Play/Pausa, Reset, Salta */}
                 <div className="flex items-center justify-center gap-2">
                   <button
                     type="button"
@@ -1748,7 +2327,6 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Preset Rapidi + Impostazione Minuti Studio e Pausa */}
               <div className="space-y-3 pt-1">
                 <div className="flex items-center justify-between gap-1.5">
                   <span className="text-[11px] font-semibold text-slate-500">
@@ -1825,7 +2403,6 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Tracciamento Sessioni di Studio */}
               <div className="pt-3 border-t border-slate-100 space-y-2.5">
                 <div className="grid grid-cols-2 gap-2.5">
                   <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/80">
@@ -1857,7 +2434,6 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* Azioni rapide storico sessioni */}
                 <div className="flex items-center justify-between text-xs pt-0.5">
                   <button
                     type="button"
@@ -1880,7 +2456,6 @@ export default function App() {
                   </button>
                 </div>
 
-                {/* Lista sessioni completate */}
                 {showPomoHistory && (
                   <div className="max-h-44 overflow-y-auto border border-slate-200 rounded-xl divide-y divide-slate-100 text-xs">
                     {pomoStats.sessions.length === 0 ? (
