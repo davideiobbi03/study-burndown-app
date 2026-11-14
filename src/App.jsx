@@ -37,6 +37,11 @@ import {
   Volume2,
   VolumeX,
   Repeat,
+  GripVertical,
+  ArrowUp,
+  ArrowDown,
+  ArrowLeftRight,
+  LayoutGrid,
 } from 'lucide-react';
 
 // --- UTILITY DATE (Locale, senza slittamenti di fuso orario) ---
@@ -137,6 +142,51 @@ const WEEKDAYS = [
 ];
 
 const WEEKDAY_NAMES = ['Dom', 'Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab'];
+
+const ALL_SECTION_IDS = [
+  'burndown',
+  'spaced_repetition',
+  'progress_log',
+  'pomodoro',
+  'parameters',
+];
+
+const DEFAULT_LAYOUT = {
+  left: ['burndown', 'spaced_repetition', 'progress_log'],
+  right: ['pomodoro', 'parameters'],
+};
+
+function sanitizeLayout(raw) {
+  if (!raw || !Array.isArray(raw.left) || !Array.isArray(raw.right)) {
+    return DEFAULT_LAYOUT;
+  }
+  const seen = new Set();
+  const cleanLeft = [];
+  const cleanRight = [];
+
+  raw.left.forEach((id) => {
+    if (ALL_SECTION_IDS.includes(id) && !seen.has(id)) {
+      seen.add(id);
+      cleanLeft.push(id);
+    }
+  });
+  raw.right.forEach((id) => {
+    if (ALL_SECTION_IDS.includes(id) && !seen.has(id)) {
+      seen.add(id);
+      cleanRight.push(id);
+    }
+  });
+
+  // Aggiungi eventuali sezioni mancanti nella colonna di default
+  ALL_SECTION_IDS.forEach((id) => {
+    if (!seen.has(id)) {
+      if (DEFAULT_LAYOUT.left.includes(id)) cleanLeft.push(id);
+      else cleanRight.push(id);
+    }
+  });
+
+  return { left: cleanLeft, right: cleanRight };
+}
 
 function createDefaultExam(name = 'Biochimica Clinica') {
   const today = getTodayStr();
@@ -251,6 +301,7 @@ function createDemoExam() {
 }
 
 const STORAGE_KEY = 'studyburn_state_v2';
+const LAYOUT_STORAGE_KEY = 'studyburn_layout_v1';
 
 export default function App() {
   const [state, setState] = useState(() => {
@@ -272,6 +323,100 @@ export default function App() {
     };
   });
 
+  // --- STATO ORDINAMENTO SEZIONI ---
+  const [layout, setLayout] = useState(() => {
+    try {
+      const savedLayout = localStorage.getItem(LAYOUT_STORAGE_KEY);
+      if (savedLayout) {
+        return sanitizeLayout(JSON.parse(savedLayout));
+      }
+    } catch (e) {
+      console.error('Errore lettura layout localStorage:', e);
+    }
+    return DEFAULT_LAYOUT;
+  });
+
+  const [isReorderMode, setIsReorderMode] = useState(false);
+  const [dragReadyId, setDragReadyId] = useState(null);
+  const [draggedSection, setDraggedSection] = useState(null); // { id, fromCol }
+  const [dragOverTarget, setDragOverTarget] = useState(null); // { col, index }
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(LAYOUT_STORAGE_KEY, JSON.stringify(layout));
+    } catch (e) {
+      console.error('Errore salvataggio layout localStorage:', e);
+    }
+  }, [layout]);
+
+  const isCustomLayout = useMemo(() => {
+    return JSON.stringify(layout) !== JSON.stringify(DEFAULT_LAYOUT);
+  }, [layout]);
+
+  const moveSectionUp = (col, index) => {
+    if (index <= 0) return;
+    setLayout((prev) => {
+      const list = [...prev[col]];
+      [list[index - 1], list[index]] = [list[index], list[index - 1]];
+      return { ...prev, [col]: list };
+    });
+  };
+
+  const moveSectionDown = (col, index) => {
+    setLayout((prev) => {
+      const list = [...prev[col]];
+      if (index >= list.length - 1) return prev;
+      [list[index], list[index + 1]] = [list[index + 1], list[index]];
+      return { ...prev, [col]: list };
+    });
+  };
+
+  const moveSectionAcross = (fromCol, index) => {
+    const toCol = fromCol === 'left' ? 'right' : 'left';
+    setLayout((prev) => {
+      const source = [...prev[fromCol]];
+      const [moved] = source.splice(index, 1);
+      if (!moved) return prev;
+      const target = [...prev[toCol], moved];
+      return { ...prev, [fromCol]: source, [toCol]: target };
+    });
+  };
+
+  const handleDropSection = (targetCol, targetIndex) => {
+    if (!draggedSection) return;
+    const { id, fromCol } = draggedSection;
+
+    setLayout((prev) => {
+      const source = [...prev[fromCol]];
+      const sourceIndex = source.indexOf(id);
+      if (sourceIndex === -1) return prev;
+
+      source.splice(sourceIndex, 1);
+
+      if (fromCol === targetCol) {
+        const adjustedIndex =
+          sourceIndex < targetIndex ? targetIndex - 1 : targetIndex;
+        const safeIdx = Math.max(0, Math.min(source.length, adjustedIndex));
+        source.splice(safeIdx, 0, id);
+        return { ...prev, [fromCol]: source };
+      } else {
+        const dest = [...prev[targetCol]];
+        const safeIdx = Math.max(0, Math.min(dest.length, targetIndex));
+        dest.splice(safeIdx, 0, id);
+        return { ...prev, [fromCol]: source, [targetCol]: dest };
+      }
+    });
+
+    setDraggedSection(null);
+    setDragOverTarget(null);
+    setDragReadyId(null);
+  };
+
+  const handleResetLayout = () => {
+    setLayout(DEFAULT_LAYOUT);
+    setIsReorderMode(false);
+  };
+
   const [undoStack, setUndoStack] = useState([]);
   const [isRenamingHeader, setIsRenamingHeader] = useState(false);
   const [confirmReset, setConfirmReset] = useState(false);
@@ -287,7 +432,7 @@ export default function App() {
   // --- STATO TIMER POMODORO ---
   const [pomoStudyMin, setPomoStudyMin] = useState(25);
   const [pomoBreakMin, setPomoBreakMin] = useState(5);
-  const [pomoPhase, setPomoPhase] = useState('study'); // 'study' | 'break'
+  const [pomoPhase, setPomoPhase] = useState('study');
   const [pomoSecondsLeft, setPomoSecondsLeft] = useState(25 * 60);
   const [pomoRunning, setPomoRunning] = useState(false);
   const [pomoSound, setPomoSound] = useState(true);
@@ -297,7 +442,7 @@ export default function App() {
   const [srTitleInput, setSrTitleInput] = useState('');
   const [srPagesInput, setSrPagesInput] = useState('');
   const [srStudyDateInput, setSrStudyDateInput] = useState(getTodayStr());
-  const [srFilter, setSrFilter] = useState('due'); // 'due' | 'upcoming' | 'all'
+  const [srFilter, setSrFilter] = useState('due');
 
   const pomoEndTimeRef = useRef(null);
   const pomoHandledRef = useRef(false);
@@ -496,7 +641,7 @@ export default function App() {
       pagesRef: srPagesInput.trim(),
       createdDate: baseDate,
       lastReviewDate: baseDate,
-      nextReviewDate: addDays(baseDate, 1), // Primo ripasso dopo 24h
+      nextReviewDate: addDays(baseDate, 1),
       intervalDays: 1,
       repetitions: 0,
       easeFactor: 2.5,
@@ -532,7 +677,10 @@ export default function App() {
           let nextEase = currentEase;
 
           if (rating === 'hard') {
-            nextInterval = currentReps <= 1 ? 1 : Math.max(1, Math.round(currentInterval * 0.6));
+            nextInterval =
+              currentReps <= 1
+                ? 1
+                : Math.max(1, Math.round(currentInterval * 0.6));
             nextReps = Math.max(0, currentReps);
             nextEase = Math.max(1.3, Number((currentEase - 0.2).toFixed(2)));
           } else if (rating === 'good') {
@@ -580,7 +728,7 @@ export default function App() {
 
     const enriched = topics
       .map((t) => {
-        const deltaDays = diffDays(today, t.nextReviewDate); // <0 scaduto, 0 oggi, >0 futuro
+        const deltaDays = diffDays(today, t.nextReviewDate);
         return {
           ...t,
           deltaDays,
@@ -600,7 +748,6 @@ export default function App() {
       (t) => t.deltaDays > 0 && t.deltaDays <= 7
     ).length;
 
-    // Costruzione serie 14 giorni per grafico carico ripassi (Oggi -> +13 giorni)
     const forecastChart = [];
     for (let i = 0; i < 14; i++) {
       const dateStr = addDays(today, i);
@@ -1103,6 +1250,1452 @@ export default function App() {
   );
   const pomoSecondsDisplay = String(pomoSecondsLeft % 60).padStart(2, '0');
 
+  // --- BARRA CONTROLLI ORDINAMENTO SINGOLA SEZIONE ---
+  const renderOrderControls = (sectionId, col, index, totalInCol) => (
+    <div
+      className={`inline-flex items-center gap-0.5 rounded-lg p-0.5 border transition shrink-0 ${
+        isReorderMode
+          ? 'bg-indigo-50 border-indigo-300 text-indigo-700 shadow-xs'
+          : 'bg-slate-50 border-slate-200/80 text-slate-400 hover:text-slate-700'
+      }`}
+    >
+      <button
+        type="button"
+        onClick={() => moveSectionUp(col, index)}
+        disabled={index === 0}
+        className="p-1 rounded hover:bg-white disabled:opacity-30 disabled:pointer-events-none transition"
+        title="Sposta sezione in alto"
+      >
+        <ArrowUp className="w-3.5 h-3.5" />
+      </button>
+      <button
+        type="button"
+        onClick={() => moveSectionDown(col, index)}
+        disabled={index === totalInCol - 1}
+        className="p-1 rounded hover:bg-white disabled:opacity-30 disabled:pointer-events-none transition"
+        title="Sposta sezione in basso"
+      >
+        <ArrowDown className="w-3.5 h-3.5" />
+      </button>
+      <button
+        type="button"
+        onClick={() => moveSectionAcross(col, index)}
+        className="p-1 rounded hover:bg-white transition"
+        title={
+          col === 'left'
+            ? 'Sposta nella colonna laterale'
+            : 'Sposta nella colonna principale'
+        }
+      >
+        <ArrowLeftRight className="w-3.5 h-3.5" />
+      </button>
+      <span
+        onMouseDown={() => setDragReadyId(sectionId)}
+        onMouseUp={() => setDragReadyId(null)}
+        className="p-1 rounded hover:bg-white cursor-grab active:cursor-grabbing transition"
+        title="Trascina per riordinare"
+      >
+        <GripVertical className="w-3.5 h-3.5" />
+      </span>
+    </div>
+  );
+
+  // --- RENDERING DINAMICO DELLE 5 SEZIONI ---
+  const renderSection = (sectionId, col, index, totalInCol) => {
+    const isNarrow = col === 'right' && layout.left.length > 0;
+    const isBeingDragged = draggedSection?.id === sectionId;
+    const isDropTargetBefore =
+      dragOverTarget?.col === col &&
+      dragOverTarget?.index === index &&
+      draggedSection?.id !== sectionId;
+
+    const orderControls = renderOrderControls(
+      sectionId,
+      col,
+      index,
+      totalInCol
+    );
+
+    let sectionContent = null;
+
+    if (sectionId === 'burndown') {
+      sectionContent = (
+        <section className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-6 shadow-sm">
+          <div className="flex flex-wrap items-start justify-between gap-3 mb-5">
+            <div>
+              <h3 className="text-base sm:text-lg font-bold text-slate-900">
+                Burn-down Chart — {activeExam.name || 'Esame'}
+              </h3>
+              <p className="text-xs text-slate-500">
+                Confronto tra discesa ideale, pagine reali rimanenti e
+                proiezione futura
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="flex flex-wrap items-center gap-1.5 text-xs font-medium">
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100 text-slate-700">
+                  <span className="w-3 h-0.5 border-t-2 border-dashed border-slate-500" />
+                  Ideale
+                </span>
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-800">
+                  <span
+                    className="w-2.5 h-2.5 rounded-full"
+                    style={{ backgroundColor: statusStyles.lineColor }}
+                  />
+                  Reale
+                </span>
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-700">
+                  <span className="w-3 h-0.5 border-t-2 border-dotted border-indigo-500" />
+                  Proiezione
+                </span>
+              </div>
+              {orderControls}
+            </div>
+          </div>
+
+          <div
+            className={`${
+              isNarrow ? 'h-[280px]' : 'h-[320px] sm:h-[360px]'
+            } w-full`}
+          >
+            <ResponsiveContainer width="100%" height="100%">
+              <ComposedChart
+                data={analytics.chartData}
+                margin={{ top: 18, right: 16, left: -12, bottom: 5 }}
+              >
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  vertical={false}
+                  stroke="#e2e8f0"
+                />
+                <XAxis
+                  dataKey="date"
+                  tick={{ fontSize: 11, fill: '#64748b' }}
+                  tickLine={false}
+                  axisLine={{ stroke: '#cbd5e1' }}
+                  minTickGap={22}
+                />
+                <YAxis
+                  domain={[0, analytics.totalPages]}
+                  tick={{ fontSize: 11, fill: '#64748b' }}
+                  tickLine={false}
+                  axisLine={false}
+                />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: '#0f172a',
+                    border: 'none',
+                    borderRadius: '12px',
+                    color: '#f8fafc',
+                    fontSize: '12px',
+                    boxShadow: '0 10px 15px -3px rgba(0,0,0,0.2)',
+                  }}
+                  labelStyle={{
+                    fontWeight: 700,
+                    marginBottom: '4px',
+                    color: '#e2e8f0',
+                  }}
+                  formatter={(value, name) => {
+                    const labels = {
+                      ideale: 'Ideale rimanenti',
+                      reale: 'Reale rimanenti',
+                      proiezione: 'Proiezione stimata',
+                    };
+                    return [`${value} pag`, labels[name] || name];
+                  }}
+                />
+
+                <ReferenceLine
+                  x={analytics.todayShort}
+                  stroke="#6366f1"
+                  strokeDasharray="4 4"
+                  label={{
+                    value: 'Oggi',
+                    position: 'top',
+                    fill: '#4f46e5',
+                    fontSize: 11,
+                    fontWeight: 700,
+                  }}
+                />
+
+                {analytics.reviewShort && (
+                  <ReferenceLine
+                    x={analytics.reviewShort}
+                    stroke="#f59e0b"
+                    strokeDasharray="4 4"
+                    label={{
+                      value: 'Ripasso',
+                      position: 'top',
+                      fill: '#d97706',
+                      fontSize: 11,
+                      fontWeight: 700,
+                    }}
+                  />
+                )}
+
+                <Line
+                  type="monotone"
+                  dataKey="ideale"
+                  stroke="#64748b"
+                  strokeWidth={2}
+                  strokeDasharray="6 4"
+                  dot={false}
+                  activeDot={{ r: 4 }}
+                />
+
+                <Line
+                  type="monotone"
+                  dataKey="reale"
+                  stroke={statusStyles.lineColor}
+                  strokeWidth={3}
+                  dot={{ r: 3, fill: statusStyles.lineColor }}
+                  activeDot={{ r: 6 }}
+                  connectNulls={false}
+                />
+
+                <Line
+                  type="monotone"
+                  dataKey="proiezione"
+                  stroke="#6366f1"
+                  strokeWidth={2.5}
+                  strokeDasharray="2 5"
+                  dot={false}
+                  connectNulls={false}
+                />
+              </ComposedChart>
+            </ResponsiveContainer>
+          </div>
+        </section>
+      );
+    } else if (sectionId === 'spaced_repetition') {
+      sectionContent = (
+        <section className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-6 shadow-sm space-y-5">
+          <div className="flex flex-wrap items-start justify-between gap-3 pb-3 border-b border-slate-100">
+            <div className="flex items-start gap-2.5">
+              <div className="p-2 rounded-xl bg-indigo-50 text-indigo-600 mt-0.5 shrink-0">
+                <Repeat className="w-4 h-4" />
+              </div>
+              <div>
+                <h3 className="text-base sm:text-lg font-bold text-slate-900">
+                  Spaced Repetition &amp; Piano Ripassi
+                </h3>
+                <p className="text-xs text-slate-500">
+                  Intervalli adattivi automatici (1g → 3g → 7g → 14g → 30g+)
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <span
+                className={`px-2.5 py-1 rounded-xl text-xs font-bold border ${
+                  srAnalytics.dueTotalCount > 0
+                    ? 'bg-amber-50 text-amber-800 border-amber-200'
+                    : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                }`}
+              >
+                Oggi: {srAnalytics.dueTotalCount}
+              </span>
+              <span className="px-2.5 py-1 rounded-xl text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200">
+                7gg: {srAnalytics.next7DaysCount}
+              </span>
+              {orderControls}
+            </div>
+          </div>
+
+          <div className="bg-slate-50/70 rounded-xl border border-slate-200/80 p-3.5 sm:p-4">
+            <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-600">
+                Carico Ripassi Programmati (14 Giorni)
+              </span>
+              <div className="flex items-center gap-3 text-[11px] font-medium text-slate-500">
+                <span className="inline-flex items-center gap-1.5">
+                  <span className="w-2.5 h-2.5 rounded-sm bg-amber-500" />
+                  Oggi / Scaduti
+                </span>
+                <span className="inline-flex items-center gap-1.5">
+                  <span className="w-2.5 h-2.5 rounded-sm bg-indigo-500" />
+                  In programma
+                </span>
+              </div>
+            </div>
+
+            <div className="h-[185px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <ComposedChart
+                  data={srAnalytics.forecastChart}
+                  margin={{ top: 14, right: 12, left: -22, bottom: 0 }}
+                >
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    vertical={false}
+                    stroke="#e2e8f0"
+                  />
+                  <XAxis
+                    dataKey="date"
+                    tick={{ fontSize: 11, fill: '#64748b' }}
+                    tickLine={false}
+                    axisLine={{ stroke: '#cbd5e1' }}
+                  />
+                  <YAxis
+                    allowDecimals={false}
+                    tick={{ fontSize: 11, fill: '#64748b' }}
+                    tickLine={false}
+                    axisLine={false}
+                  />
+                  <Tooltip
+                    cursor={{ fill: '#e2e8f0', opacity: 0.35 }}
+                    content={({ active, payload }) => {
+                      if (!active || !payload || !payload.length) return null;
+                      const item = payload[0].payload;
+                      return (
+                        <div className="bg-slate-900 text-slate-50 rounded-xl p-3 text-xs shadow-lg max-w-[260px]">
+                          <div className="font-bold text-slate-200 mb-1">
+                            {item.date} — {item.ripassi}{' '}
+                            {item.ripassi === 1 ? 'argomento' : 'argomenti'}
+                          </div>
+                          {item.topicsList && item.topicsList.length > 0 ? (
+                            <ul className="space-y-0.5 text-[11px] text-slate-300 list-disc pl-3.5">
+                              {item.topicsList.map((title, idx) => (
+                                <li key={idx} className="truncate">
+                                  {title}
+                                </li>
+                              ))}
+                            </ul>
+                          ) : (
+                            <p className="text-[11px] text-slate-400">
+                              Nessun ripasso previsto in questa data.
+                            </p>
+                          )}
+                        </div>
+                      );
+                    }}
+                  />
+
+                  {srAnalytics.examShort && (
+                    <ReferenceLine
+                      x={srAnalytics.examShort}
+                      stroke="#e11d48"
+                      strokeDasharray="4 4"
+                      label={{
+                        value: 'Appello',
+                        position: 'top',
+                        fill: '#e11d48',
+                        fontSize: 10,
+                        fontWeight: 700,
+                      }}
+                    />
+                  )}
+
+                  <Bar dataKey="ripassi" radius={[6, 6, 0, 0]} maxBarSize={32}>
+                    {srAnalytics.forecastChart.map((entry, idx) => (
+                      <Cell
+                        key={`cell-${idx}`}
+                        fill={
+                          entry.isToday && entry.ripassi > 0
+                            ? '#f59e0b'
+                            : '#6366f1'
+                        }
+                      />
+                    ))}
+                  </Bar>
+                </ComposedChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          <form
+            onSubmit={handleAddSrTopic}
+            className={`grid gap-3 items-end bg-slate-50 p-3.5 rounded-xl border border-slate-200/80 ${
+              isNarrow ? 'grid-cols-1' : 'grid-cols-1 sm:grid-cols-12'
+            }`}
+          >
+            <div className={isNarrow ? '' : 'sm:col-span-5'}>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Argomento / Capitolo studiato
+              </label>
+              <input
+                type="text"
+                placeholder="Es. Ciclo di Krebs, Asse Tiroideo..."
+                value={srTitleInput}
+                onChange={(e) => setSrTitleInput(e.target.value)}
+                className="w-full px-3 py-2 rounded-xl bg-white border border-slate-300 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                required
+              />
+            </div>
+
+            <div className={isNarrow ? 'grid grid-cols-2 gap-2.5' : 'contents'}>
+              <div className={isNarrow ? '' : 'sm:col-span-2'}>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Pagine (opz.)
+                </label>
+                <input
+                  type="text"
+                  placeholder="pp. 40-58"
+                  value={srPagesInput}
+                  onChange={(e) => setSrPagesInput(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl bg-white border border-slate-300 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
+
+              <div className={isNarrow ? '' : 'sm:col-span-3'}>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Data studio
+                </label>
+                <input
+                  type="date"
+                  value={srStudyDateInput}
+                  onChange={(e) => setSrStudyDateInput(e.target.value)}
+                  className="w-full px-2.5 py-2 rounded-xl bg-white border border-slate-300 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  required
+                />
+              </div>
+            </div>
+
+            <div className={isNarrow ? '' : 'sm:col-span-2'}>
+              <button
+                type="submit"
+                className="w-full inline-flex items-center justify-center gap-1 px-3 py-2 rounded-xl bg-slate-900 text-white text-sm font-semibold hover:bg-slate-800 transition shadow-sm"
+              >
+                <Plus className="w-4 h-4" />
+                Aggiungi
+              </button>
+            </div>
+          </form>
+
+          <div className="space-y-3">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="inline-flex flex-wrap rounded-xl bg-slate-100 p-1 border border-slate-200">
+                <button
+                  type="button"
+                  onClick={() => setSrFilter('due')}
+                  className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold transition ${
+                    srFilter === 'due'
+                      ? 'bg-white text-slate-900 shadow-sm'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  Oggi ({srAnalytics.dueTotalCount})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSrFilter('upcoming')}
+                  className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold transition ${
+                    srFilter === 'upcoming'
+                      ? 'bg-white text-slate-900 shadow-sm'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  Futuri (
+                  {srAnalytics.totalTopics - srAnalytics.dueTotalCount})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSrFilter('all')}
+                  className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold transition ${
+                    srFilter === 'all'
+                      ? 'bg-white text-slate-900 shadow-sm'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  Tutti ({srAnalytics.totalTopics})
+                </button>
+              </div>
+
+              {!isNarrow && (
+                <span className="text-[11px] text-slate-400">
+                  Valuta il ricordo dopo il ripasso per aggiornare la prossima
+                  data
+                </span>
+              )}
+            </div>
+
+            {filteredSrTopics.length === 0 ? (
+              <div className="text-center py-7 px-4 rounded-xl border border-dashed border-slate-200 text-slate-400 text-xs">
+                {srFilter === 'due'
+                  ? srAnalytics.totalTopics === 0
+                    ? 'Nessun argomento inserito finora. Aggiungi qui sopra i capitoli che hai studiato per programmare i ripassi!'
+                    : 'Ottimo lavoro! Hai completato tutti i ripassi previsti per oggi.'
+                  : 'Nessun argomento in questa categoria.'}
+              </div>
+            ) : (
+              <div className="divide-y divide-slate-100 border border-slate-200 rounded-xl overflow-hidden">
+                {filteredSrTopics.map((topic) => (
+                  <div
+                    key={topic.id}
+                    className={`p-3.5 bg-white hover:bg-slate-50/70 transition flex justify-between gap-3 ${
+                      isNarrow
+                        ? 'flex-col'
+                        : 'flex-col sm:flex-row sm:items-center'
+                    }`}
+                  >
+                    <div className="space-y-1 min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        {topic.isOverdue ? (
+                          <span className="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase bg-rose-100 text-rose-700 border border-rose-200">
+                            Scaduto ({Math.abs(topic.deltaDays)}g fa)
+                          </span>
+                        ) : topic.isDueToday ? (
+                          <span className="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase bg-amber-100 text-amber-800 border border-amber-200">
+                            Ripassa Oggi
+                          </span>
+                        ) : (
+                          <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                            Tra {topic.deltaDays}{' '}
+                            {topic.deltaDays === 1 ? 'giorno' : 'giorni'} (
+                            {formatShortDate(topic.nextReviewDate)})
+                          </span>
+                        )}
+
+                        {topic.pagesRef && (
+                          <span className="text-[11px] font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md">
+                            {topic.pagesRef}
+                          </span>
+                        )}
+
+                        {topic.isAfterExam && (
+                          <span className="text-[10px] font-semibold text-rose-600 bg-rose-50 px-1.5 py-0.5 rounded border border-rose-200">
+                            Oltre appello
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="text-sm font-bold text-slate-900 truncate">
+                        {topic.title}
+                      </div>
+
+                      <div className="text-[11px] text-slate-400 flex flex-wrap items-center gap-2">
+                        <span>
+                          Ripassi: <strong>{topic.repetitions}</strong>
+                        </span>
+                        <span>•</span>
+                        <span>
+                          Intervallo: <strong>{topic.intervalDays}g</strong>
+                        </span>
+                        <span>•</span>
+                        <span>
+                          Ultimo: {formatShortDate(topic.lastReviewDate)}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div
+                      className={`flex items-center gap-1.5 shrink-0 ${
+                        isNarrow ? 'self-start' : 'self-start sm:self-center'
+                      }`}
+                    >
+                      <button
+                        type="button"
+                        onClick={() => handleReviewSrTopic(topic.id, 'hard')}
+                        className="px-2.5 py-1.5 rounded-lg bg-rose-50 text-rose-700 border border-rose-200 text-xs font-bold hover:bg-rose-100 transition"
+                        title="Ricordo faticoso: anticipa il prossimo ripasso"
+                      >
+                        Difficile
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleReviewSrTopic(topic.id, 'good')}
+                        className="px-2.5 py-1.5 rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-200 text-xs font-bold hover:bg-indigo-100 transition"
+                        title="Buon ricordo: progredisci regolarmente"
+                      >
+                        Bene
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleReviewSrTopic(topic.id, 'easy')}
+                        className="px-2.5 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold hover:bg-emerald-100 transition"
+                        title="Ricordo immediato: allunga l'intervallo"
+                      >
+                        Facile
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteSrTopic(topic.id)}
+                        className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition ml-1"
+                        title="Rimuovi argomento"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </section>
+      );
+    } else if (sectionId === 'progress_log') {
+      sectionContent = (
+        <section className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-6 shadow-sm space-y-5">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h3 className="text-base font-bold text-slate-900">
+                Registro Avanzamento Reale
+              </h3>
+              <p className="text-xs text-slate-500">
+                Inserisci le pagine studiate oggi o aggiorna il totale
+                completato
+              </p>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="inline-flex rounded-xl bg-slate-100 p-1 border border-slate-200">
+                <button
+                  type="button"
+                  onClick={() => setLogMode('daily')}
+                  className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold transition ${
+                    logMode === 'daily'
+                      ? 'bg-white text-slate-900 shadow-sm'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  + Giorno
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setLogMode('cumulative')}
+                  className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold transition ${
+                    logMode === 'cumulative'
+                      ? 'bg-white text-slate-900 shadow-sm'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  Totale
+                </button>
+              </div>
+              {orderControls}
+            </div>
+          </div>
+
+          <form
+            onSubmit={handleAddLog}
+            className={`grid gap-3 items-end bg-slate-50 p-3.5 rounded-xl border border-slate-200/80 ${
+              isNarrow ? 'grid-cols-1' : 'grid-cols-1 sm:grid-cols-12'
+            }`}
+          >
+            <div className={isNarrow ? '' : 'sm:col-span-4'}>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Data studio
+              </label>
+              <input
+                type="date"
+                value={logDate}
+                onChange={(e) => setLogDate(e.target.value)}
+                className="w-full px-3 py-2 rounded-xl bg-white border border-slate-300 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                required
+              />
+            </div>
+
+            <div className={isNarrow ? '' : 'sm:col-span-5'}>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                {logMode === 'daily'
+                  ? 'Pagine studiate nella giornata'
+                  : `Totale pagine completate (su ${analytics.totalPages})`}
+              </label>
+              <input
+                type="number"
+                min="0"
+                max={analytics.totalPages * 2}
+                placeholder={
+                  logMode === 'daily'
+                    ? 'Es. 20'
+                    : `Attuale: ${analytics.completedPages}`
+                }
+                value={logPagesInput}
+                onChange={(e) => setLogPagesInput(e.target.value)}
+                className="w-full px-3 py-2 rounded-xl bg-white border border-slate-300 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                required
+              />
+            </div>
+
+            <div className={isNarrow ? '' : 'sm:col-span-3'}>
+              <button
+                type="submit"
+                className="w-full inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 transition shadow-sm"
+              >
+                <Plus className="w-4 h-4" />
+                Registra
+              </button>
+            </div>
+
+            {logMode === 'daily' && (
+              <div
+                className={`flex flex-wrap items-center gap-2 pt-1 ${
+                  isNarrow ? '' : 'sm:col-span-12'
+                }`}
+              >
+                <span className="text-[11px] font-medium text-slate-500">
+                  Aggiunta rapida:
+                </span>
+                {[5, 10, 20, 30].map((preset) => (
+                  <button
+                    key={preset}
+                    type="button"
+                    onClick={() =>
+                      setLogPagesInput((prev) =>
+                        String((Number(prev) || 0) + preset)
+                      )
+                    }
+                    className="px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-xs font-semibold text-slate-700 hover:border-indigo-300 hover:text-indigo-700 transition"
+                  >
+                    +{preset} pag
+                  </button>
+                ))}
+              </div>
+            )}
+          </form>
+
+          <div className="space-y-2.5">
+            <div className="flex items-center justify-between">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                Storico Giornate Registrate ({historyRows.length})
+              </h4>
+              {undoStack.length > 0 && (
+                <button
+                  type="button"
+                  onClick={handleUndo}
+                  className="inline-flex items-center gap-1 text-xs font-semibold text-indigo-600 hover:text-indigo-800"
+                >
+                  <Undo2 className="w-3.5 h-3.5" />
+                  Annulla
+                </button>
+              )}
+            </div>
+
+            {historyRows.length === 0 ? (
+              <div className="text-center py-8 px-4 rounded-xl border border-dashed border-slate-200 text-slate-400 text-xs">
+                Nessuna sessione registrata finora. Inserisci le prime pagine
+                studiate qui sopra per attivare la linea reale e la proiezione.
+              </div>
+            ) : (
+              <div className="overflow-x-auto border border-slate-200 rounded-xl">
+                <table className="w-full text-left border-collapse text-xs sm:text-sm">
+                  <thead>
+                    <tr className="bg-slate-50 border-b border-slate-200 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                      <th className="py-2.5 px-3">Data</th>
+                      <th className="py-2.5 px-3">Pagine</th>
+                      <th className="py-2.5 px-3">Cumulato</th>
+                      <th className="py-2.5 px-3 text-right">Azioni</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {historyRows.map((row) => (
+                      <tr
+                        key={row.date}
+                        className="hover:bg-slate-50/80 transition"
+                      >
+                        <td className="py-2.5 px-3 font-medium text-slate-800 whitespace-nowrap">
+                          <span>{formatShortDate(row.date)}</span>
+                          <span className="ml-1.5 text-xs text-slate-400">
+                            ({row.weekday})
+                          </span>
+                          {row.isRestDay && (
+                            <span className="ml-2 text-[10px] font-semibold px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200">
+                              Riposo
+                            </span>
+                          )}
+                        </td>
+
+                        <td className="py-2.5 px-3">
+                          {editingLogDate === row.date ? (
+                            <input
+                              type="number"
+                              min="0"
+                              value={editingLogPages}
+                              onChange={(e) =>
+                                setEditingLogPages(e.target.value)
+                              }
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  handleSaveEditedLog(row.date);
+                                } else if (e.key === 'Escape') {
+                                  setEditingLogDate(null);
+                                }
+                              }}
+                              className="w-20 px-2 py-1 rounded-lg border border-indigo-300 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                              autoFocus
+                            />
+                          ) : (
+                            <span className="font-bold text-indigo-700">
+                              +{row.pages} pag
+                            </span>
+                          )}
+                        </td>
+
+                        <td className="py-2.5 px-3 text-slate-600 whitespace-nowrap">
+                          {row.cumulative} / {analytics.totalPages}
+                        </td>
+
+                        <td className="py-2.5 px-3 text-right whitespace-nowrap">
+                          {editingLogDate === row.date ? (
+                            <div className="inline-flex items-center gap-1">
+                              <button
+                                type="button"
+                                onClick={() => handleSaveEditedLog(row.date)}
+                                className="p-1.5 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700"
+                                title="Salva"
+                              >
+                                <Check className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setEditingLogDate(null)}
+                                className="p-1.5 rounded-lg bg-slate-200 text-slate-700 hover:bg-slate-300"
+                                title="Annulla"
+                              >
+                                <X className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="inline-flex items-center gap-1">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setEditingLogDate(row.date);
+                                  setEditingLogPages(String(row.pages));
+                                }}
+                                className="p-1.5 rounded-lg text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 transition"
+                                title="Modifica pagine"
+                              >
+                                <Edit3 className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteLog(row.date)}
+                                className="p-1.5 rounded-lg text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition"
+                                title="Elimina giornata"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </section>
+      );
+    } else if (sectionId === 'pomodoro') {
+      sectionContent = (
+        <section className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-6 shadow-sm space-y-4">
+          <div className="flex items-center justify-between gap-2 pb-3 border-b border-slate-100">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div
+                className={`p-2 rounded-xl shrink-0 ${
+                  pomoPhase === 'study'
+                    ? 'bg-indigo-50 text-indigo-600'
+                    : 'bg-emerald-50 text-emerald-600'
+                }`}
+              >
+                {pomoPhase === 'study' ? (
+                  <Clock className="w-4 h-4" />
+                ) : (
+                  <Coffee className="w-4 h-4" />
+                )}
+              </div>
+              <div className="min-w-0">
+                <h3 className="text-base font-bold text-slate-900">
+                  Timer Pomodoro
+                </h3>
+                <p className="text-xs text-slate-500 truncate">
+                  {activeExam.name || 'Esame'}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-1.5 shrink-0">
+              <button
+                type="button"
+                onClick={() => setPomoSound((s) => !s)}
+                className="p-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-600 hover:bg-slate-100 transition"
+                title={
+                  pomoSound
+                    ? 'Suono notifica attivo (clicca per silenziare)'
+                    : 'Suono silenziato (clicca per attivare)'
+                }
+              >
+                {pomoSound ? (
+                  <Volume2 className="w-4 h-4 text-indigo-600" />
+                ) : (
+                  <VolumeX className="w-4 h-4 text-slate-400" />
+                )}
+              </button>
+              {orderControls}
+            </div>
+          </div>
+
+          <div
+            className={`grid gap-4 ${
+              !isNarrow ? 'grid-cols-1 md:grid-cols-12 items-center' : ''
+            }`}
+          >
+            <div className={!isNarrow ? 'md:col-span-7 space-y-3' : 'space-y-4'}>
+              <div className="grid grid-cols-2 gap-1.5 bg-slate-100 p-1 rounded-xl border border-slate-200">
+                <button
+                  type="button"
+                  onClick={() => handlePomoSwitchPhase('study')}
+                  className={`py-1.5 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 ${
+                    pomoPhase === 'study'
+                      ? 'bg-white text-indigo-700 shadow-sm'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  <BookOpen className="w-3.5 h-3.5" />
+                  Studio ({pomoStudyMin}m)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handlePomoSwitchPhase('break')}
+                  className={`py-1.5 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 ${
+                    pomoPhase === 'break'
+                      ? 'bg-white text-emerald-700 shadow-sm'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  <Coffee className="w-3.5 h-3.5" />
+                  Pausa ({pomoBreakMin}m)
+                </button>
+              </div>
+
+              <div
+                className={`rounded-2xl p-5 text-center border transition-colors ${
+                  pomoPhase === 'study'
+                    ? 'bg-indigo-50/60 border-indigo-200/80'
+                    : 'bg-emerald-50/60 border-emerald-200/80'
+                }`}
+              >
+                <span
+                  className={`inline-block text-[10px] font-bold uppercase tracking-widest px-2.5 py-0.5 rounded-full mb-2 ${
+                    pomoPhase === 'study'
+                      ? 'bg-indigo-100 text-indigo-700'
+                      : 'bg-emerald-100 text-emerald-700'
+                  }`}
+                >
+                  {pomoPhase === 'study'
+                    ? 'Sessione di Concentrazione'
+                    : 'Pausa di Recupero'}
+                </span>
+
+                <div className="text-5xl font-extrabold tracking-tight text-slate-900 tabular-nums my-1">
+                  {pomoMinutesDisplay}:{pomoSecondsDisplay}
+                </div>
+
+                <div className="w-full h-1.5 bg-white/80 rounded-full overflow-hidden mt-3 mb-4 border border-slate-200/60">
+                  <div
+                    className={`h-full transition-all duration-300 ${
+                      pomoPhase === 'study' ? 'bg-indigo-600' : 'bg-emerald-500'
+                    }`}
+                    style={{ width: `${pomoStats.progressPct}%` }}
+                  />
+                </div>
+
+                <div className="flex items-center justify-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setPomoRunning((r) => !r)}
+                    className={`flex-1 inline-flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-sm font-bold text-white shadow-sm transition ${
+                      pomoRunning
+                        ? 'bg-amber-500 hover:bg-amber-600'
+                        : pomoPhase === 'study'
+                        ? 'bg-indigo-600 hover:bg-indigo-700'
+                        : 'bg-emerald-600 hover:bg-emerald-700'
+                    }`}
+                  >
+                    {pomoRunning ? (
+                      <>
+                        <Pause className="w-4 h-4" />
+                        Pausa
+                      </>
+                    ) : (
+                      <>
+                        <Play className="w-4 h-4" />
+                        Avvia
+                      </>
+                    )}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handlePomoReset}
+                    className="p-2.5 rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 transition"
+                    title="Azzera timer corrente"
+                  >
+                    <RotateCcw className="w-4 h-4" />
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      handlePomoSwitchPhase(
+                        pomoPhase === 'study' ? 'break' : 'study'
+                      )
+                    }
+                    className="p-2.5 rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 transition"
+                    title="Passa alla fase successiva"
+                  >
+                    <SkipForward className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div className={!isNarrow ? 'md:col-span-5 space-y-3' : 'space-y-3'}>
+              <div className="space-y-3 pt-1">
+                <div className="flex items-center justify-between gap-1.5">
+                  <span className="text-[11px] font-semibold text-slate-500">
+                    Preset:
+                  </span>
+                  <div className="flex items-center gap-1.5">
+                    {[
+                      { s: 25, b: 5 },
+                      { s: 45, b: 10 },
+                      { s: 50, b: 10 },
+                    ].map((pr) => (
+                      <button
+                        key={`${pr.s}-${pr.b}`}
+                        type="button"
+                        onClick={() => handlePomoPreset(pr.s, pr.b)}
+                        className={`px-2 py-1 rounded-lg text-[11px] font-bold border transition ${
+                          pomoStudyMin === pr.s && pomoBreakMin === pr.b
+                            ? 'bg-slate-900 text-white border-slate-900'
+                            : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
+                        }`}
+                      >
+                        {pr.s}/{pr.b}m
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                      Studio (min)
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      max="180"
+                      value={pomoStudyMin}
+                      onChange={(e) => {
+                        const val = Math.max(
+                          1,
+                          Math.min(180, Number(e.target.value) || 1)
+                        );
+                        setPomoStudyMin(val);
+                        if (!pomoRunning && pomoPhase === 'study') {
+                          setPomoSecondsLeft(val * 60);
+                        }
+                      }}
+                      className="w-full px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-300 text-sm font-semibold text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                      Pausa (min)
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      max="60"
+                      value={pomoBreakMin}
+                      onChange={(e) => {
+                        const val = Math.max(
+                          1,
+                          Math.min(60, Number(e.target.value) || 1)
+                        );
+                        setPomoBreakMin(val);
+                        if (!pomoRunning && pomoPhase === 'break') {
+                          setPomoSecondsLeft(val * 60);
+                        }
+                      }}
+                      className="w-full px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-300 text-sm font-semibold text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-3 border-t border-slate-100 space-y-2.5">
+                <div className="grid grid-cols-2 gap-2.5">
+                  <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/80">
+                    <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                      Sessioni Oggi
+                    </div>
+                    <div className="mt-0.5 flex items-baseline gap-1.5">
+                      <span className="text-lg font-extrabold text-indigo-700">
+                        {pomoStats.todayCount}
+                      </span>
+                      <span className="text-xs font-medium text-slate-500">
+                        ({formatMinutesHuman(pomoStats.todayMinutes)})
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/80">
+                    <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                      Totale Esame
+                    </div>
+                    <div className="mt-0.5 flex items-baseline gap-1.5">
+                      <span className="text-lg font-extrabold text-slate-900">
+                        {pomoStats.totalCount}
+                      </span>
+                      <span className="text-xs font-medium text-slate-500">
+                        ({formatMinutesHuman(pomoStats.totalMinutes)})
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between text-xs pt-0.5">
+                  <button
+                    type="button"
+                    onClick={() => setShowPomoHistory((h) => !h)}
+                    className="font-semibold text-indigo-600 hover:text-indigo-800"
+                  >
+                    {showPomoHistory
+                      ? 'Nascondi registro'
+                      : `Registro (${pomoStats.totalCount})`}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleAddManualPomoSession}
+                    className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-indigo-50 text-indigo-700 font-semibold hover:bg-indigo-100 transition"
+                    title="Registra manualmente una sessione completata"
+                  >
+                    <Plus className="w-3 h-3" />
+                    1 sessione ({pomoStudyMin}m)
+                  </button>
+                </div>
+
+                {showPomoHistory && (
+                  <div className="max-h-40 overflow-y-auto border border-slate-200 rounded-xl divide-y divide-slate-100 text-xs">
+                    {pomoStats.sessions.length === 0 ? (
+                      <div className="p-3 text-center text-slate-400">
+                        Nessuna sessione Pomodoro registrata per questo esame.
+                      </div>
+                    ) : (
+                      pomoStats.sessions.map((sess) => (
+                        <div
+                          key={sess.id}
+                          className="flex items-center justify-between px-3 py-2 hover:bg-slate-50"
+                        >
+                          <div>
+                            <span className="font-semibold text-slate-800">
+                              {formatShortDate(sess.date)}
+                            </span>
+                            {sess.time && (
+                              <span className="text-slate-400 ml-1.5">
+                                alle {sess.time}
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 font-bold">
+                              {sess.durationMin} min
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => handleDeletePomoSession(sess.id)}
+                              className="text-slate-400 hover:text-rose-600 transition"
+                              title="Elimina sessione"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </section>
+      );
+    } else if (sectionId === 'parameters') {
+      sectionContent = (
+        <aside className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-6 shadow-sm space-y-5">
+          <div className="flex items-start justify-between gap-2 pb-3 border-b border-slate-100">
+            <div className="flex items-start gap-2.5">
+              <div className="p-2 rounded-xl bg-indigo-50 text-indigo-600 mt-0.5 shrink-0">
+                <SlidersHorizontal className="w-4 h-4" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-slate-900">
+                  Parametri Tabella di Marcia
+                </h3>
+                <p className="text-xs text-slate-500">
+                  Modifica in qualsiasi momento con ricalcolo istantaneo
+                </p>
+              </div>
+            </div>
+            {orderControls}
+          </div>
+
+          <div
+            className={`grid gap-4 ${
+              !isNarrow ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1'
+            }`}
+          >
+            <div className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                  Nome dell&apos;esame / materia
+                </label>
+                <input
+                  ref={sidebarNameInputRef}
+                  type="text"
+                  value={activeExam.name ?? ''}
+                  placeholder="Es. Biochimica Clinica, Endocrinologia..."
+                  onChange={(e) => updateActiveExam({ name: e.target.value })}
+                  onBlur={() => {
+                    if (!activeExam.name || !activeExam.name.trim()) {
+                      updateActiveExam({ name: 'Esame senza nome' });
+                    }
+                  }}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-sm font-semibold text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                    Inizio studio
+                  </label>
+                  <input
+                    type="date"
+                    value={activeExam.startDate}
+                    onChange={(e) => {
+                      const newStart = e.target.value;
+                      if (!newStart) return;
+                      updateActiveExam((ex) => ({
+                        ...ex,
+                        startDate: newStart,
+                        examDate:
+                          ex.examDate < newStart
+                            ? addDays(newStart, 7)
+                            : ex.examDate,
+                      }));
+                    }}
+                    className="w-full px-2.5 py-2 rounded-xl bg-slate-50 border border-slate-300 text-xs sm:text-sm font-medium text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                    Data appello
+                  </label>
+                  <input
+                    type="date"
+                    value={activeExam.examDate}
+                    min={activeExam.startDate}
+                    onChange={(e) => {
+                      const newExamDate = e.target.value;
+                      if (!newExamDate) return;
+                      updateActiveExam({ examDate: newExamDate });
+                    }}
+                    className="w-full px-2.5 py-2 rounded-xl bg-slate-50 border border-slate-300 text-xs sm:text-sm font-medium text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                    Totale pagine
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="10000"
+                    value={activeExam.totalPages}
+                    onChange={(e) =>
+                      updateActiveExam({
+                        totalPages: Math.max(1, Number(e.target.value) || 0),
+                      })
+                    }
+                    className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-300 text-sm font-semibold text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                    Giorni ripasso finale
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    max="60"
+                    value={activeExam.reviewDays}
+                    onChange={(e) =>
+                      updateActiveExam({
+                        reviewDays: Math.max(0, Number(e.target.value) || 0),
+                      })
+                    }
+                    className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-300 text-sm font-semibold text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-xs font-bold text-slate-700">
+                    Giorni di riposo settimanali
+                  </label>
+                  <span className="text-[11px] text-slate-400">
+                    {(activeExam.restDays || []).length} off/sett
+                  </span>
+                </div>
+                <div className="grid grid-cols-7 gap-1.5">
+                  {WEEKDAYS.map((day) => {
+                    const isSelected = (activeExam.restDays || []).includes(
+                      day.id
+                    );
+                    return (
+                      <button
+                        key={day.id}
+                        type="button"
+                        onClick={() => toggleRestDay(day.id)}
+                        className={`py-2 rounded-xl text-xs font-bold border transition ${
+                          isSelected
+                            ? 'bg-slate-900 text-white border-slate-900 shadow-sm'
+                            : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
+                        }`}
+                      >
+                        {day.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div
+                className={`${
+                  isNarrow ? 'pt-2 border-t border-slate-100' : ''
+                } space-y-2.5`}
+              >
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-slate-700">
+                    Ritmo target iniziale (pag/giorno)
+                  </label>
+                  <span className="text-[11px] font-semibold text-indigo-600">
+                    Minimo: {analytics.initialMinPace.toFixed(1)} pag/gg
+                  </span>
+                </div>
+
+                <input
+                  type="number"
+                  min="1"
+                  max="500"
+                  value={activeExam.targetPace}
+                  onChange={(e) =>
+                    updateActiveExam({
+                      targetPace: Math.max(1, Number(e.target.value) || 0),
+                    })
+                  }
+                  className="w-full px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-300 text-sm font-semibold text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+
+                <div
+                  className={`p-3 rounded-xl border text-xs leading-relaxed ${
+                    (Number(activeExam.targetPace) || 0) >=
+                    analytics.initialMinPace
+                      ? 'bg-emerald-50/70 border-emerald-200 text-emerald-900'
+                      : 'bg-amber-50/70 border-amber-200 text-amber-900'
+                  }`}
+                >
+                  {(Number(activeExam.targetPace) || 0) >=
+                  analytics.initialMinPace ? (
+                    <>
+                      <strong>Target sostenibile:</strong> con{' '}
+                      <strong>{activeExam.targetPace} pag/giorno</strong>{' '}
+                      superi il minimo necessario di{' '}
+                      <strong>
+                        +
+                        {(
+                          (Number(activeExam.targetPace) || 0) -
+                          analytics.initialMinPace
+                        ).toFixed(1)}{' '}
+                        pag/gg
+                      </strong>{' '}
+                      su {analytics.totalUsefulDays} giorni utili.
+                    </>
+                  ) : (
+                    <>
+                      <strong>Target inferiore al minimo:</strong> per finire{' '}
+                      {analytics.totalPages} pagine in{' '}
+                      {analytics.totalUsefulDays} giorni utili servono almeno{' '}
+                      <strong>
+                        {analytics.initialMinPace.toFixed(1)} pag/giorno
+                      </strong>{' '}
+                      (+
+                      {(
+                        analytics.initialMinPace -
+                        (Number(activeExam.targetPace) || 0)
+                      ).toFixed(1)}{' '}
+                      pag/gg rispetto al target).
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </aside>
+      );
+    }
+
+    return (
+      <div
+        key={sectionId}
+        draggable={isReorderMode || dragReadyId === sectionId}
+        onDragStart={(e) => {
+          setDraggedSection({ id: sectionId, fromCol: col });
+          e.dataTransfer.effectAllowed = 'move';
+          e.dataTransfer.setData('text/plain', sectionId);
+        }}
+        onDragEnd={() => {
+          setDraggedSection(null);
+          setDragOverTarget(null);
+          setDragReadyId(null);
+        }}
+        onDragOver={(e) => {
+          e.preventDefault();
+          e.dataTransfer.dropEffect = 'move';
+          if (
+            dragOverTarget?.col !== col ||
+            dragOverTarget?.index !== index
+          ) {
+            setDragOverTarget({ col, index });
+          }
+        }}
+        onDrop={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          handleDropSection(col, index);
+        }}
+        className={`relative rounded-2xl transition-all ${
+          isBeingDragged ? 'opacity-45 scale-[0.99]' : 'opacity-100'
+        } ${
+          isReorderMode
+            ? 'ring-2 ring-indigo-300/80 ring-offset-2 ring-offset-slate-50'
+            : ''
+        }`}
+      >
+        {isDropTargetBefore && (
+          <div className="h-1.5 rounded-full bg-indigo-500 mb-3 animate-pulse" />
+        )}
+        {sectionContent}
+      </div>
+    );
+  };
+
   return (
     <div className="min-h-screen w-full bg-slate-50 text-slate-900 font-sans pb-14">
       <style>{`
@@ -1240,6 +2833,32 @@ export default function App() {
               <Sparkles className="w-3.5 h-3.5" />
               Carica Demo Avanzata
             </button>
+
+            <button
+              type="button"
+              onClick={() => setIsReorderMode((m) => !m)}
+              className={`inline-flex items-center gap-1.5 px-2.5 py-2 rounded-xl border text-xs font-semibold transition ${
+                isReorderMode
+                  ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
+                  : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+              }`}
+              title="Attiva o disattiva evidenziazione per spostare le sezioni"
+            >
+              <LayoutGrid className="w-3.5 h-3.5" />
+              <span>{isReorderMode ? 'Fine Ordine' : 'Ordina Sezioni'}</span>
+            </button>
+
+            {isCustomLayout && (
+              <button
+                type="button"
+                onClick={handleResetLayout}
+                className="inline-flex items-center gap-1 px-2.5 py-2 rounded-xl bg-amber-50 text-amber-800 border border-amber-200 text-xs font-semibold hover:bg-amber-100 transition"
+                title="Ripristina la disposizione predefinita delle sezioni"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                <span>Ripristina Layout</span>
+              </button>
+            )}
 
             <button
               type="button"
@@ -1433,1288 +3052,78 @@ export default function App() {
           </div>
         </section>
 
-        {/* GRIGLIA PRINCIPALE: GRAFICI + SPACED REPETITION + REGISTRO A SINISTRA | POMODORO + PARAMETRI A DESTRA */}
+        {/* AREA DI LAVORO ORDINABILE A DUE COLONNE */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-          {/* COLONNA SINISTRA (8 col) */}
-          <div className="lg:col-span-8 space-y-6">
-            {/* 1. BURN-DOWN CHART */}
-            <section className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-6 shadow-sm">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
-                <div>
-                  <h3 className="text-base sm:text-lg font-bold text-slate-900">
-                    Burn-down Chart — {activeExam.name || 'Esame'}
-                  </h3>
-                  <p className="text-xs text-slate-500">
-                    Confronto tra discesa ideale, pagine reali rimanenti e
-                    proiezione futura
-                  </p>
+          {/* COLONNA PRINCIPALE */}
+          {(layout.left.length > 0 || draggedSection) && (
+            <div
+              onDragOver={(e) => {
+                e.preventDefault();
+                if (
+                  dragOverTarget?.col !== 'left' ||
+                  dragOverTarget?.index !== layout.left.length
+                ) {
+                  setDragOverTarget({ col: 'left', index: layout.left.length });
+                }
+              }}
+              onDrop={(e) => {
+                e.preventDefault();
+                handleDropSection('left', layout.left.length);
+              }}
+              className={`${
+                layout.right.length === 0 && !draggedSection
+                  ? 'lg:col-span-12'
+                  : 'lg:col-span-8'
+              } space-y-6 min-h-[120px]`}
+            >
+              {layout.left.map((secId, idx) =>
+                renderSection(secId, 'left', idx, layout.left.length)
+              )}
+
+              {layout.left.length === 0 && draggedSection && (
+                <div className="h-32 rounded-2xl border-2 border-dashed border-indigo-300 bg-indigo-50/40 flex items-center justify-center text-xs font-semibold text-indigo-600">
+                  Rilascia qui per inserire nella colonna principale
                 </div>
-                <div className="flex flex-wrap items-center gap-2 text-xs font-medium">
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100 text-slate-700">
-                    <span className="w-3 h-0.5 border-t-2 border-dashed border-slate-500" />
-                    Ideale
-                  </span>
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-800">
-                    <span
-                      className="w-2.5 h-2.5 rounded-full"
-                      style={{ backgroundColor: statusStyles.lineColor }}
-                    />
-                    Reale
-                  </span>
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-700">
-                    <span className="w-3 h-0.5 border-t-2 border-dotted border-indigo-500" />
-                    Proiezione
-                  </span>
+              )}
+            </div>
+          )}
+
+          {/* COLONNA LATERALE */}
+          {(layout.right.length > 0 || draggedSection) && (
+            <div
+              onDragOver={(e) => {
+                e.preventDefault();
+                if (
+                  dragOverTarget?.col !== 'right' ||
+                  dragOverTarget?.index !== layout.right.length
+                ) {
+                  setDragOverTarget({
+                    col: 'right',
+                    index: layout.right.length,
+                  });
+                }
+              }}
+              onDrop={(e) => {
+                e.preventDefault();
+                handleDropSection('right', layout.right.length);
+              }}
+              className={`${
+                layout.left.length === 0 && !draggedSection
+                  ? 'lg:col-span-12'
+                  : 'lg:col-span-4'
+              } space-y-6 min-h-[120px]`}
+            >
+              {layout.right.map((secId, idx) =>
+                renderSection(secId, 'right', idx, layout.right.length)
+              )}
+
+              {layout.right.length === 0 && draggedSection && (
+                <div className="h-32 rounded-2xl border-2 border-dashed border-indigo-300 bg-indigo-50/40 flex items-center justify-center text-xs font-semibold text-indigo-600">
+                  Rilascia qui per inserire nella colonna laterale
                 </div>
-              </div>
-
-              <div className="h-[320px] sm:h-[360px] w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <ComposedChart
-                    data={analytics.chartData}
-                    margin={{ top: 18, right: 16, left: -12, bottom: 5 }}
-                  >
-                    <CartesianGrid
-                      strokeDasharray="3 3"
-                      vertical={false}
-                      stroke="#e2e8f0"
-                    />
-                    <XAxis
-                      dataKey="date"
-                      tick={{ fontSize: 11, fill: '#64748b' }}
-                      tickLine={false}
-                      axisLine={{ stroke: '#cbd5e1' }}
-                      minTickGap={22}
-                    />
-                    <YAxis
-                      domain={[0, analytics.totalPages]}
-                      tick={{ fontSize: 11, fill: '#64748b' }}
-                      tickLine={false}
-                      axisLine={false}
-                    />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: '#0f172a',
-                        border: 'none',
-                        borderRadius: '12px',
-                        color: '#f8fafc',
-                        fontSize: '12px',
-                        boxShadow: '0 10px 15px -3px rgba(0,0,0,0.2)',
-                      }}
-                      labelStyle={{
-                        fontWeight: 700,
-                        marginBottom: '4px',
-                        color: '#e2e8f0',
-                      }}
-                      formatter={(value, name) => {
-                        const labels = {
-                          ideale: 'Ideale rimanenti',
-                          reale: 'Reale rimanenti',
-                          proiezione: 'Proiezione stimata',
-                        };
-                        return [`${value} pag`, labels[name] || name];
-                      }}
-                    />
-
-                    <ReferenceLine
-                      x={analytics.todayShort}
-                      stroke="#6366f1"
-                      strokeDasharray="4 4"
-                      label={{
-                        value: 'Oggi',
-                        position: 'top',
-                        fill: '#4f46e5',
-                        fontSize: 11,
-                        fontWeight: 700,
-                      }}
-                    />
-
-                    {analytics.reviewShort && (
-                      <ReferenceLine
-                        x={analytics.reviewShort}
-                        stroke="#f59e0b"
-                        strokeDasharray="4 4"
-                        label={{
-                          value: 'Ripasso',
-                          position: 'top',
-                          fill: '#d97706',
-                          fontSize: 11,
-                          fontWeight: 700,
-                        }}
-                      />
-                    )}
-
-                    <Line
-                      type="monotone"
-                      dataKey="ideale"
-                      stroke="#64748b"
-                      strokeWidth={2}
-                      strokeDasharray="6 4"
-                      dot={false}
-                      activeDot={{ r: 4 }}
-                    />
-
-                    <Line
-                      type="monotone"
-                      dataKey="reale"
-                      stroke={statusStyles.lineColor}
-                      strokeWidth={3}
-                      dot={{ r: 3, fill: statusStyles.lineColor }}
-                      activeDot={{ r: 6 }}
-                      connectNulls={false}
-                    />
-
-                    <Line
-                      type="monotone"
-                      dataKey="proiezione"
-                      stroke="#6366f1"
-                      strokeWidth={2.5}
-                      strokeDasharray="2 5"
-                      dot={false}
-                      connectNulls={false}
-                    />
-                  </ComposedChart>
-                </ResponsiveContainer>
-              </div>
-            </section>
-
-            {/* 2. SEZIONE SPACED REPETITION & GRAFICO CARICO RIPASSI */}
-            <section className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-6 shadow-sm space-y-5">
-              {/* Intestazione Spaced Repetition + Contatori */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
-                <div className="flex items-start gap-2.5">
-                  <div className="p-2 rounded-xl bg-indigo-50 text-indigo-600 mt-0.5">
-                    <Repeat className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <h3 className="text-base sm:text-lg font-bold text-slate-900">
-                      Spaced Repetition &amp; Piano Ripassi
-                    </h3>
-                    <p className="text-xs text-slate-500">
-                      Pianificazione automatica degli argomenti da ripassare (1g → 3g → 7g → 14g → 30g+)
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex flex-wrap items-center gap-2">
-                  <span
-                    className={`px-2.5 py-1 rounded-xl text-xs font-bold border ${
-                      srAnalytics.dueTotalCount > 0
-                        ? 'bg-amber-50 text-amber-800 border-amber-200'
-                        : 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                    }`}
-                  >
-                    Oggi: {srAnalytics.dueTotalCount}{' '}
-                    {srAnalytics.dueTotalCount === 1 ? 'argomento' : 'argomenti'}
-                  </span>
-                  <span className="px-2.5 py-1 rounded-xl text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200">
-                    Prossimi 7gg: {srAnalytics.next7DaysCount}
-                  </span>
-                </div>
-              </div>
-
-              {/* Grafico Previsionale Ripassi (14 Giorni) */}
-              <div className="bg-slate-50/70 rounded-xl border border-slate-200/80 p-3.5 sm:p-4">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
-                  <span className="text-xs font-bold uppercase tracking-wider text-slate-600">
-                    Carico Ripassi Programmati (Prossimi 14 Giorni)
-                  </span>
-                  <div className="flex items-center gap-3 text-[11px] font-medium text-slate-500">
-                    <span className="inline-flex items-center gap-1.5">
-                      <span className="w-2.5 h-2.5 rounded-sm bg-amber-500" />
-                      Oggi / Scaduti
-                    </span>
-                    <span className="inline-flex items-center gap-1.5">
-                      <span className="w-2.5 h-2.5 rounded-sm bg-indigo-500" />
-                      In programma
-                    </span>
-                  </div>
-                </div>
-
-                <div className="h-[190px] w-full">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <ComposedChart
-                      data={srAnalytics.forecastChart}
-                      margin={{ top: 14, right: 12, left: -22, bottom: 0 }}
-                    >
-                      <CartesianGrid
-                        strokeDasharray="3 3"
-                        vertical={false}
-                        stroke="#e2e8f0"
-                      />
-                      <XAxis
-                        dataKey="date"
-                        tick={{ fontSize: 11, fill: '#64748b' }}
-                        tickLine={false}
-                        axisLine={{ stroke: '#cbd5e1' }}
-                      />
-                      <YAxis
-                        allowDecimals={false}
-                        tick={{ fontSize: 11, fill: '#64748b' }}
-                        tickLine={false}
-                        axisLine={false}
-                      />
-                      <Tooltip
-                        cursor={{ fill: '#e2e8f0', opacity: 0.35 }}
-                        content={({ active, payload }) => {
-                          if (!active || !payload || !payload.length) return null;
-                          const item = payload[0].payload;
-                          return (
-                            <div className="bg-slate-900 text-slate-50 rounded-xl p-3 text-xs shadow-lg max-w-[260px]">
-                              <div className="font-bold text-slate-200 mb-1">
-                                {item.date} — {item.ripassi}{' '}
-                                {item.ripassi === 1 ? 'argomento' : 'argomenti'}
-                              </div>
-                              {item.topicsList && item.topicsList.length > 0 ? (
-                                <ul className="space-y-0.5 text-[11px] text-slate-300 list-disc pl-3.5">
-                                  {item.topicsList.map((title, idx) => (
-                                    <li key={idx} className="truncate">
-                                      {title}
-                                    </li>
-                                  ))}
-                                </ul>
-                              ) : (
-                                <p className="text-[11px] text-slate-400">
-                                  Nessun ripasso previsto in questa data.
-                                </p>
-                              )}
-                            </div>
-                          );
-                        }}
-                      />
-
-                      {srAnalytics.examShort && (
-                        <ReferenceLine
-                          x={srAnalytics.examShort}
-                          stroke="#e11d48"
-                          strokeDasharray="4 4"
-                          label={{
-                            value: 'Appello',
-                            position: 'top',
-                            fill: '#e11d48',
-                            fontSize: 10,
-                            fontWeight: 700,
-                          }}
-                        />
-                      )}
-
-                      <Bar dataKey="ripassi" radius={[6, 6, 0, 0]} maxBarSize={32}>
-                        {srAnalytics.forecastChart.map((entry, idx) => (
-                          <Cell
-                            key={`cell-${idx}`}
-                            fill={
-                              entry.isToday && entry.ripassi > 0
-                                ? '#f59e0b'
-                                : '#6366f1'
-                            }
-                          />
-                        ))}
-                      </Bar>
-                    </ComposedChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-
-              {/* Form Aggiunta Nuovo Argomento Studia-e-Ripassa */}
-              <form
-                onSubmit={handleAddSrTopic}
-                className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end bg-slate-50 p-3.5 rounded-xl border border-slate-200/80"
-              >
-                <div className="sm:col-span-5">
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    Argomento / Capitolo studiato
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Es. Ciclo di Krebs, Asse Tiroideo..."
-                    value={srTitleInput}
-                    onChange={(e) => setSrTitleInput(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl bg-white border border-slate-300 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    required
-                  />
-                </div>
-
-                <div className="sm:col-span-2">
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    Pagine (opz.)
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="pp. 40-58"
-                    value={srPagesInput}
-                    onChange={(e) => setSrPagesInput(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl bg-white border border-slate-300 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  />
-                </div>
-
-                <div className="sm:col-span-3">
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    Data studio
-                  </label>
-                  <input
-                    type="date"
-                    value={srStudyDateInput}
-                    onChange={(e) => setSrStudyDateInput(e.target.value)}
-                    className="w-full px-2.5 py-2 rounded-xl bg-white border border-slate-300 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    required
-                  />
-                </div>
-
-                <div className="sm:col-span-2">
-                  <button
-                    type="submit"
-                    className="w-full inline-flex items-center justify-center gap-1 px-3 py-2 rounded-xl bg-slate-900 text-white text-sm font-semibold hover:bg-slate-800 transition shadow-sm"
-                  >
-                    <Plus className="w-4 h-4" />
-                    Aggiungi
-                  </button>
-                </div>
-              </form>
-
-              {/* Filtri + Coda Argomenti da Ripassare */}
-              <div className="space-y-3">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div className="inline-flex rounded-xl bg-slate-100 p-1 border border-slate-200">
-                    <button
-                      type="button"
-                      onClick={() => setSrFilter('due')}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
-                        srFilter === 'due'
-                          ? 'bg-white text-slate-900 shadow-sm'
-                          : 'text-slate-600 hover:text-slate-900'
-                      }`}
-                    >
-                      Da ripassare oggi ({srAnalytics.dueTotalCount})
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setSrFilter('upcoming')}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
-                        srFilter === 'upcoming'
-                          ? 'bg-white text-slate-900 shadow-sm'
-                          : 'text-slate-600 hover:text-slate-900'
-                      }`}
-                    >
-                      In programma (
-                      {srAnalytics.totalTopics - srAnalytics.dueTotalCount})
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setSrFilter('all')}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
-                        srFilter === 'all'
-                          ? 'bg-white text-slate-900 shadow-sm'
-                          : 'text-slate-600 hover:text-slate-900'
-                      }`}
-                    >
-                      Tutti ({srAnalytics.totalTopics})
-                    </button>
-                  </div>
-
-                  <span className="text-[11px] text-slate-400">
-                    Valuta il ricordo dopo il ripasso per aggiornare la prossima data
-                  </span>
-                </div>
-
-                {filteredSrTopics.length === 0 ? (
-                  <div className="text-center py-7 px-4 rounded-xl border border-dashed border-slate-200 text-slate-400 text-xs">
-                    {srFilter === 'due'
-                      ? srAnalytics.totalTopics === 0
-                        ? 'Nessun argomento inserito finora. Aggiungi qui sopra i capitoli che hai studiato per programmare i ripassi!'
-                        : 'Ottimo lavoro! Hai completato tutti i ripassi previsti per oggi.'
-                      : 'Nessun argomento in questa categoria.'}
-                  </div>
-                ) : (
-                  <div className="divide-y divide-slate-100 border border-slate-200 rounded-xl overflow-hidden">
-                    {filteredSrTopics.map((topic) => (
-                      <div
-                        key={topic.id}
-                        className="p-3.5 bg-white hover:bg-slate-50/70 transition flex flex-col sm:flex-row sm:items-center justify-between gap-3"
-                      >
-                        <div className="space-y-1 min-w-0">
-                          <div className="flex flex-wrap items-center gap-2">
-                            {topic.isOverdue ? (
-                              <span className="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase bg-rose-100 text-rose-700 border border-rose-200">
-                                Scaduto ({Math.abs(topic.deltaDays)}g fa)
-                              </span>
-                            ) : topic.isDueToday ? (
-                              <span className="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase bg-amber-100 text-amber-800 border border-amber-200">
-                                Ripassa Oggi
-                              </span>
-                            ) : (
-                              <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
-                                Tra {topic.deltaDays}{' '}
-                                {topic.deltaDays === 1 ? 'giorno' : 'giorni'} (
-                                {formatShortDate(topic.nextReviewDate)})
-                              </span>
-                            )}
-
-                            {topic.pagesRef && (
-                              <span className="text-[11px] font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md">
-                                {topic.pagesRef}
-                              </span>
-                            )}
-
-                            {topic.isAfterExam && (
-                              <span className="text-[10px] font-semibold text-rose-600 bg-rose-50 px-1.5 py-0.5 rounded border border-rose-200">
-                                Oltre appello
-                              </span>
-                            )}
-                          </div>
-
-                          <div className="text-sm font-bold text-slate-900 truncate">
-                            {topic.title}
-                          </div>
-
-                          <div className="text-[11px] text-slate-400 flex flex-wrap items-center gap-2">
-                            <span>
-                              Ripassi completati: <strong>{topic.repetitions}</strong>
-                            </span>
-                            <span>•</span>
-                            <span>
-                              Intervallo attuale: <strong>{topic.intervalDays}g</strong>
-                            </span>
-                            <span>•</span>
-                            <span>
-                              Ultimo: {formatShortDate(topic.lastReviewDate)}
-                            </span>
-                          </div>
-                        </div>
-
-                        {/* Azioni valutazione ricordo + elimina */}
-                        <div className="flex items-center gap-1.5 shrink-0 self-start sm:self-center">
-                          <button
-                            type="button"
-                            onClick={() => handleReviewSrTopic(topic.id, 'hard')}
-                            className="px-2.5 py-1.5 rounded-lg bg-rose-50 text-rose-700 border border-rose-200 text-xs font-bold hover:bg-rose-100 transition"
-                            title="Ricordo faticoso: anticipa il prossimo ripasso"
-                          >
-                            Difficile
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleReviewSrTopic(topic.id, 'good')}
-                            className="px-2.5 py-1.5 rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-200 text-xs font-bold hover:bg-indigo-100 transition"
-                            title="Buon ricordo: progredisci regolarmente"
-                          >
-                            Bene
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleReviewSrTopic(topic.id, 'easy')}
-                            className="px-2.5 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold hover:bg-emerald-100 transition"
-                            title="Ricordo immediato: allunga l'intervallo"
-                          >
-                            Facile
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteSrTopic(topic.id)}
-                            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition ml-1"
-                            title="Rimuovi argomento"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </section>
-
-            {/* 3. REGISTRO AVANZAMENTO REALE E STORICO */}
-            <section className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-6 shadow-sm space-y-5">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div>
-                  <h3 className="text-base font-bold text-slate-900">
-                    Registro Avanzamento Reale
-                  </h3>
-                  <p className="text-xs text-slate-500">
-                    Inserisci le pagine studiate oggi o aggiorna il totale
-                    completato finora
-                  </p>
-                </div>
-
-                <div className="inline-flex rounded-xl bg-slate-100 p-1 border border-slate-200 self-start">
-                  <button
-                    type="button"
-                    onClick={() => setLogMode('daily')}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
-                      logMode === 'daily'
-                        ? 'bg-white text-slate-900 shadow-sm'
-                        : 'text-slate-600 hover:text-slate-900'
-                    }`}
-                  >
-                    + Pagine del giorno
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setLogMode('cumulative')}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
-                      logMode === 'cumulative'
-                        ? 'bg-white text-slate-900 shadow-sm'
-                        : 'text-slate-600 hover:text-slate-900'
-                    }`}
-                  >
-                    Totale completato
-                  </button>
-                </div>
-              </div>
-
-              <form
-                onSubmit={handleAddLog}
-                className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end bg-slate-50 p-3.5 rounded-xl border border-slate-200/80"
-              >
-                <div className="sm:col-span-4">
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    Data studio
-                  </label>
-                  <input
-                    type="date"
-                    value={logDate}
-                    onChange={(e) => setLogDate(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl bg-white border border-slate-300 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    required
-                  />
-                </div>
-
-                <div className="sm:col-span-5">
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    {logMode === 'daily'
-                      ? 'Pagine studiate nella giornata'
-                      : `Totale pagine completate (su ${analytics.totalPages})`}
-                  </label>
-                  <input
-                    type="number"
-                    min="0"
-                    max={analytics.totalPages * 2}
-                    placeholder={
-                      logMode === 'daily'
-                        ? 'Es. 20'
-                        : `Attuale: ${analytics.completedPages}`
-                    }
-                    value={logPagesInput}
-                    onChange={(e) => setLogPagesInput(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl bg-white border border-slate-300 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    required
-                  />
-                </div>
-
-                <div className="sm:col-span-3">
-                  <button
-                    type="submit"
-                    className="w-full inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 transition shadow-sm"
-                  >
-                    <Plus className="w-4 h-4" />
-                    Registra
-                  </button>
-                </div>
-
-                {logMode === 'daily' && (
-                  <div className="sm:col-span-12 flex flex-wrap items-center gap-2 pt-1">
-                    <span className="text-[11px] font-medium text-slate-500">
-                      Aggiunta rapida:
-                    </span>
-                    {[5, 10, 20, 30].map((preset) => (
-                      <button
-                        key={preset}
-                        type="button"
-                        onClick={() =>
-                          setLogPagesInput((prev) =>
-                            String((Number(prev) || 0) + preset)
-                          )
-                        }
-                        className="px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-xs font-semibold text-slate-700 hover:border-indigo-300 hover:text-indigo-700 transition"
-                      >
-                        +{preset} pag
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </form>
-
-              <div className="space-y-2.5">
-                <div className="flex items-center justify-between">
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                    Storico Giornate Registrate ({historyRows.length})
-                  </h4>
-                  {undoStack.length > 0 && (
-                    <button
-                      type="button"
-                      onClick={handleUndo}
-                      className="inline-flex items-center gap-1 text-xs font-semibold text-indigo-600 hover:text-indigo-800"
-                    >
-                      <Undo2 className="w-3.5 h-3.5" />
-                      Annulla ultima modifica
-                    </button>
-                  )}
-                </div>
-
-                {historyRows.length === 0 ? (
-                  <div className="text-center py-8 px-4 rounded-xl border border-dashed border-slate-200 text-slate-400 text-xs">
-                    Nessuna sessione registrata finora. Inserisci le prime pagine
-                    studiate qui sopra per attivare la linea reale e la
-                    proiezione.
-                  </div>
-                ) : (
-                  <div className="overflow-x-auto border border-slate-200 rounded-xl">
-                    <table className="w-full text-left border-collapse text-xs sm:text-sm">
-                      <thead>
-                        <tr className="bg-slate-50 border-b border-slate-200 text-[11px] font-bold uppercase tracking-wider text-slate-500">
-                          <th className="py-2.5 px-3">Data</th>
-                          <th className="py-2.5 px-3">Pagine Giorno</th>
-                          <th className="py-2.5 px-3">Totale Cumulato</th>
-                          <th className="py-2.5 px-3 text-right">Azioni</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-100">
-                        {historyRows.map((row) => (
-                          <tr
-                            key={row.date}
-                            className="hover:bg-slate-50/80 transition"
-                          >
-                            <td className="py-2.5 px-3 font-medium text-slate-800 whitespace-nowrap">
-                              <span>{formatShortDate(row.date)}</span>
-                              <span className="ml-1.5 text-xs text-slate-400">
-                                ({row.weekday})
-                              </span>
-                              {row.isRestDay && (
-                                <span className="ml-2 text-[10px] font-semibold px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200">
-                                  Riposo
-                                </span>
-                              )}
-                            </td>
-
-                            <td className="py-2.5 px-3">
-                              {editingLogDate === row.date ? (
-                                <input
-                                  type="number"
-                                  min="0"
-                                  value={editingLogPages}
-                                  onChange={(e) =>
-                                    setEditingLogPages(e.target.value)
-                                  }
-                                  onKeyDown={(e) => {
-                                    if (e.key === 'Enter') {
-                                      handleSaveEditedLog(row.date);
-                                    } else if (e.key === 'Escape') {
-                                      setEditingLogDate(null);
-                                    }
-                                  }}
-                                  className="w-20 px-2 py-1 rounded-lg border border-indigo-300 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                                  autoFocus
-                                />
-                              ) : (
-                                <span className="font-bold text-indigo-700">
-                                  +{row.pages} pag
-                                </span>
-                              )}
-                            </td>
-
-                            <td className="py-2.5 px-3 text-slate-600">
-                              {row.cumulative} / {analytics.totalPages} pag
-                            </td>
-
-                            <td className="py-2.5 px-3 text-right whitespace-nowrap">
-                              {editingLogDate === row.date ? (
-                                <div className="inline-flex items-center gap-1">
-                                  <button
-                                    type="button"
-                                    onClick={() =>
-                                      handleSaveEditedLog(row.date)
-                                    }
-                                    className="p-1.5 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700"
-                                    title="Salva"
-                                  >
-                                    <Check className="w-3.5 h-3.5" />
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => setEditingLogDate(null)}
-                                    className="p-1.5 rounded-lg bg-slate-200 text-slate-700 hover:bg-slate-300"
-                                    title="Annulla"
-                                  >
-                                    <X className="w-3.5 h-3.5" />
-                                  </button>
-                                </div>
-                              ) : (
-                                <div className="inline-flex items-center gap-1">
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      setEditingLogDate(row.date);
-                                      setEditingLogPages(String(row.pages));
-                                    }}
-                                    className="p-1.5 rounded-lg text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 transition"
-                                    title="Modifica pagine"
-                                  >
-                                    <Edit3 className="w-3.5 h-3.5" />
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => handleDeleteLog(row.date)}
-                                    className="p-1.5 rounded-lg text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition"
-                                    title="Elimina giornata"
-                                  >
-                                    <Trash2 className="w-3.5 h-3.5" />
-                                  </button>
-                                </div>
-                              )}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-              </div>
-            </section>
-          </div>
-
-          {/* COLONNA DESTRA: TIMER POMODORO + PARAMETRI TABELLA DI MARCIA (4 col) */}
-          <div className="lg:col-span-4 space-y-6">
-            {/* SEZIONE TIMER POMODORO */}
-            <section className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-6 shadow-sm space-y-4">
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                <div className="flex items-center gap-2.5">
-                  <div
-                    className={`p-2 rounded-xl ${
-                      pomoPhase === 'study'
-                        ? 'bg-indigo-50 text-indigo-600'
-                        : 'bg-emerald-50 text-emerald-600'
-                    }`}
-                  >
-                    {pomoPhase === 'study' ? (
-                      <Clock className="w-4 h-4" />
-                    ) : (
-                      <Coffee className="w-4 h-4" />
-                    )}
-                  </div>
-                  <div>
-                    <h3 className="text-base font-bold text-slate-900">
-                      Timer Pomodoro
-                    </h3>
-                    <p className="text-xs text-slate-500 truncate max-w-[190px]">
-                      {activeExam.name || 'Esame'}
-                    </p>
-                  </div>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => setPomoSound((s) => !s)}
-                  className="p-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-600 hover:bg-slate-100 transition"
-                  title={
-                    pomoSound
-                      ? 'Suono notifica attivo (clicca per silenziare)'
-                      : 'Suono silenziato (clicca per attivare)'
-                  }
-                >
-                  {pomoSound ? (
-                    <Volume2 className="w-4 h-4 text-indigo-600" />
-                  ) : (
-                    <VolumeX className="w-4 h-4 text-slate-400" />
-                  )}
-                </button>
-              </div>
-
-              <div className="grid grid-cols-2 gap-1.5 bg-slate-100 p-1 rounded-xl border border-slate-200">
-                <button
-                  type="button"
-                  onClick={() => handlePomoSwitchPhase('study')}
-                  className={`py-1.5 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 ${
-                    pomoPhase === 'study'
-                      ? 'bg-white text-indigo-700 shadow-sm'
-                      : 'text-slate-600 hover:text-slate-900'
-                  }`}
-                >
-                  <BookOpen className="w-3.5 h-3.5" />
-                  Studio ({pomoStudyMin}m)
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handlePomoSwitchPhase('break')}
-                  className={`py-1.5 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 ${
-                    pomoPhase === 'break'
-                      ? 'bg-white text-emerald-700 shadow-sm'
-                      : 'text-slate-600 hover:text-slate-900'
-                  }`}
-                >
-                  <Coffee className="w-3.5 h-3.5" />
-                  Pausa ({pomoBreakMin}m)
-                </button>
-              </div>
-
-              <div
-                className={`rounded-2xl p-5 text-center border transition-colors ${
-                  pomoPhase === 'study'
-                    ? 'bg-indigo-50/60 border-indigo-200/80'
-                    : 'bg-emerald-50/60 border-emerald-200/80'
-                }`}
-              >
-                <span
-                  className={`inline-block text-[10px] font-bold uppercase tracking-widest px-2.5 py-0.5 rounded-full mb-2 ${
-                    pomoPhase === 'study'
-                      ? 'bg-indigo-100 text-indigo-700'
-                      : 'bg-emerald-100 text-emerald-700'
-                  }`}
-                >
-                  {pomoPhase === 'study'
-                    ? 'Sessione di Concentrazione'
-                    : 'Pausa di Recupero'}
-                </span>
-
-                <div className="text-5xl font-extrabold tracking-tight text-slate-900 tabular-nums my-1">
-                  {pomoMinutesDisplay}:{pomoSecondsDisplay}
-                </div>
-
-                <div className="w-full h-1.5 bg-white/80 rounded-full overflow-hidden mt-3 mb-4 border border-slate-200/60">
-                  <div
-                    className={`h-full transition-all duration-300 ${
-                      pomoPhase === 'study' ? 'bg-indigo-600' : 'bg-emerald-500'
-                    }`}
-                    style={{ width: `${pomoStats.progressPct}%` }}
-                  />
-                </div>
-
-                <div className="flex items-center justify-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setPomoRunning((r) => !r)}
-                    className={`flex-1 inline-flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-sm font-bold text-white shadow-sm transition ${
-                      pomoRunning
-                        ? 'bg-amber-500 hover:bg-amber-600'
-                        : pomoPhase === 'study'
-                        ? 'bg-indigo-600 hover:bg-indigo-700'
-                        : 'bg-emerald-600 hover:bg-emerald-700'
-                    }`}
-                  >
-                    {pomoRunning ? (
-                      <>
-                        <Pause className="w-4 h-4" />
-                        Pausa
-                      </>
-                    ) : (
-                      <>
-                        <Play className="w-4 h-4" />
-                        Avvia
-                      </>
-                    )}
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={handlePomoReset}
-                    className="p-2.5 rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 transition"
-                    title="Azzera timer corrente"
-                  >
-                    <RotateCcw className="w-4 h-4" />
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() =>
-                      handlePomoSwitchPhase(
-                        pomoPhase === 'study' ? 'break' : 'study'
-                      )
-                    }
-                    className="p-2.5 rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 transition"
-                    title="Passa alla fase successiva"
-                  >
-                    <SkipForward className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-
-              <div className="space-y-3 pt-1">
-                <div className="flex items-center justify-between gap-1.5">
-                  <span className="text-[11px] font-semibold text-slate-500">
-                    Preset:
-                  </span>
-                  <div className="flex items-center gap-1.5">
-                    {[
-                      { s: 25, b: 5 },
-                      { s: 45, b: 10 },
-                      { s: 50, b: 10 },
-                    ].map((pr) => (
-                      <button
-                        key={`${pr.s}-${pr.b}`}
-                        type="button"
-                        onClick={() => handlePomoPreset(pr.s, pr.b)}
-                        className={`px-2 py-1 rounded-lg text-[11px] font-bold border transition ${
-                          pomoStudyMin === pr.s && pomoBreakMin === pr.b
-                            ? 'bg-slate-900 text-white border-slate-900'
-                            : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
-                        }`}
-                      >
-                        {pr.s}/{pr.b}m
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
-                      Tempo Studio (min)
-                    </label>
-                    <input
-                      type="number"
-                      min="1"
-                      max="180"
-                      value={pomoStudyMin}
-                      onChange={(e) => {
-                        const val = Math.max(
-                          1,
-                          Math.min(180, Number(e.target.value) || 1)
-                        );
-                        setPomoStudyMin(val);
-                        if (!pomoRunning && pomoPhase === 'study') {
-                          setPomoSecondsLeft(val * 60);
-                        }
-                      }}
-                      className="w-full px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-300 text-sm font-semibold text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
-                      Tempo Pausa (min)
-                    </label>
-                    <input
-                      type="number"
-                      min="1"
-                      max="60"
-                      value={pomoBreakMin}
-                      onChange={(e) => {
-                        const val = Math.max(
-                          1,
-                          Math.min(60, Number(e.target.value) || 1)
-                        );
-                        setPomoBreakMin(val);
-                        if (!pomoRunning && pomoPhase === 'break') {
-                          setPomoSecondsLeft(val * 60);
-                        }
-                      }}
-                      className="w-full px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-300 text-sm font-semibold text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="pt-3 border-t border-slate-100 space-y-2.5">
-                <div className="grid grid-cols-2 gap-2.5">
-                  <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/80">
-                    <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                      Sessioni Oggi
-                    </div>
-                    <div className="mt-0.5 flex items-baseline gap-1.5">
-                      <span className="text-lg font-extrabold text-indigo-700">
-                        {pomoStats.todayCount}
-                      </span>
-                      <span className="text-xs font-medium text-slate-500">
-                        ({formatMinutesHuman(pomoStats.todayMinutes)})
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/80">
-                    <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                      Totale Esame
-                    </div>
-                    <div className="mt-0.5 flex items-baseline gap-1.5">
-                      <span className="text-lg font-extrabold text-slate-900">
-                        {pomoStats.totalCount}
-                      </span>
-                      <span className="text-xs font-medium text-slate-500">
-                        ({formatMinutesHuman(pomoStats.totalMinutes)})
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between text-xs pt-0.5">
-                  <button
-                    type="button"
-                    onClick={() => setShowPomoHistory((h) => !h)}
-                    className="font-semibold text-indigo-600 hover:text-indigo-800"
-                  >
-                    {showPomoHistory
-                      ? 'Nascondi registro sessioni'
-                      : `Vedi registro sessioni (${pomoStats.totalCount})`}
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={handleAddManualPomoSession}
-                    className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-indigo-50 text-indigo-700 font-semibold hover:bg-indigo-100 transition"
-                    title="Registra manualmente una sessione completata"
-                  >
-                    <Plus className="w-3 h-3" />
-                    1 sessione ({pomoStudyMin}m)
-                  </button>
-                </div>
-
-                {showPomoHistory && (
-                  <div className="max-h-44 overflow-y-auto border border-slate-200 rounded-xl divide-y divide-slate-100 text-xs">
-                    {pomoStats.sessions.length === 0 ? (
-                      <div className="p-3 text-center text-slate-400">
-                        Nessuna sessione Pomodoro registrata per questo esame.
-                      </div>
-                    ) : (
-                      pomoStats.sessions.map((sess) => (
-                        <div
-                          key={sess.id}
-                          className="flex items-center justify-between px-3 py-2 hover:bg-slate-50"
-                        >
-                          <div>
-                            <span className="font-semibold text-slate-800">
-                              {formatShortDate(sess.date)}
-                            </span>
-                            {sess.time && (
-                              <span className="text-slate-400 ml-1.5">
-                                alle {sess.time}
-                              </span>
-                            )}
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span className="px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 font-bold">
-                              {sess.durationMin} min
-                            </span>
-                            <button
-                              type="button"
-                              onClick={() => handleDeletePomoSession(sess.id)}
-                              className="text-slate-400 hover:text-rose-600 transition"
-                              title="Elimina sessione"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                )}
-              </div>
-            </section>
-
-            {/* PANNELLO CONFIGURAZIONE TABELLA DI MARCIA */}
-            <aside className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-6 shadow-sm space-y-5">
-              <div className="flex items-start gap-2.5 pb-3 border-b border-slate-100">
-                <div className="p-2 rounded-xl bg-indigo-50 text-indigo-600 mt-0.5">
-                  <SlidersHorizontal className="w-4 h-4" />
-                </div>
-                <div>
-                  <h3 className="text-base font-bold text-slate-900">
-                    Parametri Tabella di Marcia
-                  </h3>
-                  <p className="text-xs text-slate-500">
-                    Modifica in qualsiasi momento con ricalcolo istantaneo
-                  </p>
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                    Nome dell&apos;esame / materia
-                  </label>
-                  <input
-                    ref={sidebarNameInputRef}
-                    type="text"
-                    value={activeExam.name ?? ''}
-                    placeholder="Es. Biochimica Clinica, Endocrinologia..."
-                    onChange={(e) => updateActiveExam({ name: e.target.value })}
-                    onBlur={() => {
-                      if (!activeExam.name || !activeExam.name.trim()) {
-                        updateActiveExam({ name: 'Esame senza nome' });
-                      }
-                    }}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-sm font-semibold text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                      Inizio studio
-                    </label>
-                    <input
-                      type="date"
-                      value={activeExam.startDate}
-                      onChange={(e) => {
-                        const newStart = e.target.value;
-                        if (!newStart) return;
-                        updateActiveExam((ex) => ({
-                          ...ex,
-                          startDate: newStart,
-                          examDate:
-                            ex.examDate < newStart
-                              ? addDays(newStart, 7)
-                              : ex.examDate,
-                        }));
-                      }}
-                      className="w-full px-2.5 py-2 rounded-xl bg-slate-50 border border-slate-300 text-xs sm:text-sm font-medium text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                      Data appello
-                    </label>
-                    <input
-                      type="date"
-                      value={activeExam.examDate}
-                      min={activeExam.startDate}
-                      onChange={(e) => {
-                        const newExamDate = e.target.value;
-                        if (!newExamDate) return;
-                        updateActiveExam({ examDate: newExamDate });
-                      }}
-                      className="w-full px-2.5 py-2 rounded-xl bg-slate-50 border border-slate-300 text-xs sm:text-sm font-medium text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                      Totale pagine
-                    </label>
-                    <input
-                      type="number"
-                      min="1"
-                      max="10000"
-                      value={activeExam.totalPages}
-                      onChange={(e) =>
-                        updateActiveExam({
-                          totalPages: Math.max(1, Number(e.target.value) || 0),
-                        })
-                      }
-                      className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-300 text-sm font-semibold text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                      Giorni ripasso finale
-                    </label>
-                    <input
-                      type="number"
-                      min="0"
-                      max="60"
-                      value={activeExam.reviewDays}
-                      onChange={(e) =>
-                        updateActiveExam({
-                          reviewDays: Math.max(0, Number(e.target.value) || 0),
-                        })
-                      }
-                      className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-300 text-sm font-semibold text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <label className="text-xs font-bold text-slate-700">
-                      Giorni di riposo settimanali
-                    </label>
-                    <span className="text-[11px] text-slate-400">
-                      {(activeExam.restDays || []).length} off/sett
-                    </span>
-                  </div>
-                  <div className="grid grid-cols-7 gap-1.5">
-                    {WEEKDAYS.map((day) => {
-                      const isSelected = (activeExam.restDays || []).includes(
-                        day.id
-                      );
-                      return (
-                        <button
-                          key={day.id}
-                          type="button"
-                          onClick={() => toggleRestDay(day.id)}
-                          className={`py-2 rounded-xl text-xs font-bold border transition ${
-                            isSelected
-                              ? 'bg-slate-900 text-white border-slate-900 shadow-sm'
-                              : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
-                          }`}
-                        >
-                          {day.label}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                <div className="pt-2 border-t border-slate-100 space-y-2.5">
-                  <div className="flex items-center justify-between">
-                    <label className="text-xs font-bold text-slate-700">
-                      Ritmo target iniziale (pag/giorno)
-                    </label>
-                    <span className="text-[11px] font-semibold text-indigo-600">
-                      Minimo: {analytics.initialMinPace.toFixed(1)} pag/gg
-                    </span>
-                  </div>
-
-                  <input
-                    type="number"
-                    min="1"
-                    max="500"
-                    value={activeExam.targetPace}
-                    onChange={(e) =>
-                      updateActiveExam({
-                        targetPace: Math.max(1, Number(e.target.value) || 0),
-                      })
-                    }
-                    className="w-full px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-300 text-sm font-semibold text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  />
-
-                  <div
-                    className={`p-3 rounded-xl border text-xs leading-relaxed ${
-                      (Number(activeExam.targetPace) || 0) >=
-                      analytics.initialMinPace
-                        ? 'bg-emerald-50/70 border-emerald-200 text-emerald-900'
-                        : 'bg-amber-50/70 border-amber-200 text-amber-900'
-                    }`}
-                  >
-                    {(Number(activeExam.targetPace) || 0) >=
-                    analytics.initialMinPace ? (
-                      <>
-                        <strong>Target sostenibile:</strong> con{' '}
-                        <strong>{activeExam.targetPace} pag/giorno</strong>{' '}
-                        superi il minimo necessario di{' '}
-                        <strong>
-                          +
-                          {(
-                            (Number(activeExam.targetPace) || 0) -
-                            analytics.initialMinPace
-                          ).toFixed(1)}{' '}
-                          pag/gg
-                        </strong>{' '}
-                        su {analytics.totalUsefulDays} giorni utili.
-                      </>
-                    ) : (
-                      <>
-                        <strong>Target inferiore al minimo:</strong> per finire{' '}
-                        {analytics.totalPages} pagine in{' '}
-                        {analytics.totalUsefulDays} giorni utili servono almeno{' '}
-                        <strong>
-                          {analytics.initialMinPace.toFixed(1)} pag/giorno
-                        </strong>{' '}
-                        (+
-                        {(
-                          analytics.initialMinPace -
-                          (Number(activeExam.targetPace) || 0)
-                        ).toFixed(1)}{' '}
-                        pag/gg rispetto al target).
-                      </>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </aside>
-          </div>
+              )}
+            </div>
+          )}
         </div>
       </main>
     </div>
