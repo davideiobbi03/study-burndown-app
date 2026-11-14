@@ -511,9 +511,9 @@ export default function App() {
   };
 
   const moveSectionDown = (col, index) => {
+    if (index >= layout[col].length - 1) return;
     setLayout((prev) => {
       const list = [...prev[col]];
-      if (index >= list.length - 1) return prev;
       [list[index], list[index + 1]] = [list[index + 1], list[index]];
       return { ...prev, [col]: list };
     });
@@ -2582,9 +2582,13 @@ export default function App() {
                   onClick={() => setSrFilter('due')}
                   className={`px-3 py-1 rounded-lg text-xs font-semibold transition cursor-pointer ${
                     srFilter === 'due'
-                      ? isDark
-                        ? 'bg-slate-900 text-amber-400 shadow-xs'
-                        : 'bg-white text-amber-700 shadow-xs'
+                      ? srAnalytics.dueTotalCount > 0
+                        ? isDark
+                          ? 'bg-slate-900 text-amber-400 shadow-xs'
+                          : 'bg-white text-amber-700 shadow-xs'
+                        : isDark
+                        ? 'bg-slate-900 text-emerald-400 shadow-xs'
+                        : 'bg-white text-emerald-700 shadow-xs'
                       : isDark
                       ? 'text-slate-400 hover:text-slate-200'
                       : 'text-slate-600 hover:text-slate-900'
@@ -3348,7 +3352,11 @@ export default function App() {
 
             <div
               className={`w-full h-1.5 rounded-full overflow-hidden mb-4 ${
-                isDark ? 'bg-slate-800/90' : 'bg-white/80'
+                isDark
+                  ? 'bg-slate-800/90'
+                  : pomoPhase === 'study'
+                  ? 'bg-indigo-200/60'
+                  : 'bg-emerald-200/60'
               }`}
             >
               <div
@@ -3586,7 +3594,7 @@ export default function App() {
                     getUnlockedAudioContext();
                     playPomodoroSound(chosen, 'study');
                   }}
-                  className={`w-full rounded-lg border px-2 py-1 text-xs font-medium truncate disabled:opacity-50 ${inputMutedSurfaceClass}`}
+                  className={`w-full rounded-lg border pl-2 pr-6 py-1 text-xs font-medium truncate disabled:opacity-50 ${inputMutedSurfaceClass}`}
                   title="Scegli la suoneria di fine sessione o pausa"
                 >
                   {POMO_SOUNDS.map((s) => (
@@ -4271,7 +4279,7 @@ export default function App() {
                 setIsRenamingHeader(false);
                 setConfirmReset(false);
               }}
-              className={`rounded-lg border text-xs sm:text-sm font-medium px-2.5 py-1.5 max-w-[170px] sm:max-w-[220px] truncate ${
+              className={`rounded-lg border text-xs sm:text-sm font-medium pl-3 pr-7 py-1.5 max-w-[190px] sm:max-w-[240px] truncate ${
                 isDark
                   ? 'border-slate-700 bg-slate-800 text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500'
                   : 'border-slate-300 bg-slate-50 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500'
@@ -4781,7 +4789,7 @@ export default function App() {
                 <span
                   className={`text-[11px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full border ${statusStyles.badge}`}
                 >
-                  {statusStyles.statusTitle}
+                  {analytics.statusTitle}
                 </span>
                 {analytics.safeReviewDays > 0 && (
                   <span className="text-xs opacity-75">
@@ -4792,10 +4800,10 @@ export default function App() {
                 )}
               </div>
               <h2 className="text-base sm:text-lg font-bold leading-snug">
-                {statusStyles.statusHeadline}
+                {analytics.statusHeadline}
               </h2>
               <p className="text-xs sm:text-sm opacity-90 leading-relaxed">
-                {statusStyles.statusDetail}
+                {analytics.statusDetail}
               </p>
             </div>
           </div>
