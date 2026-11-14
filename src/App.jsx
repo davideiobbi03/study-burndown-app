@@ -85,9 +85,9 @@ function createDefaultExam(name = 'Biochimica Clinica') {
     examDate: addDays(today, 30),
     totalPages: 450,
     reviewDays: 3,
-    restDays: [0], // Domenica di default
+    restDays: [0],
     targetPace: 20,
-    logs: [], // [{ date: 'YYYY-MM-DD', pages: 18 }]
+    logs: [],
   };
 }
 
@@ -122,7 +122,6 @@ function createDemoExam() {
 const STORAGE_KEY = 'studyburn_state_v2';
 
 export default function App() {
-  // --- STATO APPLICAZIONE CON PERSISTENZA LOCALSTORAGE ---
   const [state, setState] = useState(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
@@ -146,17 +145,19 @@ export default function App() {
   const [isRenamingHeader, setIsRenamingHeader] = useState(false);
   const [confirmReset, setConfirmReset] = useState(false);
 
-  // Stato form registro avanzamento
-  const [logMode, setLogMode] = useState('daily'); // 'daily' | 'cumulative'
+  const [logMode, setLogMode] = useState('daily');
   const [logDate, setLogDate] = useState(getTodayStr());
   const [logPagesInput, setLogPagesInput] = useState('');
 
-  // Stato modifica inline nello storico
   const [editingLogDate, setEditingLogDate] = useState(null);
   const [editingLogPages, setEditingLogPages] = useState('');
 
   const headerRenameInputRef = useRef(null);
   const sidebarNameInputRef = useRef(null);
+
+  useEffect(() => {
+    document.title = 'StudyBurn — Simulatore Universitario';
+  }, []);
 
   useEffect(() => {
     try {
@@ -179,7 +180,6 @@ export default function App() {
     );
   }, [state]);
 
-  // --- FUNZIONI DI AGGIORNAMENTO ESAME ---
   const updateActiveExam = (updater, saveUndo = false) => {
     setState((prev) => {
       if (saveUndo) {
@@ -267,7 +267,6 @@ export default function App() {
 
   const toggleRestDay = (dayId) => {
     const current = activeExam.restDays || [];
-    // Impedisci di selezionare tutti e 7 i giorni come riposo
     if (!current.includes(dayId) && current.length >= 6) return;
     const updated = current.includes(dayId)
       ? current.filter((d) => d !== dayId)
@@ -275,7 +274,6 @@ export default function App() {
     updateActiveExam({ restDays: updated });
   };
 
-  // --- REGISTRO AVANZAMENTO REALE ---
   const handleAddLog = (e) => {
     e.preventDefault();
     const val = Number(logPagesInput);
@@ -297,7 +295,6 @@ export default function App() {
         sortedLogs.push({ date: logDate, pages: val });
       }
     } else {
-      // Modalità Totale Completato finora
       const beforeSum = sortedLogs
         .filter((l) => l.date < logDate)
         .reduce((acc, l) => acc + l.pages, 0);
@@ -337,7 +334,6 @@ export default function App() {
     updateActiveExam({ logs: updated }, true);
   };
 
-  // --- MOTORE DI CALCOLO BURN-DOWN, PROIEZIONI E KPI ---
   const analytics = useMemo(() => {
     const today = getTodayStr();
     const totalPages = Math.max(1, Number(activeExam.totalPages) || 1);
@@ -348,7 +344,6 @@ export default function App() {
         : addDays(startDate, 14);
     const restDays = activeExam.restDays || [];
 
-    // Calcolo giorni totali calendario da startDate a examDate
     const allDates = [];
     let cursor = startDate;
     let safety = 0;
@@ -365,7 +360,6 @@ export default function App() {
     );
     const studyDeadline = addDays(examDate, -safeReviewDays);
 
-    // Mappa log per data
     const logMap = {};
     (activeExam.logs || []).forEach((l) => {
       logMap[l.date] = (logMap[l.date] || 0) + Number(l.pages || 0);
@@ -375,7 +369,6 @@ export default function App() {
     const remainingPages = Math.max(0, totalPages - completedPages);
     const completionPct = Math.min(100, (completedPages / totalPages) * 100);
 
-    // Giorni utili totali nella finestra di studio (startDate -> studyDeadline)
     const studyDates = allDates.filter((d) => d <= studyDeadline);
     const usefulStudyDates = studyDates.filter(
       (d) => !restDays.includes(parseLocalDate(d).getDay())
@@ -383,7 +376,6 @@ export default function App() {
     const totalUsefulDays = Math.max(1, usefulStudyDates.length);
     const initialMinPace = totalPages / totalUsefulDays;
 
-    // Giorni utili mancanti da oggi (incluso se oggi non è stato ancora loggato, oppure da domani se oggi è già loggato)
     const loggedToday = (logMap[today] || 0) > 0;
     const futureStart = loggedToday ? addDays(today, 1) : today;
     const remainingUsefulDaysRaw = usefulStudyDates.filter(
@@ -396,7 +388,6 @@ export default function App() {
       allDates.filter((d) => d >= today).length - 1
     );
 
-    // Calcolo media reale (pagine completate / giorni utili trascorsi)
     const elapsedUsefulDates = usefulStudyDates.filter((d) =>
       loggedToday ? d <= today : d < today
     );
@@ -411,7 +402,6 @@ export default function App() {
     const realDailyAvg =
       completedPages > 0 ? completedPages / denominatorDays : 0;
 
-    // Nuova media richiesta
     const newRequiredPace =
       remainingPages === 0
         ? 0
@@ -419,9 +409,7 @@ export default function App() {
         ? remainingPages / remainingUsefulDays
         : remainingPages;
 
-    // Costruzione serie dati grafico Burn-down
     const chartData = [];
-    // Punto iniziale giorno 0 (partenza piena a totalPages)
     chartData.push({
       date: 'Inizio',
       rawDate: addDays(startDate, -1),
@@ -437,7 +425,6 @@ export default function App() {
     const lastLogDate = Object.keys(logMap).sort().pop() || '';
     const realCutoffDate = today > lastLogDate ? today : lastLogDate;
 
-    // Pagine completate prima di startDate (eventuali log anticipati)
     Object.keys(logMap).forEach((d) => {
       if (d < startDate) cumRealPages += logMap[d];
     });
@@ -478,7 +465,6 @@ export default function App() {
       });
     });
 
-    // Proiezione futura da realCutoffDate in poi
     let estimatedFinishDate = null;
     if (remainingPages === 0) {
       estimatedFinishDate = lastLogDate || today;
@@ -487,7 +473,6 @@ export default function App() {
       let projCursor = realCutoffDate;
       let projSteps = 0;
 
-      // Aggiorna i punti esistenti nel grafico dopo realCutoffDate
       for (let i = 0; i < chartData.length; i++) {
         const pt = chartData[i];
         if (pt.rawDate > realCutoffDate) {
@@ -504,7 +489,6 @@ export default function App() {
         }
       }
 
-      // Continua a simulare oltre examDate se non ancora finito
       while (projRem > 0 && projSteps < 365) {
         projCursor = addDays(projCursor, 1);
         const isRest = restDays.includes(parseLocalDate(projCursor).getDay());
@@ -519,16 +503,15 @@ export default function App() {
       }
     }
 
-    // Calcolo stato Alert Dinamico (Verde / Giallo / Rosso)
     const idealCompletedByNow = Math.max(
       0,
       totalPages - idealRemainingAtCutoff
     );
-    const pagesDelta = completedPages - idealCompletedByNow; // positivo = avanti, negativo = ritardo
+    const pagesDelta = completedPages - idealCompletedByNow;
     const delayPages = Math.max(0, -pagesDelta);
     const delayPct = (delayPages / totalPages) * 100;
 
-    let status = 'green'; // 'green' | 'yellow' | 'red'
+    let status = 'green';
     let statusTitle = 'IN LINEA / IN ANTICIPO';
     let statusHeadline = '';
     let statusDetail = '';
@@ -618,7 +601,6 @@ export default function App() {
     };
   }, [activeExam]);
 
-  // Storico ordinato con progressivo cumulato
   const historyRows = useMemo(() => {
     const sorted = [...(activeExam.logs || [])].sort((a, b) =>
       a.date.localeCompare(b.date)
@@ -665,10 +647,24 @@ export default function App() {
   const StatusIcon = statusStyles.Icon;
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans pb-14">
-      {/* HEADER */}
-      <header className="bg-white border-b border-slate-200 sticky top-0 z-30">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3.5 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+    <div className="min-h-screen w-full bg-slate-50 text-slate-900 font-sans pb-14">
+      {/* Reset stili predefiniti Vite per occupare il 100% dello schermo senza fasce scure */}
+      <style>{`
+        html, body, #root {
+          margin: 0 !important;
+          padding: 0 !important;
+          width: 100% !important;
+          max-width: 100% !important;
+          min-height: 100vh !important;
+          display: block !important;
+          background-color: #f8fafc !important;
+          text-align: left !important;
+        }
+      `}</style>
+
+      {/* HEADER A LARGHEZZA PIENA */}
+      <header className="w-full bg-white border-b border-slate-200 sticky top-0 z-30">
+        <div className="w-full px-4 sm:px-6 lg:px-8 py-3.5 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
           {/* Brand */}
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-slate-900 text-white flex items-center justify-center shadow-sm shrink-0">
@@ -699,9 +695,7 @@ export default function App() {
                   type="text"
                   value={activeExam.name ?? ''}
                   placeholder="Nome materia..."
-                  onChange={(e) =>
-                    updateActiveExam({ name: e.target.value })
-                  }
+                  onChange={(e) => updateActiveExam({ name: e.target.value })}
                   onBlur={() => {
                     if (!activeExam.name || !activeExam.name.trim()) {
                       updateActiveExam({ name: 'Esame senza nome' });
@@ -832,8 +826,8 @@ export default function App() {
         </div>
       </header>
 
-      {/* CONTENUTO PRINCIPALE */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 pt-6 space-y-6">
+      {/* CONTENUTO PRINCIPALE A LARGHEZZA PIENA */}
+      <main className="w-full px-4 sm:px-6 lg:px-8 pt-6 space-y-6">
         {/* BANNER DI STATO DINAMICO */}
         <section
           className={`rounded-2xl border p-4 sm:p-5 transition-colors shadow-sm ${statusStyles.wrapper}`}
@@ -1025,7 +1019,7 @@ export default function App() {
                 </div>
               </div>
 
-              <div className="h-[320px] sm:h-[360px] w-full">
+              <div className="h-[340px] sm:h-[380px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <ComposedChart
                     data={analytics.chartData}
@@ -1073,7 +1067,6 @@ export default function App() {
                       }}
                     />
 
-                    {/* Linea riferimento OGGI */}
                     <ReferenceLine
                       x={analytics.todayShort}
                       stroke="#6366f1"
@@ -1087,7 +1080,6 @@ export default function App() {
                       }}
                     />
 
-                    {/* Linea riferimento RIPASSO */}
                     {analytics.reviewShort && (
                       <ReferenceLine
                         x={analytics.reviewShort}
@@ -1103,7 +1095,6 @@ export default function App() {
                       />
                     )}
 
-                    {/* Linea Ideale */}
                     <Line
                       type="monotone"
                       dataKey="ideale"
@@ -1114,7 +1105,6 @@ export default function App() {
                       activeDot={{ r: 4 }}
                     />
 
-                    {/* Linea Reale */}
                     <Line
                       type="monotone"
                       dataKey="reale"
@@ -1125,7 +1115,6 @@ export default function App() {
                       connectNulls={false}
                     />
 
-                    {/* Proiezione Futura */}
                     <Line
                       type="monotone"
                       dataKey="proiezione"
@@ -1179,7 +1168,6 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Form inserimento rapido */}
               <form
                 onSubmit={handleAddLog}
                 className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end bg-slate-50 p-3.5 rounded-xl border border-slate-200/80"
@@ -1229,7 +1217,6 @@ export default function App() {
                   </button>
                 </div>
 
-                {/* Pulsanti incremento rapido */}
                 {logMode === 'daily' && (
                   <div className="sm:col-span-12 flex flex-wrap items-center gap-2 pt-1">
                     <span className="text-[11px] font-medium text-slate-500">
@@ -1253,7 +1240,6 @@ export default function App() {
                 )}
               </form>
 
-              {/* Storico giornaliero modificabile */}
               <div className="space-y-2.5">
                 <div className="flex items-center justify-between">
                   <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500">
@@ -1409,7 +1395,6 @@ export default function App() {
             </div>
 
             <div className="space-y-4">
-              {/* NOME DELL'ESAME (Modificabile liberamente) */}
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1.5">
                   Nome dell&apos;esame / materia
@@ -1429,7 +1414,6 @@ export default function App() {
                 />
               </div>
 
-              {/* DATE INIZIO E APPELLO */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1.5">
@@ -1472,7 +1456,6 @@ export default function App() {
                 </div>
               </div>
 
-              {/* TOTALE PAGINE E MARGINE RIPASSO */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1.5">
@@ -1511,7 +1494,6 @@ export default function App() {
                 </div>
               </div>
 
-              {/* GIORNI DI RIPOSO SETTIMANALI */}
               <div>
                 <div className="flex items-center justify-between mb-1.5">
                   <label className="text-xs font-bold text-slate-700">
@@ -1544,7 +1526,6 @@ export default function App() {
                 </div>
               </div>
 
-              {/* RITMO TARGET INIZIALE VS RITMO MINIMO NECESSARIO */}
               <div className="pt-2 border-t border-slate-100 space-y-2.5">
                 <div className="flex items-center justify-between">
                   <label className="text-xs font-bold text-slate-700">
@@ -1568,7 +1549,6 @@ export default function App() {
                   className="w-full px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-300 text-sm font-semibold text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
 
-                {/* Box confronto automatico */}
                 <div
                   className={`p-3 rounded-xl border text-xs leading-relaxed ${
                     (Number(activeExam.targetPace) || 0) >=
