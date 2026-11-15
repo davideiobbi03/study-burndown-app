@@ -51,6 +51,7 @@ import {
   LogOut,
   Download,
   Upload,
+  Palette,
 } from 'lucide-react';
 
 // ============================================================================
@@ -59,6 +60,60 @@ import {
 const SUPABASE_URL = 'https://lubcesnljpwvgvsnhtcl.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_psF0qMa_982qxlfRWaFGHA_JlFL_9zW';
 // ============================================================================
+
+// --- PALETTE COLORI ACCENTO ---
+const ACCENT_COLORS = {
+  indigo: {
+    label: 'Indigo',
+    primary: 'bg-indigo-600 hover:bg-indigo-700 text-white',
+    primaryHover: 'hover:bg-indigo-700',
+    border: 'border-indigo-500',
+    ring: 'focus:ring-indigo-500',
+    text: 'text-indigo-600 dark:text-indigo-400',
+    bgLight: 'bg-indigo-50 dark:bg-indigo-950/70 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800/70',
+    hex: '#4f46e5',
+  },
+  emerald: {
+    label: 'Emerald',
+    primary: 'bg-emerald-600 hover:bg-emerald-700 text-white',
+    primaryHover: 'hover:bg-emerald-700',
+    border: 'border-emerald-500',
+    ring: 'focus:ring-emerald-500',
+    text: 'text-emerald-600 dark:text-emerald-400',
+    bgLight: 'bg-emerald-50 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800/70',
+    hex: '#059669',
+  },
+  violet: {
+    label: 'Violet',
+    primary: 'bg-violet-600 hover:bg-violet-700 text-white',
+    primaryHover: 'hover:bg-violet-700',
+    border: 'border-violet-500',
+    ring: 'focus:ring-violet-500',
+    text: 'text-violet-600 dark:text-violet-400',
+    bgLight: 'bg-violet-50 dark:bg-violet-950/70 text-violet-700 dark:text-violet-300 border-violet-200 dark:border-violet-800/70',
+    hex: '#7c3aed',
+  },
+  rose: {
+    label: 'Rose',
+    primary: 'bg-rose-600 hover:bg-rose-700 text-white',
+    primaryHover: 'hover:bg-rose-700',
+    border: 'border-rose-500',
+    ring: 'focus:ring-rose-500',
+    text: 'text-rose-600 dark:text-rose-400',
+    bgLight: 'bg-rose-50 dark:bg-rose-950/70 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800/70',
+    hex: '#e11d48',
+  },
+  amber: {
+    label: 'Amber',
+    primary: 'bg-amber-600 hover:bg-amber-700 text-white',
+    primaryHover: 'hover:bg-amber-700',
+    border: 'border-amber-500',
+    ring: 'focus:ring-amber-500',
+    text: 'text-amber-600 dark:text-amber-400',
+    bgLight: 'bg-amber-50 dark:bg-amber-950/70 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800/70',
+    hex: '#d97706',
+  },
+};
 
 // --- UTILITY DATE ---
 function getTodayStr() {
@@ -115,6 +170,16 @@ function formatMinutesHuman(totalMinutes) {
   const m = mins % 60;
   return m > 0 ? `${h}h ${m}m` : `${h}h`;
 }
+
+// --- CITAZIONI MOTIVAZIONALI POMODORO ---
+const POMO_QUOTES = [
+  "“La costanza è il mattone fondamentale del successo clinico e accademico.”",
+  "“Un capitolo alla volta, un Pomodoro alla volta: la meta si avvicina.”",
+  "“La mente focalizzata è il tuo strumento diagnostico più potente.”",
+  "“Il successo non viene dai colpi di genio isolati, ma dalla disciplina quotidiana.”",
+  "“Rilassati, respira e riparti: il recupero è parte integrante dello studio.”",
+  "“Trasforma la complessità in schemi chiari. Tu domini la materia.”",
+];
 
 // --- MOTORE AUDIO POMODORO ---
 const POMO_SOUNDS = [
@@ -310,116 +375,10 @@ function createDefaultExam(name = 'Biochimica Clinica') {
   };
 }
 
-function createDemoExam() {
-  const today = getTodayStr();
-  const startDate = addDays(today, -11);
-  const examDate = addDays(today, 18);
-  const sampleDaily = [22, 18, 25, 15, 20, 12, 0, 24, 19, 16, 21, 14];
-  const logs = [];
-
-  for (let i = 0; i < 12; i++) {
-    const d = addDays(startDate, i);
-    const pages = sampleDaily[i] ?? 18;
-    if (pages > 0) {
-      logs.push({ date: d, pages });
-    }
-  }
-
-  return {
-    id: `exam_demo_${Date.now()}`,
-    name: 'Patologia Clinica (Demo)',
-    startDate,
-    examDate,
-    totalPages: 520,
-    reviewDays: 3,
-    restDays: [0],
-    targetPace: 22,
-    logs,
-    pomodoroSessions: [
-      { id: 'p_1', date: addDays(today, -1), time: '16:30', durationMin: 50 },
-      { id: 'p_2', date: addDays(today, -1), time: '17:35', durationMin: 50 },
-      { id: 'p_3', date: today, time: '09:45', durationMin: 25 },
-    ],
-    srTopics: [
-      {
-        id: 'sr_1',
-        title: 'Marcatori cardiaci (Troponine, BNP)',
-        pagesRef: 'pp. 18-42',
-        createdDate: addDays(today, -8),
-        lastReviewDate: addDays(today, -4),
-        nextReviewDate: addDays(today, -1),
-        intervalDays: 3,
-        repetitions: 1,
-        easeFactor: 2.3,
-        lastRating: 'hard',
-      },
-      {
-        id: 'sr_2',
-        title: 'Emocromo e anemie microcitiche',
-        pagesRef: 'pp. 43-78',
-        createdDate: addDays(today, -7),
-        lastReviewDate: addDays(today, -3),
-        nextReviewDate: today,
-        intervalDays: 3,
-        repetitions: 1,
-        easeFactor: 2.5,
-        lastRating: 'good',
-      },
-      {
-        id: 'sr_3',
-        title: 'Cascata coagulativa e PT/aPTT',
-        pagesRef: 'pp. 79-110',
-        createdDate: addDays(today, -1),
-        lastReviewDate: addDays(today, -1),
-        nextReviewDate: today,
-        intervalDays: 1,
-        repetitions: 0,
-        easeFactor: 2.5,
-        lastRating: null,
-      },
-      {
-        id: 'sr_4',
-        title: 'Funzionalità renale, eGFR e proteinuria',
-        pagesRef: 'pp. 111-145',
-        createdDate: addDays(today, -5),
-        lastReviewDate: addDays(today, -2),
-        nextReviewDate: addDays(today, 2),
-        intervalDays: 4,
-        repetitions: 2,
-        easeFactor: 2.6,
-        lastRating: 'easy',
-      },
-      {
-        id: 'sr_5',
-        title: 'Enzimi epatici e itteri',
-        pagesRef: 'pp. 146-180',
-        createdDate: addDays(today, -6),
-        lastReviewDate: addDays(today, -1),
-        nextReviewDate: addDays(today, 5),
-        intervalDays: 6,
-        repetitions: 2,
-        easeFactor: 2.5,
-        lastRating: 'good',
-      },
-    ],
-  };
-}
-
-function hasMeaningfulProgress(examState) {
-  if (!examState || !Array.isArray(examState.exams)) return false;
-  if (examState.exams.length > 1) return true;
-  const ex = examState.exams[0];
-  if (!ex) return false;
-  return (
-    (ex.logs && ex.logs.length > 0) ||
-    (ex.srTopics && ex.srTopics.length > 0) ||
-    (ex.pomodoroSessions && ex.pomodoroSessions.length > 0)
-  );
-}
-
 const STORAGE_KEY = 'studyburn_state_v2';
 const LAYOUT_STORAGE_KEY = 'studyburn_layout_v1';
 const THEME_STORAGE_KEY = 'studyburn_theme_v1';
+const ACCENT_STORAGE_KEY = 'studyburn_accent_v1';
 const POMO_PREFS_STORAGE_KEY = 'studyburn_pomo_prefs_v1';
 const CLOUD_CONFIG_STORAGE_KEY = 'studyburn_cloud_config_v1';
 const CLOUD_SESSION_STORAGE_KEY = 'studyburn_cloud_session_v1';
@@ -442,6 +401,26 @@ export default function App() {
     }
     return false;
   });
+
+  const [accentKey, setAccentKey] = useState(() => {
+    try {
+      const saved = localStorage.getItem(ACCENT_STORAGE_KEY);
+      if (saved && ACCENT_COLORS[saved]) return saved;
+    } catch (e) {
+      console.error('Errore lettura colore accento:', e);
+    }
+    return 'indigo';
+  });
+
+  const currentAccent = ACCENT_COLORS[accentKey] || ACCENT_COLORS.indigo;
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(ACCENT_STORAGE_KEY, accentKey);
+    } catch (e) {
+      console.error('Errore salvataggio colore accento:', e);
+    }
+  }, [accentKey]);
 
   useEffect(() => {
     try {
@@ -614,6 +593,7 @@ export default function App() {
     initialPomoPrefs.soundType || 'bell'
   );
   const [showPomoHistory, setShowPomoHistory] = useState(false);
+  const [currentQuoteIndex, setCurrentQuoteIndex] = useState(0);
 
   useEffect(() => {
     try {
@@ -926,7 +906,7 @@ export default function App() {
         const remoteRow = Array.isArray(rows) && rows.length > 0 ? rows[0] : null;
 
         if (remoteRow && remoteRow.payload && remoteRow.payload.state) {
-          if (askOnLocalConflict && hasMeaningfulProgress(state)) {
+          if (askOnLocalConflict) {
             setCloudConflictPayload(remoteRow.payload);
             setCloudStatus('synced');
             return remoteRow.payload;
@@ -955,7 +935,6 @@ export default function App() {
       cloudUrl,
       cloudAnonKey,
       cloudSession,
-      state,
       applyRemotePayload,
       pushToCloud,
       refreshCloudToken,
@@ -1002,23 +981,6 @@ export default function App() {
     cloudSession,
     pushToCloud,
   ]);
-
-  useEffect(() => {
-    const handleVisibility = () => {
-      if (
-        document.visibilityState === 'visible' &&
-        cloudUrl &&
-        cloudAnonKey &&
-        cloudSession?.access_token &&
-        cloudSyncReadyRef.current
-      ) {
-        pullFromCloud(cloudSession, false);
-      }
-    };
-    document.addEventListener('visibilitychange', handleVisibility);
-    return () =>
-      document.removeEventListener('visibilitychange', handleVisibility);
-  }, [cloudUrl, cloudAnonKey, cloudSession, pullFromCloud]);
 
   const handleCloudAuthSubmit = async (e) => {
     e.preventDefault();
@@ -1260,6 +1222,7 @@ export default function App() {
               Math.max(1, Number(pomoShortBreakMin) || 5) * 60
             );
           }
+          setCurrentQuoteIndex((prev) => (prev + 1) % POMO_QUOTES.length);
           setPomoRunning(shouldAutoContinue);
         } else {
           if (pomoPhase === 'long_break' || pomoCycleCount >= 4) {
@@ -1267,6 +1230,7 @@ export default function App() {
           }
           setPomoPhase('study');
           setPomoSecondsLeft(Math.max(1, Number(pomoStudyMin) || 25) * 60);
+          setCurrentQuoteIndex((prev) => (prev + 1) % POMO_QUOTES.length);
           setPomoRunning(shouldAutoContinue);
         }
       }
@@ -1301,6 +1265,7 @@ export default function App() {
     }
     setPomoPhase(targetPhase);
     setPomoSecondsLeft(getPhaseMinutes(targetPhase) * 60);
+    setCurrentQuoteIndex((prev) => (prev + 1) % POMO_QUOTES.length);
   };
 
   const handlePomoSkipPhase = () => {
@@ -1323,6 +1288,7 @@ export default function App() {
       setPomoPhase('study');
       setPomoSecondsLeft(getPhaseMinutes('study') * 60);
     }
+    setCurrentQuoteIndex((prev) => (prev + 1) % POMO_QUOTES.length);
   };
 
   const handlePomoReset = () => {
@@ -1605,18 +1571,6 @@ export default function App() {
       activeExamId: copy.id,
     }));
     setIsRenamingHeader(true);
-  };
-
-  const handleLoadDemo = () => {
-    const demo = createDemoExam();
-    setUndoStack((u) => [state, ...u.slice(0, 9)]);
-    setState((prev) => ({
-      exams: [...prev.exams, demo],
-      activeExamId: demo.id,
-    }));
-    setLogDate(getTodayStr());
-    setSrStudyDateInput(getTodayStr());
-    setIsRenamingHeader(false);
   };
 
   const handleDeleteExam = () => {
@@ -2047,11 +2001,11 @@ export default function App() {
     ? 'bg-slate-800/55 border-slate-700/80'
     : 'bg-slate-50 border-slate-200/80';
   const inputSurfaceClass = isDark
-    ? 'bg-slate-800 border-slate-700 text-slate-100 placeholder-slate-500 focus:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500'
-    : 'bg-white border-slate-300 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500';
+    ? `bg-slate-800 border-slate-700 text-slate-100 placeholder-slate-500 focus:bg-slate-800 focus:outline-none focus:ring-2 ${currentAccent.ring}`
+    : `bg-white border-slate-300 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 ${currentAccent.ring}`;
   const inputMutedSurfaceClass = isDark
-    ? 'bg-slate-800 border-slate-700 text-slate-100 placeholder-slate-500 focus:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500'
-    : 'bg-slate-50 border-slate-300 text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500';
+    ? `bg-slate-800 border-slate-700 text-slate-100 placeholder-slate-500 focus:bg-slate-800 focus:outline-none focus:ring-2 ${currentAccent.ring}`
+    : `bg-slate-50 border-slate-300 text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 ${currentAccent.ring}`;
 
   const chartGridStroke = isDark ? '#1e293b' : '#e2e8f0';
   const chartTickFill = isDark ? '#94a3b8' : '#64748b';
@@ -2188,13 +2142,9 @@ export default function App() {
                   Reale
                 </span>
                 <span
-                  className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full ${
-                    isDark
-                      ? 'bg-indigo-950/70 text-indigo-300 border border-indigo-800/60'
-                      : 'bg-indigo-50 text-indigo-700'
-                  }`}
+                  className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full ${currentAccent.bgLight}`}
                 >
-                  <span className="w-3 h-0.5 border-t-2 border-dotted border-indigo-400" />
+                  <span className="w-3 h-0.5 border-t-2 border-dotted" style={{ borderColor: currentAccent.hex }} />
                   Proiezione
                 </span>
               </div>
@@ -2256,12 +2206,12 @@ export default function App() {
 
                 <ReferenceLine
                   x={analytics.todayShort}
-                  stroke="#6366f1"
+                  stroke={currentAccent.hex}
                   strokeDasharray="4 4"
                   label={{
                     value: 'Oggi',
                     position: 'top',
-                    fill: isDark ? '#818cf8' : '#4f46e5',
+                    fill: currentAccent.hex,
                     fontSize: 11,
                     fontWeight: 700,
                   }}
@@ -2305,7 +2255,7 @@ export default function App() {
                 <Line
                   type="monotone"
                   dataKey="proiezione"
-                  stroke={isDark ? '#818cf8' : '#6366f1'}
+                  stroke={currentAccent.hex}
                   strokeWidth={2.5}
                   strokeDasharray="2 5"
                   dot={false}
@@ -2328,11 +2278,7 @@ export default function App() {
           >
             <div className="flex items-start gap-2.5">
               <div
-                className={`p-2 rounded-xl mt-0.5 shrink-0 ${
-                  isDark
-                    ? 'bg-indigo-950/80 text-indigo-400'
-                    : 'bg-indigo-50 text-indigo-600'
-                }`}
+                className={`p-2 rounded-xl mt-0.5 shrink-0 ${currentAccent.bgLight}`}
               >
                 <Repeat className="w-4 h-4" />
               </div>
@@ -2406,7 +2352,7 @@ export default function App() {
                   Oggi / Scaduti
                 </span>
                 <span className="inline-flex items-center gap-1.5">
-                  <span className="w-2.5 h-2.5 rounded-sm bg-indigo-500" />
+                  <span className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: currentAccent.hex }} />
                   In programma
                 </span>
               </div>
@@ -2495,9 +2441,7 @@ export default function App() {
                         fill={
                           entry.isToday
                             ? '#f59e0b'
-                            : isDark
-                            ? '#818cf8'
-                            : '#6366f1'
+                            : currentAccent.hex
                         }
                       />
                     ))}
@@ -2562,7 +2506,7 @@ export default function App() {
             <div className="sm:col-span-2">
               <button
                 type="submit"
-                className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 shadow-xs transition cursor-pointer"
+                className={`w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold shadow-xs transition cursor-pointer ${currentAccent.primary}`}
               >
                 <Plus className="w-4 h-4" />
                 Aggiungi
@@ -2735,11 +2679,7 @@ export default function App() {
                           )}
                           {!topic.isDue && (
                             <span
-                              className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
-                                isDark
-                                  ? 'bg-indigo-950/80 text-indigo-300'
-                                  : 'bg-indigo-50 text-indigo-700'
-                              }`}
+                              className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${currentAccent.bgLight}`}
                             >
                               Tra {topic.deltaDays}g (
                               {formatShortDate(topic.nextReviewDate)})
@@ -2814,11 +2754,7 @@ export default function App() {
                         <button
                           type="button"
                           onClick={() => handleReviewSrTopic(topic.id, 'easy')}
-                          className={`px-2 py-1 rounded-lg text-[11px] font-semibold border transition cursor-pointer ${
-                            isDark
-                              ? 'bg-indigo-950/70 hover:bg-indigo-900/80 text-indigo-200 border-indigo-800/70'
-                              : 'bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border-indigo-200'
-                          }`}
+                          className={`px-2 py-1 rounded-lg text-[11px] font-semibold border transition cursor-pointer ${currentAccent.bgLight}`}
                           title="Facile: estende l'intervallo di ripasso"
                         >
                           Facile ({previewEasy}g)
@@ -2961,7 +2897,7 @@ export default function App() {
             <div className="sm:col-span-3">
               <button
                 type="submit"
-                className="w-full inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 shadow-xs transition cursor-pointer"
+                className={`w-full inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold shadow-xs transition cursor-pointer ${currentAccent.primary}`}
               >
                 <Plus className="w-4 h-4" />
                 Registra
@@ -3076,18 +3012,14 @@ export default function App() {
                               }}
                               className={`w-20 rounded-lg border px-2 py-1 text-sm font-semibold focus:outline-none ${
                                 isDark
-                                  ? 'border-indigo-500 bg-slate-800 text-slate-100'
-                                  : 'border-indigo-400 bg-white text-slate-900'
+                                  ? `border-slate-600 bg-slate-800 text-slate-100`
+                                  : `border-slate-400 bg-white text-slate-900`
                               }`}
                               autoFocus
                             />
                           ) : (
                             <span
-                              className={`inline-flex items-center px-2 py-0.5 rounded-md font-semibold text-xs ${
-                                isDark
-                                  ? 'bg-indigo-950/70 text-indigo-300'
-                                  : 'bg-indigo-50 text-indigo-700'
-                              }`}
+                              className={`inline-flex items-center px-2 py-0.5 rounded-md font-semibold text-xs ${currentAccent.bgLight}`}
                             >
                               +{row.pages} pag
                             </span>
@@ -3139,8 +3071,8 @@ export default function App() {
                                   }}
                                   className={`p-1.5 rounded-lg cursor-pointer ${
                                     isDark
-                                      ? 'text-slate-400 hover:text-indigo-400 hover:bg-slate-800'
-                                      : 'text-slate-400 hover:text-indigo-600 hover:bg-slate-100'
+                                      ? 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+                                      : 'text-slate-400 hover:text-slate-700 hover:bg-slate-100'
                                   }`}
                                   title="Modifica pagine"
                                 >
@@ -3182,9 +3114,7 @@ export default function App() {
                 <Clock
                   className={`w-4 h-4 ${
                     pomoPhase === 'study'
-                      ? isDark
-                        ? 'text-indigo-400'
-                        : 'text-indigo-600'
+                      ? currentAccent.text
                       : isDark
                       ? 'text-emerald-400'
                       : 'text-emerald-600'
@@ -3218,9 +3148,7 @@ export default function App() {
                 }}
                 className={`p-1.5 rounded-lg border text-xs transition cursor-pointer ${
                   pomoSound
-                    ? isDark
-                      ? 'bg-indigo-950/70 border-indigo-800/70 text-indigo-300'
-                      : 'bg-indigo-50 border-indigo-200 text-indigo-600'
+                    ? currentAccent.bgLight
                     : isDark
                     ? 'bg-slate-800 border-slate-700 text-slate-500'
                     : 'bg-slate-50 border-slate-200 text-slate-400'
@@ -3248,8 +3176,8 @@ export default function App() {
               className={`py-1.5 px-2 rounded-lg text-xs font-semibold transition cursor-pointer ${
                 pomoPhase === 'study'
                   ? isDark
-                    ? 'bg-slate-900 text-indigo-400 shadow-xs'
-                    : 'bg-white text-indigo-600 shadow-xs'
+                    ? 'bg-slate-900 text-slate-100 shadow-xs'
+                    : 'bg-white text-slate-900 shadow-xs'
                   : isDark
                   ? 'text-slate-400 hover:text-slate-200'
                   : 'text-slate-600 hover:text-slate-900'
@@ -3289,134 +3217,159 @@ export default function App() {
             </button>
           </div>
 
+          {/* BOX GRAFICA RILASSANTE E STIMOLANTE (ZEN ATMOSPHERE) */}
           <div
-            className={`rounded-2xl p-4 text-center border transition-colors ${
+            className={`relative overflow-hidden rounded-2xl p-5 text-center border transition-all duration-700 ${
               pomoPhase === 'study'
                 ? isDark
-                  ? 'bg-indigo-950/35 border-indigo-800/60'
-                  : 'bg-indigo-50/70 border-indigo-100'
+                  ? 'bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950 border-slate-800'
+                  : 'bg-gradient-to-br from-slate-50 via-white to-slate-100 border-slate-200'
                 : isDark
-                ? 'bg-emerald-950/35 border-emerald-800/60'
-                : 'bg-emerald-50/70 border-emerald-100'
+                ? 'bg-gradient-to-br from-emerald-950/70 via-slate-900 to-emerald-950/40 border-emerald-700/60 shadow-[0_0_25px_rgba(16,185,129,0.15)]'
+                : 'bg-gradient-to-br from-emerald-50/90 via-white to-emerald-50/40 border-emerald-200 shadow-[0_10px_25px_rgba(16,185,129,0.08)]'
             }`}
           >
-            <div className="flex items-center justify-center gap-1.5 mb-2">
-              {[1, 2, 3, 4].map((dot) => (
-                <span
-                  key={dot}
-                  className={`h-2 w-6 rounded-full transition-all ${
-                    dot <= pomoCycleCount
-                      ? pomoPhase === 'study'
-                        ? 'bg-indigo-500'
-                        : 'bg-emerald-500'
-                      : isDark
-                      ? 'bg-slate-700'
-                      : 'bg-slate-200'
-                  }`}
-                  title={`Pomodoro ${dot} di 4 prima della pausa lunga`}
-                />
-              ))}
-            </div>
-
-            <div
-              className={`text-4xl sm:text-5xl font-black tracking-tight tabular-nums my-1 ${
-                pomoPhase === 'study'
-                  ? isDark
-                    ? 'text-slate-50'
-                    : 'text-slate-900'
-                  : isDark
-                  ? 'text-emerald-200'
-                  : 'text-emerald-950'
-              }`}
-            >
-              {pomoMinutesDisplay}:{pomoSecondsDisplay}
-            </div>
-
-            <p
-              className={`text-xs font-medium mb-3 ${
-                pomoPhase === 'study'
-                  ? isDark
-                    ? 'text-indigo-300'
-                    : 'text-indigo-700'
-                  : isDark
-                  ? 'text-emerald-300'
-                  : 'text-emerald-700'
-              }`}
-            >
-              {pomoPhase === 'study'
-                ? `Sessione Studio #${(pomoCycleCount % 4) + 1} di 4`
-                : pomoPhase === 'short_break'
-                ? 'Pausa breve: sgranchisciti e riposa gli occhi'
-                : 'Pausa lunga meritata dopo 4 sessioni!'}
-            </p>
-
-            <div
-              className={`w-full h-1.5 rounded-full overflow-hidden mb-4 ${
-                isDark
-                  ? 'bg-slate-800/90'
-                  : pomoPhase === 'study'
-                  ? 'bg-indigo-200/60'
-                  : 'bg-emerald-200/60'
-              }`}
-            >
+            {pomoRunning && (
               <div
-                className={`h-full transition-all duration-300 ${
-                  pomoPhase === 'study' ? 'bg-indigo-600' : 'bg-emerald-500'
+                className={`absolute inset-0 opacity-15 pointer-events-none animate-pulse ${
+                  pomoPhase === 'study' ? 'bg-indigo-500' : 'bg-emerald-500'
                 }`}
-                style={{ width: `${pomoStats.progressPct}%` }}
+                style={{ filter: 'blur(40px)' }}
               />
-            </div>
+            )}
 
-            <div className="flex items-center justify-center gap-2">
-              <button
-                type="button"
-                onClick={handleTogglePomoRunning}
-                className={`inline-flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-xl text-sm font-bold text-white shadow-xs transition cursor-pointer ${
-                  pomoRunning
-                    ? 'bg-amber-500 hover:bg-amber-600'
+            <div className="relative z-10">
+              <div className="flex items-center justify-center gap-1.5 mb-2">
+                {[1, 2, 3, 4].map((dot) => (
+                  <span
+                    key={dot}
+                    className={`h-2 w-6 rounded-full transition-all ${
+                      dot <= pomoCycleCount
+                        ? pomoPhase === 'study'
+                          ? 'bg-indigo-500 shadow-xs'
+                          : 'bg-emerald-500 shadow-xs'
+                        : isDark
+                        ? 'bg-slate-800'
+                        : 'bg-slate-200'
+                    }`}
+                    title={`Pomodoro ${dot} di 4 prima della pausa lunga`}
+                  />
+                ))}
+              </div>
+
+              <div
+                className={`text-4xl sm:text-5xl font-black tracking-tight tabular-nums my-1 transition-transform duration-300 ${
+                  pomoRunning ? 'scale-102' : 'scale-100'
+                } ${
+                  pomoPhase === 'study'
+                    ? isDark
+                      ? 'text-slate-50'
+                      : 'text-slate-900'
+                    : isDark
+                    ? 'text-emerald-200'
+                    : 'text-emerald-950'
+                }`}
+              >
+                {pomoMinutesDisplay}:{pomoSecondsDisplay}
+              </div>
+
+              <p
+                className={`text-xs font-semibold tracking-wide uppercase mb-3 ${
+                  pomoPhase === 'study'
+                    ? currentAccent.text
+                    : isDark
+                    ? 'text-emerald-300'
+                    : 'text-emerald-700'
+                }`}
+              >
+                {pomoPhase === 'study'
+                  ? `Sessione Studio #${(pomoCycleCount % 4) + 1} di 4`
+                  : pomoPhase === 'short_break'
+                  ? 'Pausa breve: sgranchisciti e respira'
+                  : 'Pausa lunga: ricarica le energie!'}
+              </p>
+
+              <div
+                className={`mb-4 px-3 py-2 rounded-xl text-[11px] italic font-medium border transition-all ${
+                  isDark
+                    ? 'bg-slate-950/40 border-slate-800/80 text-slate-300'
+                    : 'bg-white/70 border-slate-200/80 text-slate-600'
+                }`}
+              >
+                {POMO_QUOTES[currentQuoteIndex]}
+              </div>
+
+              <div
+                className={`w-full h-2 rounded-full overflow-hidden mb-4 ${
+                  isDark
+                    ? 'bg-slate-800/90'
                     : pomoPhase === 'study'
-                    ? 'bg-indigo-600 hover:bg-indigo-700'
-                    : 'bg-emerald-600 hover:bg-emerald-700'
+                    ? 'bg-slate-200'
+                    : 'bg-emerald-200/60'
                 }`}
               >
-                {pomoRunning ? (
-                  <>
-                    <Pause className="w-4 h-4" />
-                    Pausa
-                  </>
-                ) : (
-                  <>
-                    <Play className="w-4 h-4" />
-                    Avvia
-                  </>
-                )}
-              </button>
+                <div
+                  className={`h-full transition-all duration-300 ${
+                    pomoPhase === 'study' ? '' : 'bg-emerald-500'
+                  }`}
+                  style={{
+                    width: `${pomoStats.progressPct}%`,
+                    backgroundColor: pomoPhase === 'study' ? currentAccent.hex : undefined,
+                  }}
+                />
+              </div>
 
-              <button
-                type="button"
-                onClick={handlePomoReset}
-                className={`p-2.5 rounded-xl border transition cursor-pointer ${
-                  isDark
-                    ? 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700'
-                    : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
-                }`}
-                title="Azzera timer corrente"
-              >
-                <RotateCcw className="w-4 h-4" />
-              </button>
+              <div className="flex items-center justify-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleTogglePomoRunning}
+                  className={`inline-flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-xl text-sm font-bold text-white shadow-md transition cursor-pointer ${
+                    pomoRunning
+                      ? 'bg-amber-500 hover:bg-amber-600'
+                      : pomoPhase === 'study'
+                      ? currentAccent.primary
+                      : 'bg-emerald-600 hover:bg-emerald-700'
+                  }`}
+                >
+                  {pomoRunning ? (
+                    <>
+                      <Pause className="w-4 h-4" />
+                      Pausa
+                    </>
+                  ) : (
+                    <>
+                      <Play className="w-4 h-4" />
+                      Avvia
+                    </>
+                  )}
+                </button>
 
-              <button
-                type="button"
-                onClick={handlePomoSkipPhase}
-                className={`p-2.5 rounded-xl border transition cursor-pointer ${
-                  isDark
-                    ? 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700'
-                    : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
-                }`}
-                title="Salta alla fase successiva"
-              >
-                <SkipForward className="w-4 h-4" />
-              </button>
+                <button
+                  type="button"
+                  onClick={handlePomoReset}
+                  className={`p-2.5 rounded-xl border transition cursor-pointer ${
+                    isDark
+                      ? 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700'
+                      : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                  }`}
+                  title="Azzera timer corrente"
+                >
+                  <RotateCcw className="w-4 h-4" />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handlePomoSkipPhase}
+                  className={`p-2.5 rounded-xl border transition cursor-pointer ${
+                    isDark
+                      ? 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700'
+                      : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                  }`}
+                  title="Salta alla fase successiva"
+                >
+                  <SkipForward className="w-4 h-4" />
+                </button>
+              </div>
             </div>
           </div>
 
@@ -3437,9 +3390,7 @@ export default function App() {
                     pomoStudyMin === 25 &&
                     pomoShortBreakMin === 5 &&
                     pomoLongBreakMin === 15
-                      ? isDark
-                        ? 'bg-indigo-950/80 text-indigo-300'
-                        : 'bg-indigo-100 text-indigo-700'
+                      ? currentAccent.bgLight
                       : isDark
                       ? 'bg-slate-800 text-slate-400 hover:bg-slate-700'
                       : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
@@ -3454,9 +3405,7 @@ export default function App() {
                     pomoStudyMin === 50 &&
                     pomoShortBreakMin === 10 &&
                     pomoLongBreakMin === 20
-                      ? isDark
-                        ? 'bg-indigo-950/80 text-indigo-300'
-                        : 'bg-indigo-100 text-indigo-700'
+                      ? currentAccent.bgLight
                       : isDark
                       ? 'bg-slate-800 text-slate-400 hover:bg-slate-700'
                       : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
@@ -3549,7 +3498,7 @@ export default function App() {
                   type="checkbox"
                   checked={pomoAutoContinue}
                   onChange={(e) => setPomoAutoContinue(e.target.checked)}
-                  className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                  className={`rounded border-slate-300 text-indigo-600 ${currentAccent.ring}`}
                 />
                 Avvio automatico fase successiva
               </label>
@@ -3557,11 +3506,7 @@ export default function App() {
               <button
                 type="button"
                 onClick={handleAddManualPomoSession}
-                className={`text-[11px] font-semibold cursor-pointer ${
-                  isDark
-                    ? 'text-indigo-400 hover:text-indigo-300'
-                    : 'text-indigo-600 hover:text-indigo-700'
-                }`}
+                className={`text-[11px] font-semibold cursor-pointer ${currentAccent.text}`}
                 title="Registra manualmente 1 sessione completata adesso"
               >
                 +1 sessione
@@ -3577,9 +3522,7 @@ export default function App() {
                 <Bell
                   className={`w-3.5 h-3.5 shrink-0 ${
                     pomoSound
-                      ? isDark
-                        ? 'text-indigo-400'
-                        : 'text-indigo-600'
+                      ? currentAccent.text
                       : isDark
                       ? 'text-slate-500'
                       : 'text-slate-400'
@@ -3649,9 +3592,7 @@ export default function App() {
                   }`}
                 >
                   {pomoStats.todayCount} pom ·{' '}
-                  <span
-                    className={isDark ? 'text-indigo-400' : 'text-indigo-600'}
-                  >
+                  <span className={currentAccent.text}>
                     {formatMinutesHuman(pomoStats.todayMinutes)}
                   </span>
                 </p>
@@ -3699,13 +3640,7 @@ export default function App() {
                   <span>
                     Registro sessioni Pomodoro ({pomoStats.sessions.length})
                   </span>
-                  <span
-                    className={
-                      isDark
-                        ? 'text-indigo-400 text-[11px]'
-                        : 'text-indigo-600 text-[11px]'
-                    }
-                  >
+                  <span className={`${currentAccent.text} text-[11px]`}>
                     {showPomoHistory ? 'Nascondi' : 'Mostra'}
                   </span>
                 </button>
@@ -3722,11 +3657,7 @@ export default function App() {
                         }`}
                       >
                         <div className="flex items-center gap-1.5">
-                          <Coffee
-                            className={`w-3 h-3 ${
-                              isDark ? 'text-indigo-400' : 'text-indigo-500'
-                            }`}
-                          />
+                          <Coffee className={`w-3 h-3 ${currentAccent.text}`} />
                           <span
                             className={`font-semibold ${
                               isDark ? 'text-slate-200' : 'text-slate-800'
@@ -3775,11 +3706,7 @@ export default function App() {
             }`}
           >
             <div className="flex items-center gap-2">
-              <SlidersHorizontal
-                className={`w-4 h-4 ${
-                  isDark ? 'text-indigo-400' : 'text-indigo-600'
-                }`}
-              />
+              <SlidersHorizontal className={`w-4 h-4 ${currentAccent.text}`} />
               <h3
                 className={`text-base font-bold ${
                   isDark ? 'text-slate-100' : 'text-slate-900'
@@ -3920,7 +3847,7 @@ export default function App() {
                       onClick={() => toggleRestDay(day.id)}
                       className={`py-2 rounded-lg text-xs font-bold transition cursor-pointer ${
                         active
-                          ? 'bg-indigo-600 text-white shadow-xs'
+                          ? `${currentAccent.primary} shadow-xs`
                           : isDark
                           ? 'bg-slate-800 text-slate-300 hover:bg-slate-700'
                           : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
@@ -3964,11 +3891,7 @@ export default function App() {
                 <span className={isDark ? 'text-slate-400' : 'text-slate-500'}>
                   Giorni utili rimanenti:
                 </span>
-                <span
-                  className={`font-bold ${
-                    isDark ? 'text-indigo-400' : 'text-indigo-600'
-                  }`}
-                >
+                <span className={`font-bold ${currentAccent.text}`}>
                   {analytics.remainingUsefulDays} giorni
                 </span>
               </div>
@@ -4047,7 +3970,7 @@ export default function App() {
           isBeingDragged ? 'opacity-45 scale-[0.99]' : ''
         } ${
           isDropTargetBefore
-            ? 'ring-2 ring-indigo-500 ring-offset-4 rounded-2xl'
+            ? `ring-2 ring-offset-4 rounded-2xl`
             : ''
         } ${
           isReorderMode
@@ -4089,12 +4012,12 @@ export default function App() {
       >
         <div className="w-full px-4 sm:px-6 lg:px-8 py-3 flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="bg-indigo-600 text-white p-2 rounded-xl shadow-xs shrink-0">
+            <div className={`${currentAccent.primary} p-2 rounded-xl shadow-xs shrink-0 transition-colors`}>
               <BookOpen className="w-5 h-5" />
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-1.5">
-                <span className="text-xs font-semibold uppercase tracking-wider text-indigo-500">
+                <span className={`text-xs font-semibold uppercase tracking-wider ${currentAccent.text}`}>
                   StudyBurn
                 </span>
                 <span
@@ -4126,7 +4049,7 @@ export default function App() {
                         setIsRenamingHeader(false);
                       }
                     }}
-                    className={`text-base sm:text-lg font-bold border-b-2 border-indigo-500 bg-transparent focus:outline-none px-0.5 ${
+                    className={`text-base sm:text-lg font-bold border-b-2 bg-transparent focus:outline-none px-0.5 ${currentAccent.border} ${
                       isDark ? 'text-slate-50' : 'text-slate-900'
                     }`}
                   />
@@ -4151,7 +4074,7 @@ export default function App() {
                   title="Clicca per rinominare l'esame"
                 >
                   <h1
-                    className={`text-base sm:text-lg font-bold truncate group-hover:text-indigo-500 transition-colors ${
+                    className={`text-base sm:text-lg font-bold truncate group-hover:opacity-80 transition-colors ${
                       isDark ? 'text-slate-50' : 'text-slate-900'
                     }`}
                   >
@@ -4160,8 +4083,8 @@ export default function App() {
                   <Edit3
                     className={`w-3.5 h-3.5 transition-colors shrink-0 ${
                       isDark
-                        ? 'text-slate-500 group-hover:text-indigo-400'
-                        : 'text-slate-400 group-hover:text-indigo-500'
+                        ? 'text-slate-500 group-hover:text-slate-300'
+                        : 'text-slate-400 group-hover:text-slate-700'
                     }`}
                   />
                 </button>
@@ -4185,6 +4108,31 @@ export default function App() {
                 <span className="hidden sm:inline">Annulla</span>
               </button>
             )}
+
+            {/* SELETTORE COLORE ACCENTO TASTI */}
+            <div className="relative inline-flex items-center">
+              <select
+                aria-label="Colore accento tasti"
+                value={accentKey}
+                onChange={(e) => setAccentKey(e.target.value)}
+                className={`rounded-lg border text-xs font-semibold pl-7 pr-3 py-1.5 transition cursor-pointer appearance-none ${
+                  isDark
+                    ? 'bg-slate-800 border-slate-700 text-slate-200 hover:bg-slate-700'
+                    : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
+                }`}
+                title="Cambia il colore dei tasti e degli accenti"
+              >
+                {Object.entries(ACCENT_COLORS).map(([key, val]) => (
+                  <option key={key} value={key}>
+                    {val.label}
+                  </option>
+                ))}
+              </select>
+              <span
+                className="absolute left-2.5 w-3 h-3 rounded-full pointer-events-none"
+                style={{ backgroundColor: currentAccent.hex }}
+              />
+            </div>
 
             <button
               type="button"
@@ -4251,11 +4199,9 @@ export default function App() {
               onClick={() => setIsReorderMode((v) => !v)}
               className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold border transition cursor-pointer ${
                 isReorderMode
-                  ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs'
+                  ? `${currentAccent.primary} border-transparent shadow-xs`
                   : isCustomLayout
-                  ? isDark
-                    ? 'bg-indigo-950/70 text-indigo-300 border-indigo-800/80 hover:bg-indigo-900/70'
-                    : 'bg-indigo-50 text-indigo-700 border-indigo-200 hover:bg-indigo-100'
+                  ? currentAccent.bgLight
                   : isDark
                   ? 'text-slate-300 bg-slate-800 hover:bg-slate-700 border-slate-700'
                   : 'text-slate-700 bg-white hover:bg-slate-50 border-slate-200'
@@ -4281,8 +4227,8 @@ export default function App() {
               }}
               className={`rounded-lg border text-xs sm:text-sm font-medium pl-3 pr-7 py-1.5 max-w-[190px] sm:max-w-[240px] truncate ${
                 isDark
-                  ? 'border-slate-700 bg-slate-800 text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500'
-                  : 'border-slate-300 bg-slate-50 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500'
+                  ? `border-slate-700 bg-slate-800 text-slate-100 focus:outline-none focus:ring-2 ${currentAccent.ring}`
+                  : `border-slate-300 bg-slate-50 text-slate-800 focus:outline-none focus:ring-2 ${currentAccent.ring}`
               }`}
             >
               {state.exams.map((ex) => (
@@ -4295,7 +4241,7 @@ export default function App() {
             <button
               type="button"
               onClick={handleCreateExam}
-              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 shadow-xs transition cursor-pointer"
+              className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold shadow-xs transition cursor-pointer ${currentAccent.primary}`}
             >
               <Plus className="w-4 h-4" />
               <span>Nuovo</span>
@@ -4314,20 +4260,6 @@ export default function App() {
               <Copy className="w-3.5 h-3.5" />
               <span className="hidden md:inline">Duplica</span>
             </button>
-
-            <button
-              type="button"
-              onClick={handleLoadDemo}
-              className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium border transition cursor-pointer ${
-                isDark
-                  ? 'text-indigo-300 bg-indigo-950/70 hover:bg-indigo-900/70 border-indigo-800/80'
-                  : 'text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border-indigo-200'
-              }`}
-              title="Crea un esame dimostrativo già popolato"
-            >
-              <Sparkles className="w-3.5 h-3.5" />
-              <span className="hidden md:inline">Carica Demo</span>
-            </button>
           </div>
         </div>
       </header>
@@ -4344,13 +4276,7 @@ export default function App() {
           >
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-center gap-2.5">
-                <div
-                  className={`p-2 rounded-xl ${
-                    isDark
-                      ? 'bg-indigo-950/80 text-indigo-400'
-                      : 'bg-indigo-50 text-indigo-600'
-                  }`}
-                >
+                <div className={`p-2 rounded-xl ${currentAccent.bgLight}`}>
                   <Cloud className="w-5 h-5" />
                 </div>
                 <div>
@@ -4404,7 +4330,7 @@ export default function App() {
                       setCloudConflictPayload(null);
                       setLastSyncedAt(getCurrentTimeStr());
                     }}
-                    className="px-3 py-1.5 rounded-lg text-xs font-bold bg-indigo-600 text-white hover:bg-indigo-700 cursor-pointer"
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold text-white cursor-pointer ${currentAccent.primary}`}
                   >
                     Scarica dati dal Cloud
                   </button>
@@ -4470,7 +4396,7 @@ export default function App() {
                     type="button"
                     onClick={() => pullFromCloud(cloudSession, false)}
                     disabled={cloudStatus === 'syncing'}
-                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50 cursor-pointer"
+                    className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold text-white disabled:opacity-50 cursor-pointer ${currentAccent.primary}`}
                   >
                     <RefreshCw
                       className={`w-3.5 h-3.5 ${
@@ -4510,9 +4436,7 @@ export default function App() {
                       }}
                       className={`px-3 py-1 rounded-lg text-xs font-semibold cursor-pointer ${
                         authMode === 'login'
-                          ? isDark
-                            ? 'bg-slate-900 text-indigo-400 shadow-xs'
-                            : 'bg-white text-indigo-600 shadow-xs'
+                          ? currentAccent.bgLight
                           : isDark
                           ? 'text-slate-400'
                           : 'text-slate-600'
@@ -4528,9 +4452,7 @@ export default function App() {
                       }}
                       className={`px-3 py-1 rounded-lg text-xs font-semibold cursor-pointer ${
                         authMode === 'signup'
-                          ? isDark
-                            ? 'bg-slate-900 text-indigo-400 shadow-xs'
-                            : 'bg-white text-indigo-600 shadow-xs'
+                          ? currentAccent.bgLight
                           : isDark
                           ? 'text-slate-400'
                           : 'text-slate-600'
@@ -4645,7 +4567,7 @@ export default function App() {
                 <button
                   type="submit"
                   disabled={authLoading}
-                  className="w-full py-2.5 rounded-xl text-xs sm:text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 transition cursor-pointer"
+                  className={`w-full py-2.5 rounded-xl text-xs sm:text-sm font-bold text-white disabled:opacity-50 transition cursor-pointer ${currentAccent.primary}`}
                 >
                   {authLoading
                     ? 'Connessione in corso...'
@@ -4722,27 +4644,15 @@ export default function App() {
       <main className="w-full px-4 sm:px-6 lg:px-8 py-6 space-y-6">
         {isReorderMode && (
           <div
-            className={`rounded-2xl border p-4 flex flex-wrap items-center justify-between gap-3 ${
-              isDark
-                ? 'bg-indigo-950/60 border-indigo-800/80 text-indigo-100'
-                : 'bg-indigo-50 border-indigo-200 text-indigo-950'
-            }`}
+            className={`rounded-2xl border p-4 flex flex-wrap items-center justify-between gap-3 ${currentAccent.bgLight}`}
           >
             <div className="flex items-center gap-2.5">
-              <LayoutGrid
-                className={`w-5 h-5 shrink-0 ${
-                  isDark ? 'text-indigo-400' : 'text-indigo-600'
-                }`}
-              />
+              <LayoutGrid className={`w-5 h-5 shrink-0 ${currentAccent.text}`} />
               <div>
                 <p className="text-sm font-bold">
                   Personalizzazione ordine sezioni attiva
                 </p>
-                <p
-                  className={`text-xs ${
-                    isDark ? 'text-indigo-300' : 'text-indigo-800'
-                  }`}
-                >
+                <p className="text-xs opacity-85">
                   Usa le frecce su/giù, sposta tra colonna sinistra e destra
                   oppure trascina la maniglia di ogni riquadro.
                 </p>
@@ -4766,7 +4676,7 @@ export default function App() {
               <button
                 type="button"
                 onClick={() => setIsReorderMode(false)}
-                className="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-indigo-600 text-white hover:bg-indigo-700 transition cursor-pointer"
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold text-white transition cursor-pointer ${currentAccent.primary}`}
               >
                 Fatto
               </button>
@@ -4822,13 +4732,7 @@ export default function App() {
               >
                 Completamento
               </span>
-              <div
-                className={`p-2 rounded-lg ${
-                  isDark
-                    ? 'bg-indigo-950/80 text-indigo-400'
-                    : 'bg-indigo-50 text-indigo-600'
-                }`}
-              >
+              <div className={`p-2 rounded-lg ${currentAccent.bgLight}`}>
                 <Layers className="w-4 h-4" />
               </div>
             </div>
@@ -4859,8 +4763,11 @@ export default function App() {
               }`}
             >
               <div
-                className="h-full bg-indigo-600 rounded-full transition-all duration-500"
-                style={{ width: `${analytics.completionPct}%` }}
+                className="h-full rounded-full transition-all duration-500"
+                style={{
+                  width: `${analytics.completionPct}%`,
+                  backgroundColor: currentAccent.hex,
+                }}
               />
             </div>
           </div>
@@ -4929,13 +4836,7 @@ export default function App() {
               >
                 Ritmo Necessario
               </span>
-              <div
-                className={`p-2 rounded-lg ${
-                  isDark
-                    ? 'bg-violet-950/80 text-violet-400'
-                    : 'bg-violet-50 text-violet-600'
-                }`}
-              >
+              <div className={`p-2 rounded-lg ${currentAccent.bgLight}`}>
                 <Target className="w-4 h-4" />
               </div>
             </div>
