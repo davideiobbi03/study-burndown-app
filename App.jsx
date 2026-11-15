@@ -320,113 +320,6 @@ function createDefaultExam(name = 'Biochimica Clinica') {
   };
 }
 
-function createDemoExam() {
-  const today = getTodayStr();
-  const startDate = addDays(today, -11);
-  const examDate = addDays(today, 18);
-  const sampleDaily = [22, 18, 25, 15, 20, 12, 0, 24, 19, 16, 21, 14];
-  const logs = [];
-
-  for (let i = 0; i < 12; i++) {
-    const d = addDays(startDate, i);
-    const pages = sampleDaily[i] ?? 18;
-    if (pages > 0) {
-      logs.push({ date: d, pages });
-    }
-  }
-
-  return {
-    id: `exam_demo_${Date.now()}`,
-    name: 'Patologia Clinica (Demo)',
-    startDate,
-    examDate,
-    totalPages: 520,
-    reviewDays: 3,
-    restDays: [0],
-    targetPace: 22,
-    logs,
-    pomodoroSessions: [
-      { id: 'p_1', date: addDays(today, -1), time: '16:30', durationMin: 50 },
-      { id: 'p_2', date: addDays(today, -1), time: '17:35', durationMin: 50 },
-      { id: 'p_3', date: today, time: '09:45', durationMin: 25 },
-    ],
-    srTopics: [
-      {
-        id: 'sr_1',
-        title: 'Marcatori cardiaci (Troponine, BNP)',
-        pagesRef: 'pp. 18-42',
-        createdDate: addDays(today, -8),
-        lastReviewDate: addDays(today, -4),
-        nextReviewDate: addDays(today, -1),
-        intervalDays: 3,
-        repetitions: 1,
-        easeFactor: 2.3,
-        lastRating: 'hard',
-      },
-      {
-        id: 'sr_2',
-        title: 'Emocromo e anemie microcitiche',
-        pagesRef: 'pp. 43-78',
-        createdDate: addDays(today, -7),
-        lastReviewDate: addDays(today, -3),
-        nextReviewDate: today,
-        intervalDays: 3,
-        repetitions: 1,
-        easeFactor: 2.5,
-        lastRating: 'good',
-      },
-      {
-        id: 'sr_3',
-        title: 'Cascata coagulativa e PT/aPTT',
-        pagesRef: 'pp. 79-110',
-        createdDate: addDays(today, -1),
-        lastReviewDate: addDays(today, -1),
-        nextReviewDate: today,
-        intervalDays: 1,
-        repetitions: 0,
-        easeFactor: 2.5,
-        lastRating: null,
-      },
-      {
-        id: 'sr_4',
-        title: 'Funzionalità renale, eGFR e proteinuria',
-        pagesRef: 'pp. 111-145',
-        createdDate: addDays(today, -5),
-        lastReviewDate: addDays(today, -2),
-        nextReviewDate: addDays(today, 2),
-        intervalDays: 4,
-        repetitions: 2,
-        easeFactor: 2.6,
-        lastRating: 'easy',
-      },
-      {
-        id: 'sr_5',
-        title: 'Enzimi epatici e itteri',
-        pagesRef: 'pp. 146-180',
-        createdDate: addDays(today, -6),
-        lastReviewDate: addDays(today, -1),
-        nextReviewDate: addDays(today, 5),
-        intervalDays: 6,
-        repetitions: 2,
-        easeFactor: 2.5,
-        lastRating: 'good',
-      },
-    ],
-  };
-}
-
-function hasMeaningfulProgress(examState) {
-  if (!examState || !Array.isArray(examState.exams)) return false;
-  if (examState.exams.length > 1) return true;
-  const ex = examState.exams[0];
-  if (!ex) return false;
-  return (
-    (ex.logs && ex.logs.length > 0) ||
-    (ex.srTopics && ex.srTopics.length > 0) ||
-    (ex.pomodoroSessions && ex.pomodoroSessions.length > 0)
-  );
-}
-
 const STORAGE_KEY = 'studyburn_state_v2';
 const LAYOUT_STORAGE_KEY = 'studyburn_layout_v1';
 const THEME_STORAGE_KEY = 'studyburn_theme_v1';
@@ -937,7 +830,7 @@ export default function App() {
         const remoteRow = Array.isArray(rows) && rows.length > 0 ? rows[0] : null;
 
         if (remoteRow && remoteRow.payload && remoteRow.payload.state) {
-          if (askOnLocalConflict && hasMeaningfulProgress(state)) {
+          if (askOnLocalConflict) {
             setCloudConflictPayload(remoteRow.payload);
             setCloudStatus('synced');
             return remoteRow.payload;
@@ -966,7 +859,6 @@ export default function App() {
       cloudUrl,
       cloudAnonKey,
       cloudSession,
-      state,
       applyRemotePayload,
       pushToCloud,
       refreshCloudToken,
@@ -1013,23 +905,6 @@ export default function App() {
     cloudSession,
     pushToCloud,
   ]);
-
-  useEffect(() => {
-    const handleVisibility = () => {
-      if (
-        document.visibilityState === 'visible' &&
-        cloudUrl &&
-        cloudAnonKey &&
-        cloudSession?.access_token &&
-        cloudSyncReadyRef.current
-      ) {
-        pullFromCloud(cloudSession, false);
-      }
-    };
-    document.addEventListener('visibilitychange', handleVisibility);
-    return () =>
-      document.removeEventListener('visibilitychange', handleVisibility);
-  }, [cloudUrl, cloudAnonKey, cloudSession, pullFromCloud]);
 
   const handleCloudAuthSubmit = async (e) => {
     e.preventDefault();
@@ -1620,18 +1495,6 @@ export default function App() {
       activeExamId: copy.id,
     }));
     setIsRenamingHeader(true);
-  };
-
-  const handleLoadDemo = () => {
-    const demo = createDemoExam();
-    setUndoStack((u) => [state, ...u.slice(0, 9)]);
-    setState((prev) => ({
-      exams: [...prev.exams, demo],
-      activeExamId: demo.id,
-    }));
-    setLogDate(getTodayStr());
-    setSrStudyDateInput(getTodayStr());
-    setIsRenamingHeader(false);
   };
 
   const handleDeleteExam = () => {
@@ -3316,7 +3179,6 @@ export default function App() {
                 : 'bg-gradient-to-br from-emerald-50/90 via-white to-emerald-50/40 border-emerald-200 shadow-[0_10px_25px_rgba(16,185,129,0.08)]'
             }`}
           >
-            {/* Effetto alone luminoso animato in background se il timer è attivo */}
             {pomoRunning && (
               <div
                 className={`absolute inset-0 opacity-20 pointer-events-none animate-pulse ${
@@ -3379,7 +3241,6 @@ export default function App() {
                   : 'Pausa lunga: ricarica le energie!'}
               </p>
 
-              {/* Citazione motivazionale zen */}
               <div
                 className={`mb-4 px-3 py-2 rounded-xl text-[11px] italic font-medium border transition-all ${
                   isDark
@@ -4354,20 +4215,6 @@ export default function App() {
             >
               <Copy className="w-3.5 h-3.5" />
               <span className="hidden md:inline">Duplica</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={handleLoadDemo}
-              className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium border transition cursor-pointer ${
-                isDark
-                  ? 'text-indigo-300 bg-indigo-950/70 hover:bg-indigo-900/70 border-indigo-800/80'
-                  : 'text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border-indigo-200'
-              }`}
-              title="Crea un esame dimostrativo già popolato"
-            >
-              <Sparkles className="w-3.5 h-3.5" />
-              <span className="hidden md:inline">Carica Demo</span>
             </button>
           </div>
         </div>
