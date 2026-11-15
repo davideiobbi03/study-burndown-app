@@ -24,7 +24,6 @@ import {
   X,
   RotateCcw,
   Copy,
-  Sparkles,
   Clock,
   Target,
   Layers,
@@ -118,12 +117,12 @@ function formatMinutesHuman(totalMinutes) {
 
 // --- CITAZIONI MOTIVAZIONALI POMODORO ---
 const POMO_QUOTES = [
-  "“La costanza è il mattone fondamentale del successo clinico e accademico.”",
-  "“Un capitolo alla volta, un Pomodoro alla volta: la meta si avvicina.”",
-  "“La mente focalizzata è il tuo strumento diagnostico più potente.”",
-  "“Il successo non viene dai colpi di genio isolati, ma dalla disciplina quotidiana.”",
-  "“Rilassati, respira e riparti: il recupero è parte integrante dello studio.”",
-  "“Trasforma la complessità in schemi chiari. Tu domini la materia.”",
+  '“La costanza è il mattone fondamentale del successo clinico e accademico.”',
+  '“Un capitolo alla volta, un Pomodoro alla volta: la meta si avvicina.”',
+  '“La mente focalizzata è il tuo strumento diagnostico più potente.”',
+  '“Il successo non viene dai colpi di genio isolati, ma dalla disciplina quotidiana.”',
+  '“Rilassati, respira e riparti: il recupero è parte integrante dello studio.”',
+  '“Trasforma la complessità in schemi chiari. Tu domini la materia.”',
 ];
 
 // --- MOTORE AUDIO POMODORO ---
@@ -1877,10 +1876,12 @@ export default function App() {
   const statusStyles = {
     green: {
       wrapper: isDark
-        ? 'bg-emerald-950/45 border-emerald-800/70 text-emerald-100'
-        : 'bg-emerald-50/90 border-emerald-200 text-emerald-950',
+        ? 'bg-emerald-950/55 border-emerald-800/80 text-emerald-100'
+        : 'bg-emerald-50 border-emerald-200 text-emerald-950',
+      headlineColor: isDark ? 'text-emerald-50' : 'text-emerald-950',
+      detailColor: isDark ? 'text-emerald-200' : 'text-emerald-900',
       badge: isDark
-        ? 'bg-emerald-900/70 text-emerald-200 border-emerald-700/70'
+        ? 'bg-emerald-900/80 text-emerald-200 border-emerald-700/80'
         : 'bg-emerald-100 text-emerald-800 border-emerald-200',
       iconBg: 'bg-emerald-600 text-white',
       lineColor: '#10b981',
@@ -1888,10 +1889,12 @@ export default function App() {
     },
     yellow: {
       wrapper: isDark
-        ? 'bg-amber-950/45 border-amber-800/70 text-amber-100'
-        : 'bg-amber-50/90 border-amber-200 text-amber-950',
+        ? 'bg-amber-950/55 border-amber-800/80 text-amber-100'
+        : 'bg-amber-50 border-amber-200 text-amber-950',
+      headlineColor: isDark ? 'text-amber-50' : 'text-amber-950',
+      detailColor: isDark ? 'text-amber-200' : 'text-amber-900',
       badge: isDark
-        ? 'bg-amber-900/70 text-amber-200 border-amber-700/70'
+        ? 'bg-amber-900/80 text-amber-200 border-amber-700/80'
         : 'bg-amber-100 text-amber-800 border-amber-200',
       iconBg: 'bg-amber-500 text-white',
       lineColor: '#f59e0b',
@@ -1899,11 +1902,13 @@ export default function App() {
     },
     red: {
       wrapper: isDark
-        ? 'bg-rose-950/45 border-rose-800/70 text-rose-100'
-        : 'bg-rose-50/90 border-rose-200 text-rose-950',
+        ? 'bg-rose-950/55 border-rose-800/80 text-rose-100'
+        : 'bg-rose-50 border-rose-200 text-rose-950',
+      headlineColor: isDark ? 'text-rose-50' : 'text-rose-950',
+      detailColor: isDark ? 'text-rose-200' : 'text-rose-900',
       badge: isDark
-        ? 'bg-rose-900/70 text-rose-200 border-rose-700/70'
-        : 'bg-rose-100 text-rose-800 border-rose-200',
+        ? 'bg-rose-900/80 text-rose-200 border-rose-700/80'
+        : 'bg-rose-100 text-rose-700 border-rose-200',
       iconBg: 'bg-rose-600 text-white',
       lineColor: '#e11d48',
       Icon: AlertOctagon,
@@ -1930,6 +1935,9 @@ export default function App() {
   const inputMutedSurfaceClass = isDark
     ? 'bg-slate-800 border-slate-700 text-slate-100 placeholder-slate-500 focus:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500'
     : 'bg-slate-50 border-slate-300 text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500';
+  const indigoPillClass = isDark
+    ? 'bg-indigo-950/75 text-indigo-300 border border-indigo-800/70'
+    : 'bg-indigo-50 text-indigo-700 border border-indigo-200';
 
   const chartGridStroke = isDark ? '#1e293b' : '#e2e8f0';
   const chartTickFill = isDark ? '#94a3b8' : '#64748b';
@@ -1944,7 +1952,7 @@ export default function App() {
             : 'bg-indigo-50 border-indigo-300 text-indigo-700 shadow-xs'
           : isDark
           ? 'bg-slate-800 border-slate-700 text-slate-400 hover:text-slate-200'
-          : 'bg-slate-50 border-slate-200/80 text-slate-400 hover:text-slate-700'
+          : 'bg-slate-50 border-slate-200/80 text-slate-500 hover:text-slate-800'
       }`}
     >
       <button
@@ -2056,7 +2064,7 @@ export default function App() {
                   className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full ${
                     isDark
                       ? 'bg-emerald-950/70 text-emerald-300 border border-emerald-800/60'
-                      : 'bg-emerald-50 text-emerald-800'
+                      : 'bg-emerald-50 text-emerald-800 border border-emerald-200'
                   }`}
                 >
                   <span
@@ -2066,13 +2074,9 @@ export default function App() {
                   Reale
                 </span>
                 <span
-                  className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full ${
-                    isDark
-                      ? 'bg-indigo-950/70 text-indigo-300 border border-indigo-800/60'
-                      : 'bg-indigo-50 text-indigo-700'
-                  }`}
+                  className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full ${indigoPillClass}`}
                 >
-                  <span className="w-3 h-0.5 border-t-2 border-dotted border-indigo-400" />
+                  <span className="w-3 h-0.5 border-t-2 border-dotted border-indigo-500" />
                   Proiezione
                 </span>
               </div>
@@ -2206,11 +2210,7 @@ export default function App() {
           >
             <div className="flex items-start gap-2.5">
               <div
-                className={`p-2 rounded-xl mt-0.5 shrink-0 ${
-                  isDark
-                    ? 'bg-indigo-950/80 text-indigo-400'
-                    : 'bg-indigo-50 text-indigo-600'
-                }`}
+                className={`p-2 rounded-xl mt-0.5 shrink-0 ${indigoPillClass}`}
               >
                 <Repeat className="w-4 h-4" />
               </div>
@@ -2440,7 +2440,7 @@ export default function App() {
             <div className="sm:col-span-2">
               <button
                 type="submit"
-                className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 shadow-xs transition cursor-pointer"
+                className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-semibold shadow-xs transition cursor-pointer"
               >
                 <Plus className="w-4 h-4" />
                 Aggiungi
@@ -2521,7 +2521,7 @@ export default function App() {
                 className={`rounded-xl border border-dashed p-5 text-center text-xs ${
                   isDark
                     ? 'border-slate-800 text-slate-400 bg-slate-800/30'
-                    : 'border-slate-200 text-slate-400 bg-slate-50/40'
+                    : 'border-slate-200 text-slate-500 bg-slate-50/40'
                 }`}
               >
                 {srAnalytics.totalTopics === 0
@@ -2613,11 +2613,7 @@ export default function App() {
                           )}
                           {!topic.isDue && (
                             <span
-                              className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
-                                isDark
-                                  ? 'bg-indigo-950/80 text-indigo-300'
-                                  : 'bg-indigo-50 text-indigo-700'
-                              }`}
+                              className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${indigoPillClass}`}
                             >
                               Tra {topic.deltaDays}g (
                               {formatShortDate(topic.nextReviewDate)})
@@ -2692,10 +2688,10 @@ export default function App() {
                         <button
                           type="button"
                           onClick={() => handleReviewSrTopic(topic.id, 'easy')}
-                          className={`px-2 py-1 rounded-lg text-[11px] font-semibold border transition cursor-pointer ${
+                          className={`px-2 py-1 rounded-lg text-[11px] font-semibold transition cursor-pointer ${
                             isDark
-                              ? 'bg-indigo-950/70 hover:bg-indigo-900/80 text-indigo-200 border-indigo-800/70'
-                              : 'bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border-indigo-200'
+                              ? 'bg-indigo-950/70 hover:bg-indigo-900/80 text-indigo-200 border border-indigo-800/70'
+                              : 'bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200'
                           }`}
                           title="Facile: estende l'intervallo di ripasso"
                         >
@@ -2839,7 +2835,7 @@ export default function App() {
             <div className="sm:col-span-3">
               <button
                 type="submit"
-                className="w-full inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 shadow-xs transition cursor-pointer"
+                className="w-full inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold shadow-xs transition cursor-pointer"
               >
                 <Plus className="w-4 h-4" />
                 Registra
@@ -2876,7 +2872,7 @@ export default function App() {
                 className={`rounded-xl border border-dashed p-6 text-center text-sm ${
                   isDark
                     ? 'border-slate-800 text-slate-400'
-                    : 'border-slate-200 text-slate-400'
+                    : 'border-slate-200 text-slate-500'
                 }`}
               >
                 Nessuna sessione ancora registrata. Inserisci le prime pagine
@@ -2961,11 +2957,7 @@ export default function App() {
                             />
                           ) : (
                             <span
-                              className={`inline-flex items-center px-2 py-0.5 rounded-md font-semibold text-xs ${
-                                isDark
-                                  ? 'bg-indigo-950/70 text-indigo-300'
-                                  : 'bg-indigo-50 text-indigo-700'
-                              }`}
+                              className={`inline-flex items-center px-2 py-0.5 rounded-md font-semibold text-xs ${indigoPillClass}`}
                             >
                               +{row.pages} pag
                             </span>
@@ -3017,8 +3009,8 @@ export default function App() {
                                   }}
                                   className={`p-1.5 rounded-lg cursor-pointer ${
                                     isDark
-                                      ? 'text-slate-400 hover:text-indigo-400 hover:bg-slate-800'
-                                      : 'text-slate-400 hover:text-indigo-600 hover:bg-slate-100'
+                                      ? 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+                                      : 'text-slate-400 hover:text-slate-700 hover:bg-slate-100'
                                   }`}
                                   title="Modifica pagine"
                                 >
@@ -3094,14 +3086,12 @@ export default function App() {
                   setPomoSound(next);
                   if (next) playPomodoroSound(pomoSoundType, 'study');
                 }}
-                className={`p-1.5 rounded-lg border text-xs transition cursor-pointer ${
+                className={`p-1.5 rounded-lg text-xs transition cursor-pointer ${
                   pomoSound
-                    ? isDark
-                      ? 'bg-indigo-950/70 border-indigo-800/70 text-indigo-300'
-                      : 'bg-indigo-50 border-indigo-200 text-indigo-600'
+                    ? indigoPillClass
                     : isDark
-                    ? 'bg-slate-800 border-slate-700 text-slate-500'
-                    : 'bg-slate-50 border-slate-200 text-slate-400'
+                    ? 'bg-slate-800 border border-slate-700 text-slate-500'
+                    : 'bg-slate-50 border border-slate-200 text-slate-400'
                 }`}
                 title={pomoSound ? 'Suono attivo' : 'Suono disattivato'}
               >
@@ -3167,21 +3157,21 @@ export default function App() {
             </button>
           </div>
 
-          {/* BOX GRAFICA RILASSANTE E STIMOLANTE (ZEN ATMOSPHERE) */}
+          {/* BOX TIMER ZEN */}
           <div
             className={`relative overflow-hidden rounded-2xl p-5 text-center border transition-all duration-700 ${
               pomoPhase === 'study'
                 ? isDark
-                  ? 'bg-gradient-to-br from-indigo-950/70 via-slate-900 to-indigo-950/40 border-indigo-700/60 shadow-[0_0_25px_rgba(79,70,229,0.15)]'
-                  : 'bg-gradient-to-br from-indigo-50/90 via-white to-indigo-50/40 border-indigo-200 shadow-[0_10px_25px_rgba(79,70,229,0.08)]'
+                  ? 'bg-gradient-to-br from-indigo-950/70 via-slate-900 to-indigo-950/40 border-indigo-700/60 shadow-[0_0_25px_rgba(99,102,241,0.15)]'
+                  : 'bg-gradient-to-br from-indigo-50/90 via-white to-indigo-50/40 border-indigo-200/80 shadow-[0_10px_25px_rgba(99,102,241,0.08)]'
                 : isDark
                 ? 'bg-gradient-to-br from-emerald-950/70 via-slate-900 to-emerald-950/40 border-emerald-700/60 shadow-[0_0_25px_rgba(16,185,129,0.15)]'
-                : 'bg-gradient-to-br from-emerald-50/90 via-white to-emerald-50/40 border-emerald-200 shadow-[0_10px_25px_rgba(16,185,129,0.08)]'
+                : 'bg-gradient-to-br from-emerald-50/90 via-white to-emerald-50/40 border-emerald-200/80 shadow-[0_10px_25px_rgba(16,185,129,0.08)]'
             }`}
           >
             {pomoRunning && (
               <div
-                className={`absolute inset-0 opacity-20 pointer-events-none animate-pulse ${
+                className={`absolute inset-0 opacity-15 pointer-events-none animate-pulse ${
                   pomoPhase === 'study' ? 'bg-indigo-500' : 'bg-emerald-500'
                 }`}
                 style={{ filter: 'blur(40px)' }}
@@ -3213,7 +3203,7 @@ export default function App() {
                 } ${
                   pomoPhase === 'study'
                     ? isDark
-                      ? 'text-slate-50'
+                      ? 'text-indigo-100'
                       : 'text-slate-900'
                     : isDark
                     ? 'text-emerald-200'
@@ -3245,7 +3235,7 @@ export default function App() {
                 className={`mb-4 px-3 py-2 rounded-xl text-[11px] italic font-medium border transition-all ${
                   isDark
                     ? 'bg-slate-950/40 border-slate-800/80 text-slate-300'
-                    : 'bg-white/70 border-slate-200/80 text-slate-600'
+                    : 'bg-white/80 border-slate-200/80 text-slate-600'
                 }`}
               >
                 {POMO_QUOTES[currentQuoteIndex]}
@@ -3339,9 +3329,7 @@ export default function App() {
                     pomoStudyMin === 25 &&
                     pomoShortBreakMin === 5 &&
                     pomoLongBreakMin === 15
-                      ? isDark
-                        ? 'bg-indigo-950/80 text-indigo-300'
-                        : 'bg-indigo-100 text-indigo-700'
+                      ? indigoPillClass
                       : isDark
                       ? 'bg-slate-800 text-slate-400 hover:bg-slate-700'
                       : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
@@ -3356,9 +3344,7 @@ export default function App() {
                     pomoStudyMin === 50 &&
                     pomoShortBreakMin === 10 &&
                     pomoLongBreakMin === 20
-                      ? isDark
-                        ? 'bg-indigo-950/80 text-indigo-300'
-                        : 'bg-indigo-100 text-indigo-700'
+                      ? indigoPillClass
                       : isDark
                       ? 'bg-slate-800 text-slate-400 hover:bg-slate-700'
                       : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
@@ -3602,11 +3588,9 @@ export default function App() {
                     Registro sessioni Pomodoro ({pomoStats.sessions.length})
                   </span>
                   <span
-                    className={
-                      isDark
-                        ? 'text-indigo-400 text-[11px]'
-                        : 'text-indigo-600 text-[11px]'
-                    }
+                    className={`${
+                      isDark ? 'text-indigo-400' : 'text-indigo-600'
+                    } text-[11px]`}
                   >
                     {showPomoHistory ? 'Nascondi' : 'Mostra'}
                   </span>
@@ -3949,7 +3933,9 @@ export default function App() {
           isBeingDragged ? 'opacity-45 scale-[0.99]' : ''
         } ${
           isDropTargetBefore
-            ? 'ring-2 ring-indigo-500 ring-offset-4 rounded-2xl'
+            ? `ring-2 ring-indigo-500 ring-offset-4 ${
+                isDark ? 'ring-offset-slate-950' : 'ring-offset-slate-50'
+              } rounded-2xl`
             : ''
         } ${
           isReorderMode
@@ -3996,7 +3982,11 @@ export default function App() {
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-1.5">
-                <span className="text-xs font-semibold uppercase tracking-wider text-indigo-500">
+                <span
+                  className={`text-xs font-semibold uppercase tracking-wider ${
+                    isDark ? 'text-indigo-400' : 'text-indigo-600'
+                  }`}
+                >
                   StudyBurn
                 </span>
                 <span
@@ -4028,7 +4018,7 @@ export default function App() {
                         setIsRenamingHeader(false);
                       }
                     }}
-                    className={`text-base sm:text-lg font-bold border-b-2 border-indigo-500 bg-transparent focus:outline-none px-0.5 ${
+                    className={`text-base sm:text-lg font-bold border-b-2 border-indigo-600 bg-transparent focus:outline-none px-0.5 ${
                       isDark ? 'text-slate-50' : 'text-slate-900'
                     }`}
                   />
@@ -4053,8 +4043,10 @@ export default function App() {
                   title="Clicca per rinominare l'esame"
                 >
                   <h1
-                    className={`text-base sm:text-lg font-bold truncate group-hover:text-indigo-500 transition-colors ${
-                      isDark ? 'text-slate-50' : 'text-slate-900'
+                    className={`text-base sm:text-lg font-bold truncate transition-colors ${
+                      isDark
+                        ? 'text-slate-50 group-hover:text-indigo-400'
+                        : 'text-slate-900 group-hover:text-indigo-600'
                     }`}
                   >
                     {activeExam.name || 'Esame senza nome'}
@@ -4063,7 +4055,7 @@ export default function App() {
                     className={`w-3.5 h-3.5 transition-colors shrink-0 ${
                       isDark
                         ? 'text-slate-500 group-hover:text-indigo-400'
-                        : 'text-slate-400 group-hover:text-indigo-500'
+                        : 'text-slate-400 group-hover:text-indigo-600'
                     }`}
                   />
                 </button>
@@ -4155,9 +4147,7 @@ export default function App() {
                 isReorderMode
                   ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs'
                   : isCustomLayout
-                  ? isDark
-                    ? 'bg-indigo-950/70 text-indigo-300 border-indigo-800/80 hover:bg-indigo-900/70'
-                    : 'bg-indigo-50 text-indigo-700 border-indigo-200 hover:bg-indigo-100'
+                  ? indigoPillClass
                   : isDark
                   ? 'text-slate-300 bg-slate-800 hover:bg-slate-700 border-slate-700'
                   : 'text-slate-700 bg-white hover:bg-slate-50 border-slate-200'
@@ -4197,7 +4187,7 @@ export default function App() {
             <button
               type="button"
               onClick={handleCreateExam}
-              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 shadow-xs transition cursor-pointer"
+              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-semibold shadow-xs transition cursor-pointer"
             >
               <Plus className="w-4 h-4" />
               <span>Nuovo</span>
@@ -4232,13 +4222,7 @@ export default function App() {
           >
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-center gap-2.5">
-                <div
-                  className={`p-2 rounded-xl ${
-                    isDark
-                      ? 'bg-indigo-950/80 text-indigo-400'
-                      : 'bg-indigo-50 text-indigo-600'
-                  }`}
-                >
+                <div className={`p-2 rounded-xl ${indigoPillClass}`}>
                   <Cloud className="w-5 h-5" />
                 </div>
                 <div>
@@ -4292,7 +4276,7 @@ export default function App() {
                       setCloudConflictPayload(null);
                       setLastSyncedAt(getCurrentTimeStr());
                     }}
-                    className="px-3 py-1.5 rounded-lg text-xs font-bold bg-indigo-600 text-white hover:bg-indigo-700 cursor-pointer"
+                    className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold cursor-pointer"
                   >
                     Scarica dati dal Cloud
                   </button>
@@ -4358,7 +4342,7 @@ export default function App() {
                     type="button"
                     onClick={() => pullFromCloud(cloudSession, false)}
                     disabled={cloudStatus === 'syncing'}
-                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50 cursor-pointer"
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold disabled:opacity-50 cursor-pointer"
                   >
                     <RefreshCw
                       className={`w-3.5 h-3.5 ${
@@ -4399,7 +4383,7 @@ export default function App() {
                       className={`px-3 py-1 rounded-lg text-xs font-semibold cursor-pointer ${
                         authMode === 'login'
                           ? isDark
-                            ? 'bg-slate-900 text-indigo-400 shadow-xs'
+                            ? 'bg-slate-900 text-indigo-400'
                             : 'bg-white text-indigo-600 shadow-xs'
                           : isDark
                           ? 'text-slate-400'
@@ -4417,7 +4401,7 @@ export default function App() {
                       className={`px-3 py-1 rounded-lg text-xs font-semibold cursor-pointer ${
                         authMode === 'signup'
                           ? isDark
-                            ? 'bg-slate-900 text-indigo-400 shadow-xs'
+                            ? 'bg-slate-900 text-indigo-400'
                             : 'bg-white text-indigo-600 shadow-xs'
                           : isDark
                           ? 'text-slate-400'
@@ -4533,7 +4517,7 @@ export default function App() {
                 <button
                   type="submit"
                   disabled={authLoading}
-                  className="w-full py-2.5 rounded-xl text-xs sm:text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 transition cursor-pointer"
+                  className="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-bold disabled:opacity-50 transition cursor-pointer"
                 >
                   {authLoading
                     ? 'Connessione in corso...'
@@ -4626,11 +4610,7 @@ export default function App() {
                 <p className="text-sm font-bold">
                   Personalizzazione ordine sezioni attiva
                 </p>
-                <p
-                  className={`text-xs ${
-                    isDark ? 'text-indigo-300' : 'text-indigo-800'
-                  }`}
-                >
+                <p className="text-xs opacity-85">
                   Usa le frecce su/giù, sposta tra colonna sinistra e destra
                   oppure trascina la maniglia di ogni riquadro.
                 </p>
@@ -4654,7 +4634,7 @@ export default function App() {
               <button
                 type="button"
                 onClick={() => setIsReorderMode(false)}
-                className="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-indigo-600 text-white hover:bg-indigo-700 transition cursor-pointer"
+                className="px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition cursor-pointer"
               >
                 Fatto
               </button>
@@ -4680,17 +4660,21 @@ export default function App() {
                   {analytics.statusTitle}
                 </span>
                 {analytics.safeReviewDays > 0 && (
-                  <span className="text-xs opacity-75">
+                  <span className={`text-xs ${statusStyles.detailColor}`}>
                     Fine prima lettura prevista entro il{' '}
                     <strong>{formatShortDate(analytics.studyDeadline)}</strong>{' '}
                     ({analytics.safeReviewDays} gg di ripasso finale)
                   </span>
                 )}
               </div>
-              <h2 className="text-base sm:text-lg font-bold leading-snug">
+              <h2
+                className={`text-base sm:text-lg font-bold leading-snug ${statusStyles.headlineColor}`}
+              >
                 {analytics.statusHeadline}
               </h2>
-              <p className="text-xs sm:text-sm opacity-90 leading-relaxed">
+              <p
+                className={`text-xs sm:text-sm leading-relaxed ${statusStyles.detailColor}`}
+              >
                 {analytics.statusDetail}
               </p>
             </div>
@@ -4710,13 +4694,7 @@ export default function App() {
               >
                 Completamento
               </span>
-              <div
-                className={`p-2 rounded-lg ${
-                  isDark
-                    ? 'bg-indigo-950/80 text-indigo-400'
-                    : 'bg-indigo-50 text-indigo-600'
-                }`}
-              >
+              <div className={`p-2 rounded-lg ${indigoPillClass}`}>
                 <Layers className="w-4 h-4" />
               </div>
             </div>
@@ -4767,8 +4745,8 @@ export default function App() {
               <div
                 className={`p-2 rounded-lg ${
                   isDark
-                    ? 'bg-sky-950/80 text-sky-400'
-                    : 'bg-sky-50 text-sky-600'
+                    ? 'bg-sky-950/80 text-sky-400 border border-sky-800/70'
+                    : 'bg-sky-50 text-sky-600 border border-sky-200'
                 }`}
               >
                 <BookOpen className="w-4 h-4" />
@@ -4817,13 +4795,7 @@ export default function App() {
               >
                 Ritmo Necessario
               </span>
-              <div
-                className={`p-2 rounded-lg ${
-                  isDark
-                    ? 'bg-violet-950/80 text-violet-400'
-                    : 'bg-violet-50 text-violet-600'
-                }`}
-              >
+              <div className={`p-2 rounded-lg ${indigoPillClass}`}>
                 <Target className="w-4 h-4" />
               </div>
             </div>
@@ -4886,8 +4858,8 @@ export default function App() {
               <div
                 className={`p-2 rounded-lg ${
                   isDark
-                    ? 'bg-amber-950/80 text-amber-400'
-                    : 'bg-amber-50 text-amber-600'
+                    ? 'bg-amber-950/80 text-amber-400 border border-amber-800/70'
+                    : 'bg-amber-50 text-amber-600 border border-amber-200'
                 }`}
               >
                 <Calendar className="w-4 h-4" />
