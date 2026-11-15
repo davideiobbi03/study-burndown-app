@@ -116,6 +116,16 @@ function formatMinutesHuman(totalMinutes) {
   return m > 0 ? `${h}h ${m}m` : `${h}h`;
 }
 
+// --- CITAZIONI MOTIVAZIONALI POMODORO ---
+const POMO_QUOTES = [
+  "“La costanza è il mattone fondamentale del successo clinico e accademico.”",
+  "“Un capitolo alla volta, un Pomodoro alla volta: la meta si avvicina.”",
+  "“La mente focalizzata è il tuo strumento diagnostico più potente.”",
+  "“Il successo non viene dai colpi di genio isolati, ma dalla disciplina quotidiana.”",
+  "“Rilassati, respira e riparti: il recupero è parte integrante dello studio.”",
+  "“Trasforma la complessità in schemi chiari. Tu domini la materia.”",
+];
+
 // --- MOTORE AUDIO POMODORO ---
 const POMO_SOUNDS = [
   { id: 'bell', label: 'Campanella Zen' },
@@ -511,9 +521,9 @@ export default function App() {
   };
 
   const moveSectionDown = (col, index) => {
+    if (index >= layout[col].length - 1) return;
     setLayout((prev) => {
       const list = [...prev[col]];
-      if (index >= list.length - 1) return prev;
       [list[index], list[index + 1]] = [list[index + 1], list[index]];
       return { ...prev, [col]: list };
     });
@@ -614,6 +624,7 @@ export default function App() {
     initialPomoPrefs.soundType || 'bell'
   );
   const [showPomoHistory, setShowPomoHistory] = useState(false);
+  const [currentQuoteIndex, setCurrentQuoteIndex] = useState(0);
 
   useEffect(() => {
     try {
@@ -1260,6 +1271,7 @@ export default function App() {
               Math.max(1, Number(pomoShortBreakMin) || 5) * 60
             );
           }
+          setCurrentQuoteIndex((prev) => (prev + 1) % POMO_QUOTES.length);
           setPomoRunning(shouldAutoContinue);
         } else {
           if (pomoPhase === 'long_break' || pomoCycleCount >= 4) {
@@ -1267,6 +1279,7 @@ export default function App() {
           }
           setPomoPhase('study');
           setPomoSecondsLeft(Math.max(1, Number(pomoStudyMin) || 25) * 60);
+          setCurrentQuoteIndex((prev) => (prev + 1) % POMO_QUOTES.length);
           setPomoRunning(shouldAutoContinue);
         }
       }
@@ -1301,6 +1314,7 @@ export default function App() {
     }
     setPomoPhase(targetPhase);
     setPomoSecondsLeft(getPhaseMinutes(targetPhase) * 60);
+    setCurrentQuoteIndex((prev) => (prev + 1) % POMO_QUOTES.length);
   };
 
   const handlePomoSkipPhase = () => {
@@ -1323,6 +1337,7 @@ export default function App() {
       setPomoPhase('study');
       setPomoSecondsLeft(getPhaseMinutes('study') * 60);
     }
+    setCurrentQuoteIndex((prev) => (prev + 1) % POMO_QUOTES.length);
   };
 
   const handlePomoReset = () => {
@@ -2582,9 +2597,13 @@ export default function App() {
                   onClick={() => setSrFilter('due')}
                   className={`px-3 py-1 rounded-lg text-xs font-semibold transition cursor-pointer ${
                     srFilter === 'due'
-                      ? isDark
-                        ? 'bg-slate-900 text-amber-400 shadow-xs'
-                        : 'bg-white text-amber-700 shadow-xs'
+                      ? srAnalytics.dueTotalCount > 0
+                        ? isDark
+                          ? 'bg-slate-900 text-amber-400 shadow-xs'
+                          : 'bg-white text-amber-700 shadow-xs'
+                        : isDark
+                        ? 'bg-slate-900 text-emerald-400 shadow-xs'
+                        : 'bg-white text-emerald-700 shadow-xs'
                       : isDark
                       ? 'text-slate-400 hover:text-slate-200'
                       : 'text-slate-600 hover:text-slate-900'
@@ -3285,130 +3304,160 @@ export default function App() {
             </button>
           </div>
 
+          {/* BOX GRAFICA RILASSANTE E STIMOLANTE (ZEN ATMOSPHERE) */}
           <div
-            className={`rounded-2xl p-4 text-center border transition-colors ${
+            className={`relative overflow-hidden rounded-2xl p-5 text-center border transition-all duration-700 ${
               pomoPhase === 'study'
                 ? isDark
-                  ? 'bg-indigo-950/35 border-indigo-800/60'
-                  : 'bg-indigo-50/70 border-indigo-100'
+                  ? 'bg-gradient-to-br from-indigo-950/70 via-slate-900 to-indigo-950/40 border-indigo-700/60 shadow-[0_0_25px_rgba(79,70,229,0.15)]'
+                  : 'bg-gradient-to-br from-indigo-50/90 via-white to-indigo-50/40 border-indigo-200 shadow-[0_10px_25px_rgba(79,70,229,0.08)]'
                 : isDark
-                ? 'bg-emerald-950/35 border-emerald-800/60'
-                : 'bg-emerald-50/70 border-emerald-100'
+                ? 'bg-gradient-to-br from-emerald-950/70 via-slate-900 to-emerald-950/40 border-emerald-700/60 shadow-[0_0_25px_rgba(16,185,129,0.15)]'
+                : 'bg-gradient-to-br from-emerald-50/90 via-white to-emerald-50/40 border-emerald-200 shadow-[0_10px_25px_rgba(16,185,129,0.08)]'
             }`}
           >
-            <div className="flex items-center justify-center gap-1.5 mb-2">
-              {[1, 2, 3, 4].map((dot) => (
-                <span
-                  key={dot}
-                  className={`h-2 w-6 rounded-full transition-all ${
-                    dot <= pomoCycleCount
-                      ? pomoPhase === 'study'
-                        ? 'bg-indigo-500'
-                        : 'bg-emerald-500'
-                      : isDark
-                      ? 'bg-slate-700'
-                      : 'bg-slate-200'
-                  }`}
-                  title={`Pomodoro ${dot} di 4 prima della pausa lunga`}
-                />
-              ))}
-            </div>
-
-            <div
-              className={`text-4xl sm:text-5xl font-black tracking-tight tabular-nums my-1 ${
-                pomoPhase === 'study'
-                  ? isDark
-                    ? 'text-slate-50'
-                    : 'text-slate-900'
-                  : isDark
-                  ? 'text-emerald-200'
-                  : 'text-emerald-950'
-              }`}
-            >
-              {pomoMinutesDisplay}:{pomoSecondsDisplay}
-            </div>
-
-            <p
-              className={`text-xs font-medium mb-3 ${
-                pomoPhase === 'study'
-                  ? isDark
-                    ? 'text-indigo-300'
-                    : 'text-indigo-700'
-                  : isDark
-                  ? 'text-emerald-300'
-                  : 'text-emerald-700'
-              }`}
-            >
-              {pomoPhase === 'study'
-                ? `Sessione Studio #${(pomoCycleCount % 4) + 1} di 4`
-                : pomoPhase === 'short_break'
-                ? 'Pausa breve: sgranchisciti e riposa gli occhi'
-                : 'Pausa lunga meritata dopo 4 sessioni!'}
-            </p>
-
-            <div
-              className={`w-full h-1.5 rounded-full overflow-hidden mb-4 ${
-                isDark ? 'bg-slate-800/90' : 'bg-white/80'
-              }`}
-            >
+            {/* Effetto alone luminoso animato in background se il timer è attivo */}
+            {pomoRunning && (
               <div
-                className={`h-full transition-all duration-300 ${
-                  pomoPhase === 'study' ? 'bg-indigo-600' : 'bg-emerald-500'
+                className={`absolute inset-0 opacity-20 pointer-events-none animate-pulse ${
+                  pomoPhase === 'study' ? 'bg-indigo-500' : 'bg-emerald-500'
                 }`}
-                style={{ width: `${pomoStats.progressPct}%` }}
+                style={{ filter: 'blur(40px)' }}
               />
-            </div>
+            )}
 
-            <div className="flex items-center justify-center gap-2">
-              <button
-                type="button"
-                onClick={handleTogglePomoRunning}
-                className={`inline-flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-xl text-sm font-bold text-white shadow-xs transition cursor-pointer ${
-                  pomoRunning
-                    ? 'bg-amber-500 hover:bg-amber-600'
+            <div className="relative z-10">
+              <div className="flex items-center justify-center gap-1.5 mb-2">
+                {[1, 2, 3, 4].map((dot) => (
+                  <span
+                    key={dot}
+                    className={`h-2 w-6 rounded-full transition-all ${
+                      dot <= pomoCycleCount
+                        ? pomoPhase === 'study'
+                          ? 'bg-indigo-500 shadow-xs'
+                          : 'bg-emerald-500 shadow-xs'
+                        : isDark
+                        ? 'bg-slate-800'
+                        : 'bg-slate-200'
+                    }`}
+                    title={`Pomodoro ${dot} di 4 prima della pausa lunga`}
+                  />
+                ))}
+              </div>
+
+              <div
+                className={`text-4xl sm:text-5xl font-black tracking-tight tabular-nums my-1 transition-transform duration-300 ${
+                  pomoRunning ? 'scale-102' : 'scale-100'
+                } ${
+                  pomoPhase === 'study'
+                    ? isDark
+                      ? 'text-slate-50'
+                      : 'text-slate-900'
+                    : isDark
+                    ? 'text-emerald-200'
+                    : 'text-emerald-950'
+                }`}
+              >
+                {pomoMinutesDisplay}:{pomoSecondsDisplay}
+              </div>
+
+              <p
+                className={`text-xs font-semibold tracking-wide uppercase mb-3 ${
+                  pomoPhase === 'study'
+                    ? isDark
+                      ? 'text-indigo-300'
+                      : 'text-indigo-700'
+                    : isDark
+                    ? 'text-emerald-300'
+                    : 'text-emerald-700'
+                }`}
+              >
+                {pomoPhase === 'study'
+                  ? `Sessione Studio #${(pomoCycleCount % 4) + 1} di 4`
+                  : pomoPhase === 'short_break'
+                  ? 'Pausa breve: sgranchisciti e respira'
+                  : 'Pausa lunga: ricarica le energie!'}
+              </p>
+
+              {/* Citazione motivazionale zen */}
+              <div
+                className={`mb-4 px-3 py-2 rounded-xl text-[11px] italic font-medium border transition-all ${
+                  isDark
+                    ? 'bg-slate-950/40 border-slate-800/80 text-slate-300'
+                    : 'bg-white/70 border-slate-200/80 text-slate-600'
+                }`}
+              >
+                {POMO_QUOTES[currentQuoteIndex]}
+              </div>
+
+              <div
+                className={`w-full h-2 rounded-full overflow-hidden mb-4 ${
+                  isDark
+                    ? 'bg-slate-800/90'
                     : pomoPhase === 'study'
-                    ? 'bg-indigo-600 hover:bg-indigo-700'
-                    : 'bg-emerald-600 hover:bg-emerald-700'
+                    ? 'bg-indigo-200/60'
+                    : 'bg-emerald-200/60'
                 }`}
               >
-                {pomoRunning ? (
-                  <>
-                    <Pause className="w-4 h-4" />
-                    Pausa
-                  </>
-                ) : (
-                  <>
-                    <Play className="w-4 h-4" />
-                    Avvia
-                  </>
-                )}
-              </button>
+                <div
+                  className={`h-full transition-all duration-300 ${
+                    pomoPhase === 'study' ? 'bg-indigo-600' : 'bg-emerald-500'
+                  }`}
+                  style={{ width: `${pomoStats.progressPct}%` }}
+                />
+              </div>
 
-              <button
-                type="button"
-                onClick={handlePomoReset}
-                className={`p-2.5 rounded-xl border transition cursor-pointer ${
-                  isDark
-                    ? 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700'
-                    : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
-                }`}
-                title="Azzera timer corrente"
-              >
-                <RotateCcw className="w-4 h-4" />
-              </button>
+              <div className="flex items-center justify-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleTogglePomoRunning}
+                  className={`inline-flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-xl text-sm font-bold text-white shadow-md transition cursor-pointer ${
+                    pomoRunning
+                      ? 'bg-amber-500 hover:bg-amber-600'
+                      : pomoPhase === 'study'
+                      ? 'bg-indigo-600 hover:bg-indigo-700'
+                      : 'bg-emerald-600 hover:bg-emerald-700'
+                  }`}
+                >
+                  {pomoRunning ? (
+                    <>
+                      <Pause className="w-4 h-4" />
+                      Pausa
+                    </>
+                  ) : (
+                    <>
+                      <Play className="w-4 h-4" />
+                      Avvia
+                    </>
+                  )}
+                </button>
 
-              <button
-                type="button"
-                onClick={handlePomoSkipPhase}
-                className={`p-2.5 rounded-xl border transition cursor-pointer ${
-                  isDark
-                    ? 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700'
-                    : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
-                }`}
-                title="Salta alla fase successiva"
-              >
-                <SkipForward className="w-4 h-4" />
-              </button>
+                <button
+                  type="button"
+                  onClick={handlePomoReset}
+                  className={`p-2.5 rounded-xl border transition cursor-pointer ${
+                    isDark
+                      ? 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700'
+                      : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                  }`}
+                  title="Azzera timer corrente"
+                >
+                  <RotateCcw className="w-4 h-4" />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handlePomoSkipPhase}
+                  className={`p-2.5 rounded-xl border transition cursor-pointer ${
+                    isDark
+                      ? 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700'
+                      : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                  }`}
+                  title="Salta alla fase successiva"
+                >
+                  <SkipForward className="w-4 h-4" />
+                </button>
+              </div>
             </div>
           </div>
 
@@ -3586,7 +3635,7 @@ export default function App() {
                     getUnlockedAudioContext();
                     playPomodoroSound(chosen, 'study');
                   }}
-                  className={`w-full rounded-lg border px-2 py-1 text-xs font-medium truncate disabled:opacity-50 ${inputMutedSurfaceClass}`}
+                  className={`w-full rounded-lg border pl-2 pr-6 py-1 text-xs font-medium truncate disabled:opacity-50 ${inputMutedSurfaceClass}`}
                   title="Scegli la suoneria di fine sessione o pausa"
                 >
                   {POMO_SOUNDS.map((s) => (
@@ -4271,7 +4320,7 @@ export default function App() {
                 setIsRenamingHeader(false);
                 setConfirmReset(false);
               }}
-              className={`rounded-lg border text-xs sm:text-sm font-medium px-2.5 py-1.5 max-w-[170px] sm:max-w-[220px] truncate ${
+              className={`rounded-lg border text-xs sm:text-sm font-medium pl-3 pr-7 py-1.5 max-w-[190px] sm:max-w-[240px] truncate ${
                 isDark
                   ? 'border-slate-700 bg-slate-800 text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500'
                   : 'border-slate-300 bg-slate-50 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500'
@@ -4781,7 +4830,7 @@ export default function App() {
                 <span
                   className={`text-[11px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full border ${statusStyles.badge}`}
                 >
-                  {statusStyles.statusTitle}
+                  {analytics.statusTitle}
                 </span>
                 {analytics.safeReviewDays > 0 && (
                   <span className="text-xs opacity-75">
@@ -4792,10 +4841,10 @@ export default function App() {
                 )}
               </div>
               <h2 className="text-base sm:text-lg font-bold leading-snug">
-                {statusStyles.statusHeadline}
+                {analytics.statusHeadline}
               </h2>
               <p className="text-xs sm:text-sm opacity-90 leading-relaxed">
-                {statusStyles.statusDetail}
+                {analytics.statusDetail}
               </p>
             </div>
           </div>
