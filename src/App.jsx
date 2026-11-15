@@ -52,6 +52,7 @@ import {
   Download,
   Upload,
   Palette,
+  ChevronDown,
 } from 'lucide-react';
 
 // ============================================================================
@@ -411,6 +412,19 @@ export default function App() {
     }
     return 'indigo';
   });
+
+  const [showAccentDropdown, setShowAccentDropdown] = useState(false);
+  const accentDropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (accentDropdownRef.current && !accentDropdownRef.current.contains(e.target)) {
+        setShowAccentDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const currentAccent = ACCENT_COLORS[accentKey] || ACCENT_COLORS.indigo;
 
@@ -1979,7 +1993,7 @@ export default function App() {
         : 'bg-rose-50/90 border-rose-200 text-rose-950',
       badge: isDark
         ? 'bg-rose-900/70 text-rose-200 border-rose-700/70'
-        : 'bg-rose-100 text-rose-800 border-rose-200',
+        : 'bg-rose-100 text-rose-700 border-rose-200',
       iconBg: 'bg-rose-600 text-white',
       lineColor: '#e11d48',
       Icon: AlertOctagon,
@@ -4109,29 +4123,59 @@ export default function App() {
               </button>
             )}
 
-            {/* SELETTORE COLORE ACCENTO TASTI */}
-            <div className="relative inline-flex items-center">
-              <select
-                aria-label="Colore accento tasti"
-                value={accentKey}
-                onChange={(e) => setAccentKey(e.target.value)}
-                className={`rounded-lg border text-xs font-semibold pl-7 pr-3 py-1.5 transition cursor-pointer appearance-none ${
+            {/* SELETTORE COLORE ACCENTO STILE PILLOLA COERENTE */}
+            <div className="relative" ref={accentDropdownRef}>
+              <button
+                type="button"
+                onClick={() => setShowAccentDropdown((v) => !v)}
+                className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold border transition cursor-pointer shadow-xs ${
                   isDark
                     ? 'bg-slate-800 border-slate-700 text-slate-200 hover:bg-slate-700'
                     : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
                 }`}
                 title="Cambia il colore dei tasti e degli accenti"
               >
-                {Object.entries(ACCENT_COLORS).map(([key, val]) => (
-                  <option key={key} value={key}>
-                    {val.label}
-                  </option>
-                ))}
-              </select>
-              <span
-                className="absolute left-2.5 w-3 h-3 rounded-full pointer-events-none"
-                style={{ backgroundColor: currentAccent.hex }}
-              />
+                <span
+                  className="w-3 h-3 rounded-full shrink-0 shadow-xs"
+                  style={{ backgroundColor: currentAccent.hex }}
+                />
+                <span>{currentAccent.label}</span>
+                <ChevronDown className="w-3 h-3 opacity-60" />
+              </button>
+
+              {showAccentDropdown && (
+                <div
+                  className={`absolute right-0 mt-1.5 w-36 rounded-2xl border p-1.5 shadow-xl z-30 space-y-0.5 ${
+                    isDark
+                      ? 'bg-slate-900 border-slate-700'
+                      : 'bg-white border-slate-200'
+                  }`}
+                >
+                  {Object.entries(ACCENT_COLORS).map(([key, val]) => (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => {
+                        setAccentKey(key);
+                        setShowAccentDropdown(false);
+                      }}
+                      className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold transition cursor-pointer ${
+                        accentKey === key
+                          ? currentAccent.bgLight
+                          : isDark
+                          ? 'text-slate-300 hover:bg-slate-800'
+                          : 'text-slate-700 hover:bg-slate-100'
+                      }`}
+                    >
+                      <span
+                        className="w-3 h-3 rounded-full shrink-0 shadow-xs"
+                        style={{ backgroundColor: val.hex }}
+                      />
+                      <span>{val.label}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
             <button
