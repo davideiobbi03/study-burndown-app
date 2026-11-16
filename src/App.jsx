@@ -50,6 +50,9 @@ import {
   LogOut,
   Download,
   Upload,
+  GraduationCap,
+  Calculator,
+  Award,
 } from 'lucide-react';
 
 // ============================================================================
@@ -113,6 +116,89 @@ function formatMinutesHuman(totalMinutes) {
   const h = Math.floor(mins / 60);
   const m = mins % 60;
   return m > 0 ? `${h}h ${m}m` : `${h}h`;
+}
+
+// --- DATI INIZIALI LIBRETTO MEDICINA (1° - 6° ANNO) ---
+function createDefaultMedYears() {
+  return {
+    1: [
+      {
+        id: 'blk_y1_1',
+        name: 'Biologia e Genetica',
+        subjects: [
+          {
+            id: 'sub_y1_1a',
+            name: 'Biologia Cellulare e Molecolare',
+            cfu: 6,
+            grade: 28,
+            lode: false,
+          },
+          {
+            id: 'sub_y1_1b',
+            name: 'Genetica Medica',
+            cfu: 4,
+            grade: 30,
+            lode: true,
+          },
+        ],
+      },
+      {
+        id: 'blk_y1_2',
+        name: 'Istologia ed Embriologia',
+        subjects: [
+          {
+            id: 'sub_y1_2a',
+            name: 'Istologia',
+            cfu: 6,
+            grade: 27,
+            lode: false,
+          },
+          {
+            id: 'sub_y1_2b',
+            name: 'Embriologia Umana',
+            cfu: 3,
+            grade: 29,
+            lode: false,
+          },
+        ],
+      },
+    ],
+    2: [],
+    3: [],
+    4: [
+      {
+        id: 'blk_y4_1',
+        name: 'Medicina di Laboratorio',
+        subjects: [
+          {
+            id: 'sub_y4_1a',
+            name: 'Biochimica Clinica',
+            cfu: 4,
+            grade: null,
+            lode: false,
+          },
+          {
+            id: 'sub_y4_1b',
+            name: 'Patologia Clinica',
+            cfu: 4,
+            grade: null,
+            lode: false,
+          },
+        ],
+      },
+    ],
+    5: [],
+    6: [],
+  };
+}
+
+function normalizeMedYears(raw) {
+  const base = { 1: [], 2: [], 3: [], 4: [], 5: [], 6: [] };
+  if (!raw || typeof raw !== 'object') return createDefaultMedYears();
+  [1, 2, 3, 4, 5, 6].forEach((yr) => {
+    base[yr] = Array.isArray(raw[yr]) ? raw[yr] : [];
+  });
+  return base;
 }
 
 // --- CITAZIONI MOTIVAZIONALI POMODORO ---
@@ -327,6 +413,8 @@ const CLOUD_CONFIG_STORAGE_KEY = 'studyburn_cloud_config_v1';
 const CLOUD_SESSION_STORAGE_KEY = 'studyburn_cloud_session_v1';
 
 export default function App() {
+  const [activeTab, setActiveTab] = useState('tracker'); // 'tracker' | 'libretto'
+
   const [isDark, setIsDark] = useState(() => {
     try {
       const savedTheme = localStorage.getItem(THEME_STORAGE_KEY);
@@ -361,7 +449,10 @@ export default function App() {
       if (saved) {
         const parsed = JSON.parse(saved);
         if (parsed && Array.isArray(parsed.exams) && parsed.exams.length > 0) {
-          return parsed;
+          return {
+            ...parsed,
+            medYears: normalizeMedYears(parsed.medYears),
+          };
         }
       }
     } catch (e) {
@@ -371,8 +462,197 @@ export default function App() {
     return {
       exams: [initial],
       activeExamId: initial.id,
+      medYears: createDefaultMedYears(),
     };
   });
+
+  // --- STATO PAGINA LIBRETTO & MEDIE (1° - 6° ANNO MEDICINA) ---
+  const [selectedMedYear, setSelectedMedYear] = useState(1);
+  const [newBlockName, setNewBlockName] = useState('');
+  const [editingBlockId, setEditingBlockId] = useState(null);
+  const [editingBlockTitle, setEditingBlockTitle] = useState('');
+  const [newSubjectDrafts, setNewSubjectDrafts] = useState({});
+
+  const medYears = useMemo(
+    () => normalizeMedYears(state.medYears),
+    [state.medYears]
+  );
+
+  const updateMedYears = (updater, saveUndo = true) => {
+    setState((prev) => {
+      if (saveUndo) {
+        setUndoStack((u) => [prev, ...u.slice(0, 9)]);
+      }
+      const currentYears = normalizeMedYears(prev.medYears);
+      const nextYears =
+        typeof updater === 'function' ? updater(currentYears) : updater;
+      return {
+        ...prev,
+        medYears: nextYears,
+      };
+    });
+  };
+
+  const handleAddMedBlock = (e) => {
+    e.preventDefault();
+    const cleanName = newBlockName.trim();
+    if (!cleanName) return;
+    const newBlock = {
+      id: `blk_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+      name: cleanName,
+      subjects: [],
+    };
+    updateMedYears((yrs) => ({
+      ...yrs,
+      [selectedMedYear]: [...yrs[selectedMedYear], newBlock],
+    }));
+    setNewBlockName('');
+  };
+
+  const handleRenameMedBlock = (yearNum, blockId) => {
+    const clean = editingBlockTitle.trim();
+    if (!clean) {
+      setEditingBlockId(null);
+      return;
+    }
+    updateMedYears((yrs) => ({
+      ...yrs,
+      [yearNum]: yrs[yearNum].map((b) =>
+        b.id === blockId ? { ...b, name: clean } : b
+      ),
+    }));
+    setEditingBlockId(null);
+  };
+
+  const handleDeleteMedBlock = (yearNum, blockId) => {
+    updateMedYears((yrs) => ({
+      ...yrs,
+      [yearNum]: yrs[yearNum].filter((b) => b.id !== blockId),
+    }));
+  };
+
+  const handleAddMedSubject = (e, yearNum, blockId) => {
+    e.preventDefault();
+    const draft = newSubjectDrafts[blockId] || {
+      name: '',
+      cfu: '6',
+      grade: '',
+    };
+    const cleanName = (draft.name || '').trim();
+    const cfuVal = Math.max(0.5, Number(draft.cfu) || 0);
+    if (!cleanName || cfuVal <= 0) return;
+
+    let gradeVal = null;
+    let lodeVal = false;
+    if (draft.grade === '30L') {
+      gradeVal = 30;
+      lodeVal = true;
+    } else if (draft.grade !== '' && draft.grade !== null) {
+      const parsedGrade = Number(draft.grade);
+      if (parsedGrade >= 18 && parsedGrade <= 30) {
+        gradeVal = parsedGrade;
+      }
+    }
+
+    const newSub = {
+      id: `sub_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+      name: cleanName,
+      cfu: cfuVal,
+      grade: gradeVal,
+      lode: lodeVal,
+    };
+
+    updateMedYears((yrs) => ({
+      ...yrs,
+      [yearNum]: yrs[yearNum].map((b) =>
+        b.id === blockId ? { ...b, subjects: [...b.subjects, newSub] } : b
+      ),
+    }));
+
+    setNewSubjectDrafts((prev) => ({
+      ...prev,
+      [blockId]: { name: '', cfu: '6', grade: '' },
+    }));
+  };
+
+  const handleUpdateMedSubject = (yearNum, blockId, subjectId, patch) => {
+    updateMedYears((yrs) => ({
+      ...yrs,
+      [yearNum]: yrs[yearNum].map((b) => {
+        if (b.id !== blockId) return b;
+        return {
+          ...b,
+          subjects: b.subjects.map((s) =>
+            s.id === subjectId ? { ...s, ...patch } : s
+          ),
+        };
+      }),
+    }));
+  };
+
+  const handleDeleteMedSubject = (yearNum, blockId, subjectId) => {
+    updateMedYears((yrs) => ({
+      ...yrs,
+      [yearNum]: yrs[yearNum].map((b) =>
+        b.id === blockId
+          ? { ...b, subjects: b.subjects.filter((s) => s.id !== subjectId) }
+          : b
+      ),
+    }));
+  };
+
+  const medAnalytics = useMemo(() => {
+    let totalWeightedSum = 0;
+    let totalGradedCfu = 0;
+    let totalAllCfu = 0;
+    let totalLodi = 0;
+
+    const perYear = {};
+
+    [1, 2, 3, 4, 5, 6].forEach((yr) => {
+      let yrWeightedSum = 0;
+      let yrGradedCfu = 0;
+      let yrAllCfu = 0;
+
+      (medYears[yr] || []).forEach((blk) => {
+        (blk.subjects || []).forEach((sub) => {
+          const cfu = Number(sub.cfu) || 0;
+          yrAllCfu += cfu;
+          totalAllCfu += cfu;
+
+          const grade = Number(sub.grade);
+          if (grade >= 18 && grade <= 30 && cfu > 0) {
+            yrWeightedSum += grade * cfu;
+            yrGradedCfu += cfu;
+            totalWeightedSum += grade * cfu;
+            totalGradedCfu += cfu;
+            if (sub.lode && grade === 30) totalLodi += 1;
+          }
+        });
+      });
+
+      perYear[yr] = {
+        blocksCount: (medYears[yr] || []).length,
+        gradedCfu: yrGradedCfu,
+        totalCfu: yrAllCfu,
+        weightedAvg: yrGradedCfu > 0 ? yrWeightedSum / yrGradedCfu : null,
+      };
+    });
+
+    const overallWeightedAvg =
+      totalGradedCfu > 0 ? totalWeightedSum / totalGradedCfu : null;
+    const graduationBase =
+      overallWeightedAvg !== null ? (overallWeightedAvg * 110) / 30 : null;
+
+    return {
+      overallWeightedAvg,
+      graduationBase,
+      totalGradedCfu,
+      totalAllCfu,
+      totalLodi,
+      perYear,
+    };
+  }, [medYears]);
 
   const [layout, setLayout] = useState(() => {
     try {
@@ -638,7 +918,12 @@ export default function App() {
       Array.isArray(payload.state.exams) &&
       payload.state.exams.length > 0
     ) {
-      setState(payload.state);
+      setState((prev) => ({
+        ...payload.state,
+        medYears: payload.state.medYears
+          ? normalizeMedYears(payload.state.medYears)
+          : normalizeMedYears(prev.medYears),
+      }));
     }
     if (payload.layout) {
       setLayout(sanitizeLayout(payload.layout));
@@ -1469,6 +1754,7 @@ export default function App() {
     const newExam = createDefaultExam(`Nuovo Esame ${count}`);
     setUndoStack((u) => [state, ...u.slice(0, 9)]);
     setState((prev) => ({
+      ...prev,
       exams: [...prev.exams, newExam],
       activeExamId: newExam.id,
     }));
@@ -1490,6 +1776,7 @@ export default function App() {
     };
     setUndoStack((u) => [state, ...u.slice(0, 9)]);
     setState((prev) => ({
+      ...prev,
       exams: [...prev.exams, copy],
       activeExamId: copy.id,
     }));
@@ -1502,6 +1789,7 @@ export default function App() {
     setState((prev) => {
       const remaining = prev.exams.filter((ex) => ex.id !== activeExam.id);
       return {
+        ...prev,
         exams: remaining,
         activeExamId: remaining[0].id,
       };
@@ -3978,7 +4266,11 @@ export default function App() {
         <div className="w-full px-4 sm:px-6 lg:px-8 py-3 flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
             <div className="bg-indigo-600 text-white p-2 rounded-xl shadow-xs shrink-0">
-              <BookOpen className="w-5 h-5" />
+              {activeTab === 'tracker' ? (
+                <BookOpen className="w-5 h-5" />
+              ) : (
+                <GraduationCap className="w-5 h-5" />
+              )}
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-1.5">
@@ -3999,71 +4291,125 @@ export default function App() {
                     isDark ? 'text-slate-400' : 'text-slate-500'
                   }`}
                 >
-                  Tracker Esami Universitari
+                  {activeTab === 'tracker'
+                    ? 'Tracker Esami Universitari'
+                    : 'Medicina e Chirurgia • Anni & Blocchi'}
                 </span>
               </div>
 
-              {isRenamingHeader ? (
-                <div className="flex items-center gap-1.5 mt-0.5">
-                  <input
-                    ref={headerRenameInputRef}
-                    type="text"
-                    value={activeExam.name}
-                    onChange={(e) =>
-                      updateActiveExam({ name: e.target.value })
-                    }
-                    onBlur={() => setIsRenamingHeader(false)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === 'Escape') {
-                        setIsRenamingHeader(false);
+              {activeTab === 'tracker' ? (
+                isRenamingHeader ? (
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <input
+                      ref={headerRenameInputRef}
+                      type="text"
+                      value={activeExam.name}
+                      onChange={(e) =>
+                        updateActiveExam({ name: e.target.value })
                       }
-                    }}
-                    className={`text-base sm:text-lg font-bold border-b-2 border-indigo-600 bg-transparent focus:outline-none px-0.5 ${
-                      isDark ? 'text-slate-50' : 'text-slate-900'
-                    }`}
-                  />
+                      onBlur={() => setIsRenamingHeader(false)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === 'Escape') {
+                          setIsRenamingHeader(false);
+                        }
+                      }}
+                      className={`text-base sm:text-lg font-bold border-b-2 border-indigo-600 bg-transparent focus:outline-none px-0.5 ${
+                        isDark ? 'text-slate-50' : 'text-slate-900'
+                      }`}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setIsRenamingHeader(false)}
+                      className={`p-1 rounded cursor-pointer ${
+                        isDark
+                          ? 'text-emerald-400 hover:bg-emerald-950/60'
+                          : 'text-emerald-600 hover:bg-emerald-50'
+                      }`}
+                      title="Conferma nome"
+                    >
+                      <Check className="w-4 h-4" />
+                    </button>
+                  </div>
+                ) : (
                   <button
                     type="button"
-                    onClick={() => setIsRenamingHeader(false)}
-                    className={`p-1 rounded cursor-pointer ${
-                      isDark
-                        ? 'text-emerald-400 hover:bg-emerald-950/60'
-                        : 'text-emerald-600 hover:bg-emerald-50'
-                    }`}
-                    title="Conferma nome"
+                    onClick={() => setIsRenamingHeader(true)}
+                    className="group flex items-center gap-1.5 text-left mt-0.5 cursor-pointer"
+                    title="Clicca per rinominare l'esame"
                   >
-                    <Check className="w-4 h-4" />
+                    <h1
+                      className={`text-base sm:text-lg font-bold truncate transition-colors ${
+                        isDark
+                          ? 'text-slate-50 group-hover:text-indigo-400'
+                          : 'text-slate-900 group-hover:text-indigo-600'
+                      }`}
+                    >
+                      {activeExam.name || 'Esame senza nome'}
+                    </h1>
+                    <Edit3
+                      className={`w-3.5 h-3.5 transition-colors shrink-0 ${
+                        isDark
+                          ? 'text-slate-500 group-hover:text-indigo-400'
+                          : 'text-slate-400 group-hover:text-indigo-600'
+                      }`}
+                    />
                   </button>
-                </div>
+                )
               ) : (
-                <button
-                  type="button"
-                  onClick={() => setIsRenamingHeader(true)}
-                  className="group flex items-center gap-1.5 text-left mt-0.5 cursor-pointer"
-                  title="Clicca per rinominare l'esame"
+                <h1
+                  className={`text-base sm:text-lg font-bold truncate mt-0.5 ${
+                    isDark ? 'text-slate-50' : 'text-slate-900'
+                  }`}
                 >
-                  <h1
-                    className={`text-base sm:text-lg font-bold truncate transition-colors ${
-                      isDark
-                        ? 'text-slate-50 group-hover:text-indigo-400'
-                        : 'text-slate-900 group-hover:text-indigo-600'
-                    }`}
-                  >
-                    {activeExam.name || 'Esame senza nome'}
-                  </h1>
-                  <Edit3
-                    className={`w-3.5 h-3.5 transition-colors shrink-0 ${
-                      isDark
-                        ? 'text-slate-500 group-hover:text-indigo-400'
-                        : 'text-slate-400 group-hover:text-indigo-600'
-                    }`}
-                  />
-                </button>
+                  Libretto &amp; Calcolatore Blocchi
+                </h1>
               )}
             </div>
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
+            {/* NAVIGAZIONE TRA LE DUE PAGINE */}
+            <div
+              className={`inline-flex rounded-xl p-1 border ${
+                isDark
+                  ? 'bg-slate-800/90 border-slate-700'
+                  : 'bg-slate-100 border-slate-200/80'
+              }`}
+            >
+              <button
+                type="button"
+                onClick={() => setActiveTab('tracker')}
+                className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition cursor-pointer ${
+                  activeTab === 'tracker'
+                    ? isDark
+                      ? 'bg-slate-900 text-indigo-400 shadow-xs'
+                      : 'bg-white text-indigo-600 shadow-xs'
+                    : isDark
+                    ? 'text-slate-400 hover:text-slate-200'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <BookOpen className="w-3.5 h-3.5" />
+                <span>Tracker Studio</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('libretto')}
+                className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition cursor-pointer ${
+                  activeTab === 'libretto'
+                    ? isDark
+                      ? 'bg-slate-900 text-indigo-400 shadow-xs'
+                      : 'bg-white text-indigo-600 shadow-xs'
+                    : isDark
+                    ? 'text-slate-400 hover:text-slate-200'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <GraduationCap className="w-3.5 h-3.5" />
+                <span>Libretto &amp; Medie</span>
+              </button>
+            </div>
+
             {undoStack.length > 0 && (
               <button
                 type="button"
@@ -4140,72 +4486,76 @@ export default function App() {
               </span>
             </button>
 
-            <button
-              type="button"
-              onClick={() => setIsReorderMode((v) => !v)}
-              className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold border transition cursor-pointer ${
-                isReorderMode
-                  ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs'
-                  : isCustomLayout
-                  ? indigoPillClass
-                  : isDark
-                  ? 'text-slate-300 bg-slate-800 hover:bg-slate-700 border-slate-700'
-                  : 'text-slate-700 bg-white hover:bg-slate-50 border-slate-200'
-              }`}
-              title="Sposta o riordina le sezioni della pagina"
-            >
-              <LayoutGrid className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">
-                {isReorderMode ? 'Fine ordine' : 'Ordina sezioni'}
-              </span>
-            </button>
+            {activeTab === 'tracker' && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => setIsReorderMode((v) => !v)}
+                  className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold border transition cursor-pointer ${
+                    isReorderMode
+                      ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs'
+                      : isCustomLayout
+                      ? indigoPillClass
+                      : isDark
+                      ? 'text-slate-300 bg-slate-800 hover:bg-slate-700 border-slate-700'
+                      : 'text-slate-700 bg-white hover:bg-slate-50 border-slate-200'
+                  }`}
+                  title="Sposta o riordina le sezioni della pagina"
+                >
+                  <LayoutGrid className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">
+                    {isReorderMode ? 'Fine ordine' : 'Ordina sezioni'}
+                  </span>
+                </button>
 
-            <select
-              aria-label="Seleziona esame"
-              value={activeExam.id}
-              onChange={(e) => {
-                setState((prev) => ({
-                  ...prev,
-                  activeExamId: e.target.value,
-                }));
-                setIsRenamingHeader(false);
-                setConfirmReset(false);
-              }}
-              className={`rounded-lg border text-xs sm:text-sm font-medium pl-3 pr-7 py-1.5 max-w-[190px] sm:max-w-[240px] truncate ${
-                isDark
-                  ? 'border-slate-700 bg-slate-800 text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500'
-                  : 'border-slate-300 bg-slate-50 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500'
-              }`}
-            >
-              {state.exams.map((ex) => (
-                <option key={ex.id} value={ex.id}>
-                  {ex.name || 'Senza nome'}
-                </option>
-              ))}
-            </select>
+                <select
+                  aria-label="Seleziona esame"
+                  value={activeExam.id}
+                  onChange={(e) => {
+                    setState((prev) => ({
+                      ...prev,
+                      activeExamId: e.target.value,
+                    }));
+                    setIsRenamingHeader(false);
+                    setConfirmReset(false);
+                  }}
+                  className={`rounded-lg border text-xs sm:text-sm font-medium pl-3 pr-7 py-1.5 max-w-[190px] sm:max-w-[240px] truncate ${
+                    isDark
+                      ? 'border-slate-700 bg-slate-800 text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500'
+                      : 'border-slate-300 bg-slate-50 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500'
+                  }`}
+                >
+                  {state.exams.map((ex) => (
+                    <option key={ex.id} value={ex.id}>
+                      {ex.name || 'Senza nome'}
+                    </option>
+                  ))}
+                </select>
 
-            <button
-              type="button"
-              onClick={handleCreateExam}
-              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-semibold shadow-xs transition cursor-pointer"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Nuovo</span>
-            </button>
+                <button
+                  type="button"
+                  onClick={handleCreateExam}
+                  className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-semibold shadow-xs transition cursor-pointer"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Nuovo</span>
+                </button>
 
-            <button
-              type="button"
-              onClick={handleDuplicateExam}
-              className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium border transition cursor-pointer ${
-                isDark
-                  ? 'text-slate-300 bg-slate-800 hover:bg-slate-700 border-slate-700'
-                  : 'text-slate-700 bg-white hover:bg-slate-50 border-slate-200'
-              }`}
-              title="Duplica questo esame"
-            >
-              <Copy className="w-3.5 h-3.5" />
-              <span className="hidden md:inline">Duplica</span>
-            </button>
+                <button
+                  type="button"
+                  onClick={handleDuplicateExam}
+                  className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium border transition cursor-pointer ${
+                    isDark
+                      ? 'text-slate-300 bg-slate-800 hover:bg-slate-700 border-slate-700'
+                      : 'text-slate-700 bg-white hover:bg-slate-50 border-slate-200'
+                  }`}
+                  title="Duplica questo esame"
+                >
+                  <Copy className="w-3.5 h-3.5" />
+                  <span className="hidden md:inline">Duplica</span>
+                </button>
+              </>
+            )}
           </div>
         </div>
       </header>
@@ -4331,9 +4681,9 @@ export default function App() {
                       isDark ? 'text-slate-300' : 'text-slate-600'
                     }`}
                   >
-                    Ogni modifica a pagine, esami, timer e ripassi viene salvata
-                    automaticamente sul cloud e caricata quando apri
-                    l&apos;app su iPad o Mac.
+                    Ogni modifica a pagine, esami, libretto, timer e ripassi
+                    viene salvata automaticamente sul cloud e caricata quando
+                    apri l&apos;app su iPad o Mac.
                   </p>
                 </div>
 
@@ -4590,365 +4940,1194 @@ export default function App() {
         </div>
       )}
 
-      {/* --- MAIN DASHBOARD FULL-WIDTH --- */}
-      <main className="w-full px-4 sm:px-6 lg:px-8 py-6 space-y-6">
-        {isReorderMode && (
-          <div
-            className={`rounded-2xl border p-4 flex flex-wrap items-center justify-between gap-3 ${
-              isDark
-                ? 'bg-indigo-950/60 border-indigo-800/80 text-indigo-100'
-                : 'bg-indigo-50 border-indigo-200 text-indigo-950'
-            }`}
-          >
-            <div className="flex items-center gap-2.5">
-              <LayoutGrid
-                className={`w-5 h-5 shrink-0 ${
-                  isDark ? 'text-indigo-400' : 'text-indigo-600'
-                }`}
-              />
-              <div>
-                <p className="text-sm font-bold">
-                  Personalizzazione ordine sezioni attiva
-                </p>
-                <p className="text-xs opacity-85">
-                  Usa le frecce su/giù, sposta tra colonna sinistra e destra
-                  oppure trascina la maniglia di ogni riquadro.
-                </p>
+      {/* =====================================================================
+          PAGINA 1: TRACKER STUDIO (BURN-DOWN, SPACED REPETITION, POMODORO)
+         ===================================================================== */}
+      {activeTab === 'tracker' && (
+        <main className="w-full px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+          {isReorderMode && (
+            <div
+              className={`rounded-2xl border p-4 flex flex-wrap items-center justify-between gap-3 ${
+                isDark
+                  ? 'bg-indigo-950/60 border-indigo-800/80 text-indigo-100'
+                  : 'bg-indigo-50 border-indigo-200 text-indigo-950'
+              }`}
+            >
+              <div className="flex items-center gap-2.5">
+                <LayoutGrid
+                  className={`w-5 h-5 shrink-0 ${
+                    isDark ? 'text-indigo-400' : 'text-indigo-600'
+                  }`}
+                />
+                <div>
+                  <p className="text-sm font-bold">
+                    Personalizzazione ordine sezioni attiva
+                  </p>
+                  <p className="text-xs opacity-85">
+                    Usa le frecce su/giù, sposta tra colonna sinistra e destra
+                    oppure trascina la maniglia di ogni riquadro.
+                  </p>
+                </div>
               </div>
-            </div>
-            <div className="flex items-center gap-2">
-              {isCustomLayout && (
+              <div className="flex items-center gap-2">
+                {isCustomLayout && (
+                  <button
+                    type="button"
+                    onClick={handleResetLayout}
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition cursor-pointer ${
+                      isDark
+                        ? 'bg-slate-900 text-slate-200 border-slate-700 hover:bg-slate-800'
+                        : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
+                    }`}
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" />
+                    Ripristina predefinito
+                  </button>
+                )}
                 <button
                   type="button"
-                  onClick={handleResetLayout}
-                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition cursor-pointer ${
-                    isDark
-                      ? 'bg-slate-900 text-slate-200 border-slate-700 hover:bg-slate-800'
-                      : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
+                  onClick={() => setIsReorderMode(false)}
+                  className="px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition cursor-pointer"
+                >
+                  Fatto
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* 1. BANNER DINAMICO STATO STUDIO */}
+          <section
+            className={`rounded-2xl border p-4 sm:p-5 transition-colors ${statusStyles.wrapper}`}
+          >
+            <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+              <div
+                className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 shadow-xs ${statusStyles.iconBg}`}
+              >
+                <StatusIcon className="w-6 h-6" />
+              </div>
+              <div className="space-y-1 flex-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span
+                    className={`text-[11px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full border ${statusStyles.badge}`}
+                  >
+                    {analytics.statusTitle}
+                  </span>
+                  {analytics.safeReviewDays > 0 && (
+                    <span className={`text-xs ${statusStyles.detailColor}`}>
+                      Fine prima lettura prevista entro il{' '}
+                      <strong>
+                        {formatShortDate(analytics.studyDeadline)}
+                      </strong>{' '}
+                      ({analytics.safeReviewDays} gg di ripasso finale)
+                    </span>
+                  )}
+                </div>
+                <h2
+                  className={`text-base sm:text-lg font-bold leading-snug ${statusStyles.headlineColor}`}
+                >
+                  {analytics.statusHeadline}
+                </h2>
+                <p
+                  className={`text-xs sm:text-sm leading-relaxed ${statusStyles.detailColor}`}
+                >
+                  {analytics.statusDetail}
+                </p>
+              </div>
+            </div>
+          </section>
+
+          {/* 2. RIGA 4 KPI CARDS */}
+          <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div
+              className={`rounded-2xl border p-4 shadow-sm flex flex-col justify-between ${cardSurfaceClass}`}
+            >
+              <div className="flex items-center justify-between">
+                <span
+                  className={`text-xs font-semibold uppercase tracking-wide ${
+                    isDark ? 'text-slate-400' : 'text-slate-500'
                   }`}
                 >
-                  <RotateCcw className="w-3.5 h-3.5" />
-                  Ripristina predefinito
-                </button>
-              )}
-              <button
-                type="button"
-                onClick={() => setIsReorderMode(false)}
-                className="px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition cursor-pointer"
-              >
-                Fatto
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* 1. BANNER DINAMICO STATO STUDIO */}
-        <section
-          className={`rounded-2xl border p-4 sm:p-5 transition-colors ${statusStyles.wrapper}`}
-        >
-          <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-            <div
-              className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 shadow-xs ${statusStyles.iconBg}`}
-            >
-              <StatusIcon className="w-6 h-6" />
-            </div>
-            <div className="space-y-1 flex-1">
-              <div className="flex flex-wrap items-center gap-2">
-                <span
-                  className={`text-[11px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full border ${statusStyles.badge}`}
-                >
-                  {analytics.statusTitle}
+                  Completamento
                 </span>
-                {analytics.safeReviewDays > 0 && (
-                  <span className={`text-xs ${statusStyles.detailColor}`}>
-                    Fine prima lettura prevista entro il{' '}
-                    <strong>{formatShortDate(analytics.studyDeadline)}</strong>{' '}
-                    ({analytics.safeReviewDays} gg di ripasso finale)
+                <div className={`p-2 rounded-lg ${indigoPillClass}`}>
+                  <Layers className="w-4 h-4" />
+                </div>
+              </div>
+              <div className="my-2">
+                <div
+                  className={`text-2xl sm:text-3xl font-extrabold ${
+                    isDark ? 'text-slate-50' : 'text-slate-900'
+                  }`}
+                >
+                  {analytics.completionPct.toFixed(1)}%
+                </div>
+                <p
+                  className={`text-xs mt-0.5 ${
+                    isDark ? 'text-slate-400' : 'text-slate-500'
+                  }`}
+                >
+                  <strong
+                    className={isDark ? 'text-slate-200' : 'text-slate-700'}
+                  >
+                    {analytics.completedPages}
+                  </strong>{' '}
+                  / {analytics.totalPages} pagine
+                </p>
+              </div>
+              <div
+                className={`w-full h-2 rounded-full overflow-hidden ${
+                  isDark ? 'bg-slate-800' : 'bg-slate-100'
+                }`}
+              >
+                <div
+                  className="h-full bg-indigo-600 rounded-full transition-all duration-500"
+                  style={{ width: `${analytics.completionPct}%` }}
+                />
+              </div>
+            </div>
+
+            <div
+              className={`rounded-2xl border p-4 shadow-sm flex flex-col justify-between ${cardSurfaceClass}`}
+            >
+              <div className="flex items-center justify-between">
+                <span
+                  className={`text-xs font-semibold uppercase tracking-wide ${
+                    isDark ? 'text-slate-400' : 'text-slate-500'
+                  }`}
+                >
+                  Pagine Rimanenti
+                </span>
+                <div
+                  className={`p-2 rounded-lg ${
+                    isDark
+                      ? 'bg-sky-950/80 text-sky-400 border border-sky-800/70'
+                      : 'bg-sky-50 text-sky-600 border border-sky-200'
+                  }`}
+                >
+                  <BookOpen className="w-4 h-4" />
+                </div>
+              </div>
+              <div className="my-2">
+                <div
+                  className={`text-2xl sm:text-3xl font-extrabold ${
+                    isDark ? 'text-slate-50' : 'text-slate-900'
+                  }`}
+                >
+                  {analytics.remainingPages}
+                </div>
+                <p
+                  className={`text-xs mt-0.5 ${
+                    isDark ? 'text-slate-400' : 'text-slate-500'
+                  }`}
+                >
+                  su {analytics.totalPages} pagine totali
+                </p>
+              </div>
+              <div
+                className={`text-xs font-medium ${
+                  isDark ? 'text-slate-400' : 'text-slate-500'
+                }`}
+              >
+                Ritmo iniziale:{' '}
+                <span
+                  className={`font-semibold ${
+                    isDark ? 'text-slate-200' : 'text-slate-700'
+                  }`}
+                >
+                  {analytics.initialMinPace.toFixed(1)} pag/gg
+                </span>
+              </div>
+            </div>
+
+            <div
+              className={`rounded-2xl border p-4 shadow-sm flex flex-col justify-between ${cardSurfaceClass}`}
+            >
+              <div className="flex items-center justify-between">
+                <span
+                  className={`text-xs font-semibold uppercase tracking-wide ${
+                    isDark ? 'text-slate-400' : 'text-slate-500'
+                  }`}
+                >
+                  Ritmo Necessario
+                </span>
+                <div className={`p-2 rounded-lg ${indigoPillClass}`}>
+                  <Target className="w-4 h-4" />
+                </div>
+              </div>
+              <div className="my-2">
+                <div
+                  className={`text-2xl sm:text-3xl font-extrabold ${
+                    isDark ? 'text-slate-50' : 'text-slate-900'
+                  }`}
+                >
+                  {analytics.newRequiredPace.toFixed(1)}
+                  <span
+                    className={`text-sm font-semibold ml-1 ${
+                      isDark ? 'text-slate-400' : 'text-slate-500'
+                    }`}
+                  >
+                    pag/gg
                   </span>
+                </div>
+                <p
+                  className={`text-xs mt-0.5 ${
+                    isDark ? 'text-slate-400' : 'text-slate-500'
+                  }`}
+                >
+                  Media reale attuale:{' '}
+                  <strong
+                    className={isDark ? 'text-slate-200' : 'text-slate-700'}
+                  >
+                    {analytics.realDailyAvg.toFixed(1)}
+                  </strong>{' '}
+                  pag/gg
+                </p>
+              </div>
+              <div
+                className={`text-xs font-medium ${
+                  isDark ? 'text-slate-400' : 'text-slate-500'
+                }`}
+              >
+                Nei prossimi{' '}
+                <span
+                  className={`font-semibold ${
+                    isDark ? 'text-slate-200' : 'text-slate-700'
+                  }`}
+                >
+                  {analytics.remainingUsefulDays} giorni utili
+                </span>
+              </div>
+            </div>
+
+            <div
+              className={`rounded-2xl border p-4 shadow-sm flex flex-col justify-between ${cardSurfaceClass}`}
+            >
+              <div className="flex items-center justify-between">
+                <span
+                  className={`text-xs font-semibold uppercase tracking-wide ${
+                    isDark ? 'text-slate-400' : 'text-slate-500'
+                  }`}
+                >
+                  Countdown Appello
+                </span>
+                <div
+                  className={`p-2 rounded-lg ${
+                    isDark
+                      ? 'bg-amber-950/80 text-amber-400 border border-amber-800/70'
+                      : 'bg-amber-50 text-amber-600 border border-amber-200'
+                  }`}
+                >
+                  <Calendar className="w-4 h-4" />
+                </div>
+              </div>
+              <div className="my-2">
+                <div
+                  className={`text-2xl sm:text-3xl font-extrabold ${
+                    isDark ? 'text-slate-50' : 'text-slate-900'
+                  }`}
+                >
+                  -{analytics.daysToExam}
+                  <span
+                    className={`text-sm font-semibold ml-1 ${
+                      isDark ? 'text-slate-400' : 'text-slate-500'
+                    }`}
+                  >
+                    giorni
+                  </span>
+                </div>
+                <p
+                  className={`text-xs mt-0.5 ${
+                    isDark ? 'text-slate-400' : 'text-slate-500'
+                  }`}
+                >
+                  Appello il{' '}
+                  <strong
+                    className={isDark ? 'text-slate-200' : 'text-slate-700'}
+                  >
+                    {formatShortDate(activeExam.examDate)}
+                  </strong>
+                </p>
+              </div>
+              <div
+                className={`text-xs font-medium flex items-center gap-1 ${
+                  isDark ? 'text-slate-400' : 'text-slate-500'
+                }`}
+              >
+                <Clock className="w-3.5 h-3.5" />
+                <span>
+                  {analytics.remainingUsefulDays} giorni utili di studio
+                </span>
+              </div>
+            </div>
+          </section>
+
+          {/* 3. GRIGLIA PRINCIPALE RIORDINABILE (2 COLONNE) */}
+          <div
+            className={`grid grid-cols-1 ${
+              layout.left.length > 0 && layout.right.length > 0
+                ? 'lg:grid-cols-12'
+                : ''
+            } gap-6 items-start`}
+          >
+            {layout.left.length > 0 && (
+              <div
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  handleDropSection('left', layout.left.length);
+                }}
+                className={`${
+                  layout.right.length > 0 ? 'lg:col-span-8' : ''
+                } space-y-6`}
+              >
+                {layout.left.map((secId, idx) =>
+                  renderSection(secId, 'left', idx, layout.left.length)
                 )}
               </div>
-              <h2
-                className={`text-base sm:text-lg font-bold leading-snug ${statusStyles.headlineColor}`}
-              >
-                {analytics.statusHeadline}
-              </h2>
-              <p
-                className={`text-xs sm:text-sm leading-relaxed ${statusStyles.detailColor}`}
-              >
-                {analytics.statusDetail}
-              </p>
-            </div>
-          </div>
-        </section>
+            )}
 
-        {/* 2. RIGA 4 KPI CARDS */}
-        <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div
-            className={`rounded-2xl border p-4 shadow-sm flex flex-col justify-between ${cardSurfaceClass}`}
-          >
-            <div className="flex items-center justify-between">
-              <span
-                className={`text-xs font-semibold uppercase tracking-wide ${
-                  isDark ? 'text-slate-400' : 'text-slate-500'
-                }`}
-              >
-                Completamento
-              </span>
-              <div className={`p-2 rounded-lg ${indigoPillClass}`}>
-                <Layers className="w-4 h-4" />
-              </div>
-            </div>
-            <div className="my-2">
+            {layout.right.length > 0 && (
               <div
-                className={`text-2xl sm:text-3xl font-extrabold ${
-                  isDark ? 'text-slate-50' : 'text-slate-900'
-                }`}
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  handleDropSection('right', layout.right.length);
+                }}
+                className={`${
+                  layout.left.length > 0 ? 'lg:col-span-4' : ''
+                } space-y-6`}
               >
-                {analytics.completionPct.toFixed(1)}%
+                {layout.right.map((secId, idx) =>
+                  renderSection(secId, 'right', idx, layout.right.length)
+                )}
               </div>
-              <p
-                className={`text-xs mt-0.5 ${
-                  isDark ? 'text-slate-400' : 'text-slate-500'
-                }`}
-              >
-                <strong
-                  className={isDark ? 'text-slate-200' : 'text-slate-700'}
-                >
-                  {analytics.completedPages}
-                </strong>{' '}
-                / {analytics.totalPages} pagine
-              </p>
-            </div>
+            )}
+          </div>
+        </main>
+      )}
+
+      {/* =====================================================================
+          PAGINA 2: LIBRETTO MEDICINA (1°–6° ANNO, BLOCCHI E MEDIA PONDERATA)
+         ===================================================================== */}
+      {activeTab === 'libretto' && (
+        <main className="w-full px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+          {/* 1. RIGA 4 KPI CARDS GENERALI */}
+          <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div
-              className={`w-full h-2 rounded-full overflow-hidden ${
-                isDark ? 'bg-slate-800' : 'bg-slate-100'
-              }`}
+              className={`rounded-2xl border p-4 shadow-sm flex flex-col justify-between ${cardSurfaceClass}`}
             >
-              <div
-                className="h-full bg-indigo-600 rounded-full transition-all duration-500"
-                style={{ width: `${analytics.completionPct}%` }}
-              />
-            </div>
-          </div>
-
-          <div
-            className={`rounded-2xl border p-4 shadow-sm flex flex-col justify-between ${cardSurfaceClass}`}
-          >
-            <div className="flex items-center justify-between">
-              <span
-                className={`text-xs font-semibold uppercase tracking-wide ${
-                  isDark ? 'text-slate-400' : 'text-slate-500'
-                }`}
-              >
-                Pagine Rimanenti
-              </span>
-              <div
-                className={`p-2 rounded-lg ${
-                  isDark
-                    ? 'bg-sky-950/80 text-sky-400 border border-sky-800/70'
-                    : 'bg-sky-50 text-sky-600 border border-sky-200'
-                }`}
-              >
-                <BookOpen className="w-4 h-4" />
-              </div>
-            </div>
-            <div className="my-2">
-              <div
-                className={`text-2xl sm:text-3xl font-extrabold ${
-                  isDark ? 'text-slate-50' : 'text-slate-900'
-                }`}
-              >
-                {analytics.remainingPages}
-              </div>
-              <p
-                className={`text-xs mt-0.5 ${
-                  isDark ? 'text-slate-400' : 'text-slate-500'
-                }`}
-              >
-                su {analytics.totalPages} pagine totali
-              </p>
-            </div>
-            <div
-              className={`text-xs font-medium ${
-                isDark ? 'text-slate-400' : 'text-slate-500'
-              }`}
-            >
-              Ritmo iniziale:{' '}
-              <span
-                className={`font-semibold ${
-                  isDark ? 'text-slate-200' : 'text-slate-700'
-                }`}
-              >
-                {analytics.initialMinPace.toFixed(1)} pag/gg
-              </span>
-            </div>
-          </div>
-
-          <div
-            className={`rounded-2xl border p-4 shadow-sm flex flex-col justify-between ${cardSurfaceClass}`}
-          >
-            <div className="flex items-center justify-between">
-              <span
-                className={`text-xs font-semibold uppercase tracking-wide ${
-                  isDark ? 'text-slate-400' : 'text-slate-500'
-                }`}
-              >
-                Ritmo Necessario
-              </span>
-              <div className={`p-2 rounded-lg ${indigoPillClass}`}>
-                <Target className="w-4 h-4" />
-              </div>
-            </div>
-            <div className="my-2">
-              <div
-                className={`text-2xl sm:text-3xl font-extrabold ${
-                  isDark ? 'text-slate-50' : 'text-slate-900'
-                }`}
-              >
-                {analytics.newRequiredPace.toFixed(1)}
+              <div className="flex items-center justify-between">
                 <span
-                  className={`text-sm font-semibold ml-1 ${
+                  className={`text-xs font-semibold uppercase tracking-wide ${
                     isDark ? 'text-slate-400' : 'text-slate-500'
                   }`}
                 >
-                  pag/gg
+                  Media Ponderata Totale
                 </span>
+                <div className={`p-2 rounded-lg ${indigoPillClass}`}>
+                  <Calculator className="w-4 h-4" />
+                </div>
               </div>
-              <p
-                className={`text-xs mt-0.5 ${
-                  isDark ? 'text-slate-400' : 'text-slate-500'
-                }`}
-              >
-                Media reale attuale:{' '}
-                <strong
-                  className={isDark ? 'text-slate-200' : 'text-slate-700'}
+              <div className="my-2">
+                <div
+                  className={`text-2xl sm:text-3xl font-extrabold ${
+                    isDark ? 'text-slate-50' : 'text-slate-900'
+                  }`}
                 >
-                  {analytics.realDailyAvg.toFixed(1)}
-                </strong>{' '}
-                pag/gg
-              </p>
-            </div>
-            <div
-              className={`text-xs font-medium ${
-                isDark ? 'text-slate-400' : 'text-slate-500'
-              }`}
-            >
-              Nei prossimi{' '}
-              <span
-                className={`font-semibold ${
-                  isDark ? 'text-slate-200' : 'text-slate-700'
-                }`}
-              >
-                {analytics.remainingUsefulDays} giorni utili
-              </span>
-            </div>
-          </div>
-
-          <div
-            className={`rounded-2xl border p-4 shadow-sm flex flex-col justify-between ${cardSurfaceClass}`}
-          >
-            <div className="flex items-center justify-between">
-              <span
-                className={`text-xs font-semibold uppercase tracking-wide ${
-                  isDark ? 'text-slate-400' : 'text-slate-500'
-                }`}
-              >
-                Countdown Appello
-              </span>
-              <div
-                className={`p-2 rounded-lg ${
-                  isDark
-                    ? 'bg-amber-950/80 text-amber-400 border border-amber-800/70'
-                    : 'bg-amber-50 text-amber-600 border border-amber-200'
-                }`}
-              >
-                <Calendar className="w-4 h-4" />
-              </div>
-            </div>
-            <div className="my-2">
-              <div
-                className={`text-2xl sm:text-3xl font-extrabold ${
-                  isDark ? 'text-slate-50' : 'text-slate-900'
-                }`}
-              >
-                -{analytics.daysToExam}
-                <span
-                  className={`text-sm font-semibold ml-1 ${
+                  {medAnalytics.overallWeightedAvg !== null
+                    ? medAnalytics.overallWeightedAvg.toFixed(2)
+                    : '—'}
+                  <span
+                    className={`text-sm font-semibold ml-1 ${
+                      isDark ? 'text-slate-400' : 'text-slate-500'
+                    }`}
+                  >
+                    / 30
+                  </span>
+                </div>
+                <p
+                  className={`text-xs mt-0.5 ${
                     isDark ? 'text-slate-400' : 'text-slate-500'
                   }`}
                 >
-                  giorni
-                </span>
+                  Su{' '}
+                  <strong
+                    className={isDark ? 'text-slate-200' : 'text-slate-700'}
+                  >
+                    {medAnalytics.totalGradedCfu}
+                  </strong>{' '}
+                  CFU valutati
+                </p>
               </div>
-              <p
-                className={`text-xs mt-0.5 ${
+              <div
+                className={`text-xs font-medium ${
                   isDark ? 'text-slate-400' : 'text-slate-500'
                 }`}
               >
-                Appello il{' '}
-                <strong
-                  className={isDark ? 'text-slate-200' : 'text-slate-700'}
+                Lodi conseguite:{' '}
+                <span
+                  className={`font-semibold ${
+                    isDark ? 'text-indigo-400' : 'text-indigo-600'
+                  }`}
                 >
-                  {formatShortDate(activeExam.examDate)}
-                </strong>
-              </p>
+                  {medAnalytics.totalLodi}
+                </span>
+              </div>
             </div>
+
             <div
-              className={`text-xs font-medium flex items-center gap-1 ${
-                isDark ? 'text-slate-400' : 'text-slate-500'
+              className={`rounded-2xl border p-4 shadow-sm flex flex-col justify-between ${cardSurfaceClass}`}
+            >
+              <div className="flex items-center justify-between">
+                <span
+                  className={`text-xs font-semibold uppercase tracking-wide ${
+                    isDark ? 'text-slate-400' : 'text-slate-500'
+                  }`}
+                >
+                  Base Voto di Laurea
+                </span>
+                <div
+                  className={`p-2 rounded-lg ${
+                    isDark
+                      ? 'bg-emerald-950/80 text-emerald-400 border border-emerald-800/70'
+                      : 'bg-emerald-50 text-emerald-600 border border-emerald-200'
+                  }`}
+                >
+                  <Award className="w-4 h-4" />
+                </div>
+              </div>
+              <div className="my-2">
+                <div
+                  className={`text-2xl sm:text-3xl font-extrabold ${
+                    isDark ? 'text-slate-50' : 'text-slate-900'
+                  }`}
+                >
+                  {medAnalytics.graduationBase !== null
+                    ? medAnalytics.graduationBase.toFixed(2)
+                    : '—'}
+                  <span
+                    className={`text-sm font-semibold ml-1 ${
+                      isDark ? 'text-slate-400' : 'text-slate-500'
+                    }`}
+                  >
+                    / 110
+                  </span>
+                </div>
+                <p
+                  className={`text-xs mt-0.5 ${
+                    isDark ? 'text-slate-400' : 'text-slate-500'
+                  }`}
+                >
+                  Calcolo: (Media × 110) / 30
+                </p>
+              </div>
+              <div
+                className={`text-xs font-medium ${
+                  isDark ? 'text-slate-400' : 'text-slate-500'
+                }`}
+              >
+                Esclusi punti tesi e bonus
+              </div>
+            </div>
+
+            <div
+              className={`rounded-2xl border p-4 shadow-sm flex flex-col justify-between ${cardSurfaceClass}`}
+            >
+              <div className="flex items-center justify-between">
+                <span
+                  className={`text-xs font-semibold uppercase tracking-wide ${
+                    isDark ? 'text-slate-400' : 'text-slate-500'
+                  }`}
+                >
+                  Avanzamento CFU
+                </span>
+                <div
+                  className={`p-2 rounded-lg ${
+                    isDark
+                      ? 'bg-sky-950/80 text-sky-400 border border-sky-800/70'
+                      : 'bg-sky-50 text-sky-600 border border-sky-200'
+                  }`}
+                >
+                  <Layers className="w-4 h-4" />
+                </div>
+              </div>
+              <div className="my-2">
+                <div
+                  className={`text-2xl sm:text-3xl font-extrabold ${
+                    isDark ? 'text-slate-50' : 'text-slate-900'
+                  }`}
+                >
+                  {medAnalytics.totalGradedCfu}
+                  <span
+                    className={`text-sm font-semibold ml-1 ${
+                      isDark ? 'text-slate-400' : 'text-slate-500'
+                    }`}
+                  >
+                    / 360 CFU
+                  </span>
+                </div>
+                <p
+                  className={`text-xs mt-0.5 ${
+                    isDark ? 'text-slate-400' : 'text-slate-500'
+                  }`}
+                >
+                  {((medAnalytics.totalGradedCfu / 360) * 100).toFixed(1)}% del
+                  corso di laurea
+                </p>
+              </div>
+              <div
+                className={`w-full h-2 rounded-full overflow-hidden ${
+                  isDark ? 'bg-slate-800' : 'bg-slate-100'
+                }`}
+              >
+                <div
+                  className="h-full bg-indigo-600 rounded-full transition-all duration-500"
+                  style={{
+                    width: `${Math.min(
+                      100,
+                      (medAnalytics.totalGradedCfu / 360) * 100
+                    )}%`,
+                  }}
+                />
+              </div>
+            </div>
+
+            <div
+              className={`rounded-2xl border p-4 shadow-sm flex flex-col justify-between ${cardSurfaceClass}`}
+            >
+              <div className="flex items-center justify-between">
+                <span
+                  className={`text-xs font-semibold uppercase tracking-wide ${
+                    isDark ? 'text-slate-400' : 'text-slate-500'
+                  }`}
+                >
+                  Media {selectedMedYear}° Anno
+                </span>
+                <div
+                  className={`p-2 rounded-lg ${
+                    isDark
+                      ? 'bg-amber-950/80 text-amber-400 border border-amber-800/70'
+                      : 'bg-amber-50 text-amber-600 border border-amber-200'
+                  }`}
+                >
+                  <GraduationCap className="w-4 h-4" />
+                </div>
+              </div>
+              <div className="my-2">
+                <div
+                  className={`text-2xl sm:text-3xl font-extrabold ${
+                    isDark ? 'text-slate-50' : 'text-slate-900'
+                  }`}
+                >
+                  {medAnalytics.perYear[selectedMedYear]?.weightedAvg !== null
+                    ? medAnalytics.perYear[
+                        selectedMedYear
+                      ].weightedAvg.toFixed(2)
+                    : '—'}
+                  <span
+                    className={`text-sm font-semibold ml-1 ${
+                      isDark ? 'text-slate-400' : 'text-slate-500'
+                    }`}
+                  >
+                    / 30
+                  </span>
+                </div>
+                <p
+                  className={`text-xs mt-0.5 ${
+                    isDark ? 'text-slate-400' : 'text-slate-500'
+                  }`}
+                >
+                  <strong
+                    className={isDark ? 'text-slate-200' : 'text-slate-700'}
+                  >
+                    {medAnalytics.perYear[selectedMedYear]?.gradedCfu || 0}
+                  </strong>{' '}
+                  / {medAnalytics.perYear[selectedMedYear]?.totalCfu || 0} CFU
+                  inseriti nell&apos;anno
+                </p>
+              </div>
+              <div
+                className={`text-xs font-medium ${
+                  isDark ? 'text-slate-400' : 'text-slate-500'
+                }`}
+              >
+                {medAnalytics.perYear[selectedMedYear]?.blocksCount || 0}{' '}
+                blocchi configurati
+              </div>
+            </div>
+          </section>
+
+          {/* 2. SELETTORE ANNI DI MEDICINA (1° - 6° ANNO) */}
+          <section
+            className={`rounded-2xl border p-4 sm:p-5 shadow-sm space-y-4 ${cardSurfaceClass}`}
+          >
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h2
+                  className={`text-base sm:text-lg font-bold ${
+                    isDark ? 'text-slate-100' : 'text-slate-900'
+                  }`}
+                >
+                  Seleziona Anno di Corso
+                </h2>
+                <p
+                  className={`text-xs ${
+                    isDark ? 'text-slate-400' : 'text-slate-500'
+                  }`}
+                >
+                  Organizza gli esami integrati in blocchi e calcola la media
+                  ponderata dei singoli moduli
+                </p>
+              </div>
+
+              <form
+                onSubmit={handleAddMedBlock}
+                className="flex flex-wrap items-center gap-2 w-full sm:w-auto"
+              >
+                <input
+                  type="text"
+                  placeholder={`Nome nuovo blocco (${selectedMedYear}° anno)...`}
+                  value={newBlockName}
+                  onChange={(e) => setNewBlockName(e.target.value)}
+                  required
+                  className={`rounded-xl border px-3 py-2 text-xs sm:text-sm flex-1 sm:w-64 ${inputMutedSurfaceClass}`}
+                />
+                <button
+                  type="submit"
+                  className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-semibold shadow-xs transition cursor-pointer shrink-0"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Aggiungi Blocco</span>
+                </button>
+              </form>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
+              {[1, 2, 3, 4, 5, 6].map((yr) => {
+                const isSelected = selectedMedYear === yr;
+                const yrStat = medAnalytics.perYear[yr];
+                return (
+                  <button
+                    key={yr}
+                    type="button"
+                    onClick={() => {
+                      setSelectedMedYear(yr);
+                      setEditingBlockId(null);
+                    }}
+                    className={`rounded-xl border p-3 text-left transition cursor-pointer flex flex-col justify-between ${
+                      isSelected
+                        ? isDark
+                          ? 'bg-indigo-950/75 border-indigo-600 text-indigo-100 shadow-xs'
+                          : 'bg-indigo-50 border-indigo-500 text-indigo-950 shadow-xs'
+                        : isDark
+                        ? 'bg-slate-800/55 border-slate-700/80 text-slate-300 hover:bg-slate-800'
+                        : 'bg-slate-50/80 border-slate-200 text-slate-700 hover:bg-white'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between gap-1">
+                      <span className="text-sm font-extrabold">
+                        {yr}° Anno
+                      </span>
+                      <span
+                        className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                          isSelected
+                            ? 'bg-indigo-600 text-white'
+                            : isDark
+                            ? 'bg-slate-700 text-slate-300'
+                            : 'bg-slate-200/80 text-slate-600'
+                        }`}
+                      >
+                        {yrStat.blocksCount}{' '}
+                        {yrStat.blocksCount === 1 ? 'blocco' : 'blocchi'}
+                      </span>
+                    </div>
+                    <div className="mt-2 flex items-center justify-between text-[11px]">
+                      <span
+                        className={
+                          isSelected
+                            ? isDark
+                              ? 'text-indigo-300 font-semibold'
+                              : 'text-indigo-700 font-semibold'
+                            : isDark
+                            ? 'text-slate-400'
+                            : 'text-slate-500'
+                        }
+                      >
+                        {yrStat.weightedAvg !== null
+                          ? `Media: ${yrStat.weightedAvg.toFixed(2)}`
+                          : 'Nessun voto'}
+                      </span>
+                      <span
+                        className={
+                          isDark ? 'text-slate-400' : 'text-slate-500'
+                        }
+                      >
+                        {yrStat.gradedCfu} CFU
+                      </span>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+
+          {/* 3. ELENCO BLOCCHI DELL'ANNO SELEZIONATO */}
+          {(medYears[selectedMedYear] || []).length === 0 ? (
+            <section
+              className={`rounded-2xl border border-dashed p-10 text-center space-y-2 ${
+                isDark
+                  ? 'bg-slate-900/50 border-slate-800 text-slate-400'
+                  : 'bg-white border-slate-300 text-slate-500'
               }`}
             >
-              <Clock className="w-3.5 h-3.5" />
-              <span>
-                {analytics.remainingUsefulDays} giorni utili di studio
-              </span>
-            </div>
-          </div>
-        </section>
+              <GraduationCap className="w-8 h-8 mx-auto opacity-50" />
+              <p className="text-sm font-bold">
+                Nessun blocco inserito per il {selectedMedYear}° Anno
+              </p>
+              <p className="text-xs">
+                Usa il campo &ldquo;Aggiungi Blocco&rdquo; qui sopra per creare
+                un esame integrato (es. Anatomia Umana, Patologia Integrata) e
+                inserire le relative materie con CFU e voti.
+              </p>
+            </section>
+          ) : (
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 items-start">
+              {(medYears[selectedMedYear] || []).map((block) => {
+                // Calcolo media ponderata del singolo blocco
+                let blkWeightedSum = 0;
+                let blkGradedCfu = 0;
+                let blkTotalCfu = 0;
 
-        {/* 3. GRIGLIA PRINCIPALE RIORDINABILE (2 COLONNE) */}
-        <div
-          className={`grid grid-cols-1 ${
-            layout.left.length > 0 && layout.right.length > 0
-              ? 'lg:grid-cols-12'
-              : ''
-          } gap-6 items-start`}
-        >
-          {layout.left.length > 0 && (
-            <div
-              onDragOver={(e) => e.preventDefault()}
-              onDrop={(e) => {
-                e.preventDefault();
-                handleDropSection('left', layout.left.length);
-              }}
-              className={`${
-                layout.right.length > 0 ? 'lg:col-span-8' : ''
-              } space-y-6`}
-            >
-              {layout.left.map((secId, idx) =>
-                renderSection(secId, 'left', idx, layout.left.length)
-              )}
+                (block.subjects || []).forEach((s) => {
+                  const c = Number(s.cfu) || 0;
+                  blkTotalCfu += c;
+                  const g = Number(s.grade);
+                  if (g >= 18 && g <= 30 && c > 0) {
+                    blkWeightedSum += g * c;
+                    blkGradedCfu += c;
+                  }
+                });
+
+                const blkAvg =
+                  blkGradedCfu > 0 ? blkWeightedSum / blkGradedCfu : null;
+                const blkRounded = blkAvg !== null ? Math.round(blkAvg) : null;
+
+                const draft = newSubjectDrafts[block.id] || {
+                  name: '',
+                  cfu: '6',
+                  grade: '',
+                };
+
+                return (
+                  <section
+                    key={block.id}
+                    className={`rounded-2xl border p-4 sm:p-6 shadow-sm space-y-4 ${cardSurfaceClass}`}
+                  >
+                    {/* Header del Blocco + Risultato Media Ponderata */}
+                    <div
+                      className={`flex flex-wrap items-start justify-between gap-3 pb-3.5 border-b ${
+                        isDark ? 'border-slate-800' : 'border-slate-100'
+                      }`}
+                    >
+                      <div className="min-w-0 flex-1">
+                        {editingBlockId === block.id ? (
+                          <div className="flex items-center gap-1.5">
+                            <input
+                              type="text"
+                              value={editingBlockTitle}
+                              onChange={(e) =>
+                                setEditingBlockTitle(e.target.value)
+                              }
+                              onBlur={() =>
+                                handleRenameMedBlock(selectedMedYear, block.id)
+                              }
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  handleRenameMedBlock(
+                                    selectedMedYear,
+                                    block.id
+                                  );
+                                }
+                                if (e.key === 'Escape') {
+                                  setEditingBlockId(null);
+                                }
+                              }}
+                              autoFocus
+                              className={`text-base font-bold border-b-2 border-indigo-600 bg-transparent focus:outline-none ${
+                                isDark ? 'text-slate-50' : 'text-slate-900'
+                              }`}
+                            />
+                            <button
+                              type="button"
+                              onClick={() =>
+                                handleRenameMedBlock(selectedMedYear, block.id)
+                              }
+                              className="p-1 text-emerald-500 cursor-pointer"
+                            >
+                              <Check className="w-4 h-4" />
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setEditingBlockId(block.id);
+                                setEditingBlockTitle(block.name);
+                              }}
+                              className="group flex items-center gap-1.5 text-left cursor-pointer"
+                              title="Clicca per rinominare il blocco"
+                            >
+                              <h3
+                                className={`text-base sm:text-lg font-bold truncate ${
+                                  isDark
+                                    ? 'text-slate-100 group-hover:text-indigo-400'
+                                    : 'text-slate-900 group-hover:text-indigo-600'
+                                }`}
+                              >
+                                {block.name}
+                              </h3>
+                              <Edit3 className="w-3.5 h-3.5 opacity-40 group-hover:opacity-100 shrink-0" />
+                            </button>
+                          </div>
+                        )}
+
+                        <p
+                          className={`text-xs mt-0.5 ${
+                            isDark ? 'text-slate-400' : 'text-slate-500'
+                          }`}
+                        >
+                          {(block.subjects || []).length}{' '}
+                          {(block.subjects || []).length === 1
+                            ? 'materia'
+                            : 'materie'}{' '}
+                          · {blkGradedCfu}/{blkTotalCfu} CFU valutati
+                        </p>
+                      </div>
+
+                      {/* Badge Calcolatore Media Ponderata Blocco */}
+                      <div className="flex items-center gap-2 shrink-0">
+                        <div
+                          className={`rounded-xl px-3 py-1.5 border text-right ${
+                            blkAvg !== null
+                              ? isDark
+                                ? 'bg-indigo-950/75 border-indigo-700/80 text-indigo-100'
+                                : 'bg-indigo-50 border-indigo-200 text-indigo-950'
+                              : isDark
+                              ? 'bg-slate-800 border-slate-700 text-slate-400'
+                              : 'bg-slate-50 border-slate-200 text-slate-500'
+                          }`}
+                        >
+                          <div className="text-[10px] font-bold uppercase tracking-wider opacity-80">
+                            Media Ponderata Blocco
+                          </div>
+                          {blkAvg !== null ? (
+                            <div className="flex items-baseline justify-end gap-1.5">
+                              <span className="text-base sm:text-lg font-black tabular-nums">
+                                {blkAvg.toFixed(2)}
+                              </span>
+                              <span
+                                className={`text-xs font-bold px-1.5 py-0.2 rounded ${
+                                  isDark
+                                    ? 'bg-indigo-600 text-white'
+                                    : 'bg-indigo-600 text-white'
+                                }`}
+                                title="Voto finale arrotondato del blocco"
+                              >
+                                → {blkRounded}/30
+                              </span>
+                            </div>
+                          ) : (
+                            <div className="text-xs font-semibold">
+                              Inserisci almeno un voto
+                            </div>
+                          )}
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() =>
+                            handleDeleteMedBlock(selectedMedYear, block.id)
+                          }
+                          className={`p-2 rounded-xl border transition cursor-pointer ${
+                            isDark
+                              ? 'border-slate-800 text-slate-500 hover:text-rose-400 hover:bg-rose-950/60'
+                              : 'border-slate-200 text-slate-400 hover:text-rose-600 hover:bg-rose-50'
+                          }`}
+                          title="Elimina intero blocco"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Tabella Materie del Blocco */}
+                    {(block.subjects || []).length > 0 && (
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-left border-collapse text-xs sm:text-sm">
+                          <thead>
+                            <tr
+                              className={`border-b text-[11px] uppercase tracking-wider ${
+                                isDark
+                                  ? 'border-slate-800 text-slate-400'
+                                  : 'border-slate-200 text-slate-500'
+                              }`}
+                            >
+                              <th className="py-2 font-semibold">Materia</th>
+                              <th className="py-2 font-semibold w-20 text-center">
+                                CFU
+                              </th>
+                              <th className="py-2 font-semibold w-28 text-center">
+                                Voto
+                              </th>
+                              <th className="py-2 font-semibold w-20 text-right">
+                                Peso
+                              </th>
+                              <th className="py-2 font-semibold w-10 text-right" />
+                            </tr>
+                          </thead>
+                          <tbody
+                            className={`divide-y ${
+                              isDark
+                                ? 'divide-slate-800/80'
+                                : 'divide-slate-100'
+                            }`}
+                          >
+                            {(block.subjects || []).map((sub) => {
+                              const subSelectVal =
+                                sub.grade === 30 && sub.lode
+                                  ? '30L'
+                                  : sub.grade
+                                  ? String(sub.grade)
+                                  : '';
+                              const weightPoints =
+                                sub.grade >= 18 && sub.grade <= 30
+                                  ? (
+                                      Number(sub.grade) * Number(sub.cfu || 0)
+                                    ).toFixed(0)
+                                  : '—';
+
+                              return (
+                                <tr
+                                  key={sub.id}
+                                  className={
+                                    isDark
+                                      ? 'hover:bg-slate-800/40'
+                                      : 'hover:bg-slate-50/70'
+                                  }
+                                >
+                                  <td className="py-2 pr-2">
+                                    <input
+                                      type="text"
+                                      value={sub.name}
+                                      onChange={(e) =>
+                                        handleUpdateMedSubject(
+                                          selectedMedYear,
+                                          block.id,
+                                          sub.id,
+                                          { name: e.target.value }
+                                        )
+                                      }
+                                      className={`w-full bg-transparent font-medium focus:outline-none focus:underline ${
+                                        isDark
+                                          ? 'text-slate-100'
+                                          : 'text-slate-800'
+                                      }`}
+                                    />
+                                  </td>
+                                  <td className="py-2 px-1 text-center">
+                                    <input
+                                      type="number"
+                                      min="0.5"
+                                      max="30"
+                                      step="0.5"
+                                      value={sub.cfu}
+                                      onChange={(e) =>
+                                        handleUpdateMedSubject(
+                                          selectedMedYear,
+                                          block.id,
+                                          sub.id,
+                                          {
+                                            cfu: Math.max(
+                                              0.5,
+                                              Number(e.target.value) || 0.5
+                                            ),
+                                          }
+                                        )
+                                      }
+                                      className={`w-16 text-center rounded-lg border px-1.5 py-1 text-xs font-bold ${inputMutedSurfaceClass}`}
+                                    />
+                                  </td>
+                                  <td className="py-2 px-1 text-center">
+                                    <select
+                                      value={subSelectVal}
+                                      onChange={(e) => {
+                                        const v = e.target.value;
+                                        if (v === '') {
+                                          handleUpdateMedSubject(
+                                            selectedMedYear,
+                                            block.id,
+                                            sub.id,
+                                            { grade: null, lode: false }
+                                          );
+                                        } else if (v === '30L') {
+                                          handleUpdateMedSubject(
+                                            selectedMedYear,
+                                            block.id,
+                                            sub.id,
+                                            { grade: 30, lode: true }
+                                          );
+                                        } else {
+                                          handleUpdateMedSubject(
+                                            selectedMedYear,
+                                            block.id,
+                                            sub.id,
+                                            {
+                                              grade: Number(v),
+                                              lode: false,
+                                            }
+                                          );
+                                        }
+                                      }}
+                                      className={`w-24 rounded-lg border px-2 py-1 text-xs font-bold cursor-pointer ${
+                                        subSelectVal
+                                          ? isDark
+                                            ? 'bg-indigo-950/80 border-indigo-700 text-indigo-200'
+                                            : 'bg-indigo-50 border-indigo-200 text-indigo-800'
+                                          : inputMutedSurfaceClass
+                                      }`}
+                                    >
+                                      <option value="">Da dare</option>
+                                      <option value="30L">30 e Lode</option>
+                                      {[
+                                        30, 29, 28, 27, 26, 25, 24, 23, 22, 21,
+                                        20, 19, 18,
+                                      ].map((g) => (
+                                        <option key={g} value={String(g)}>
+                                          {g}
+                                        </option>
+                                      ))}
+                                    </select>
+                                  </td>
+                                  <td
+                                    className={`py-2 text-right text-xs font-semibold tabular-nums ${
+                                      isDark
+                                        ? 'text-slate-400'
+                                        : 'text-slate-500'
+                                    }`}
+                                  >
+                                    {weightPoints}
+                                  </td>
+                                  <td className="py-2 text-right">
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        handleDeleteMedSubject(
+                                          selectedMedYear,
+                                          block.id,
+                                          sub.id
+                                        )
+                                      }
+                                      className={`p-1 rounded-lg transition cursor-pointer ${
+                                        isDark
+                                          ? 'text-slate-500 hover:text-rose-400 hover:bg-rose-950/60'
+                                          : 'text-slate-400 hover:text-rose-600 hover:bg-rose-50'
+                                      }`}
+                                      title="Rimuovi materia"
+                                    >
+                                      <Trash2 className="w-3.5 h-3.5" />
+                                    </button>
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+
+                    {/* Form rapido aggiunta materia al blocco */}
+                    <form
+                      onSubmit={(e) =>
+                        handleAddMedSubject(e, selectedMedYear, block.id)
+                      }
+                      className={`pt-3 border-t grid grid-cols-1 sm:grid-cols-12 gap-2 items-center ${
+                        isDark ? 'border-slate-800' : 'border-slate-100'
+                      }`}
+                    >
+                      <div className="sm:col-span-6">
+                        <input
+                          type="text"
+                          placeholder="Nuova materia del blocco..."
+                          value={draft.name}
+                          onChange={(e) =>
+                            setNewSubjectDrafts((prev) => ({
+                              ...prev,
+                              [block.id]: { ...draft, name: e.target.value },
+                            }))
+                          }
+                          required
+                          className={`w-full rounded-xl border px-3 py-1.5 text-xs ${inputMutedSurfaceClass}`}
+                        />
+                      </div>
+                      <div className="sm:col-span-2">
+                        <input
+                          type="number"
+                          min="0.5"
+                          max="30"
+                          step="0.5"
+                          placeholder="CFU"
+                          title="Crediti Formativi (CFU)"
+                          value={draft.cfu}
+                          onChange={(e) =>
+                            setNewSubjectDrafts((prev) => ({
+                              ...prev,
+                              [block.id]: { ...draft, cfu: e.target.value },
+                            }))
+                          }
+                          required
+                          className={`w-full rounded-xl border px-2.5 py-1.5 text-xs text-center font-semibold ${inputMutedSurfaceClass}`}
+                        />
+                      </div>
+                      <div className="sm:col-span-2">
+                        <select
+                          value={draft.grade}
+                          onChange={(e) =>
+                            setNewSubjectDrafts((prev) => ({
+                              ...prev,
+                              [block.id]: { ...draft, grade: e.target.value },
+                            }))
+                          }
+                          className={`w-full rounded-xl border px-2 py-1.5 text-xs font-semibold ${inputMutedSurfaceClass}`}
+                        >
+                          <option value="">Da dare</option>
+                          <option value="30L">30L</option>
+                          {[
+                            30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18,
+                          ].map((g) => (
+                            <option key={g} value={String(g)}>
+                              {g}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="sm:col-span-2">
+                        <button
+                          type="submit"
+                          className="w-full inline-flex items-center justify-center gap-1 px-2.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shadow-xs transition cursor-pointer"
+                        >
+                          <Plus className="w-3.5 h-3.5" />
+                          <span>Materia</span>
+                        </button>
+                      </div>
+                    </form>
+                  </section>
+                );
+              })}
             </div>
           )}
-
-          {layout.right.length > 0 && (
-            <div
-              onDragOver={(e) => e.preventDefault()}
-              onDrop={(e) => {
-                e.preventDefault();
-                handleDropSection('right', layout.right.length);
-              }}
-              className={`${
-                layout.left.length > 0 ? 'lg:col-span-4' : ''
-              } space-y-6`}
-            >
-              {layout.right.map((secId, idx) =>
-                renderSection(secId, 'right', idx, layout.right.length)
-              )}
-            </div>
-          )}
-        </div>
-      </main>
+        </main>
+      )}
     </div>
   );
 }
