@@ -2025,41 +2025,55 @@ export default function App() {
       });
     });
 
+    // Proiezione coerente con futureStart (se oggi hai già loggato, la prossima sessione parte da domani)
+    const projectionStartDate =
+      futureStart > realCutoffDate ? futureStart : realCutoffDate;
     let estimatedFinishDate = null;
+
     if (remainingPages === 0) {
       estimatedFinishDate = lastLogDate || today;
     } else if (realDailyAvg > 0) {
       let projRem = remainingPages;
-      let projCursor = realCutoffDate;
+      let projCursor = addDays(projectionStartDate, -1);
       let projSteps = 0;
 
       for (let i = 0; i < chartData.length; i++) {
         const pt = chartData[i];
-        if (pt.rawDate > realCutoffDate) {
+        if (pt.rawDate >= projectionStartDate) {
           const isRest = restDays.includes(
             parseLocalDate(pt.rawDate).getDay()
           );
           if (!isRest && projRem > 0) {
-            projRem = Math.max(0, Number((projRem - realDailyAvg).toFixed(1)));
-            if (projRem === 0 && !estimatedFinishDate) {
+            projRem = Math.max(0, Number((projRem - realDailyAvg).toFixed(2)));
+            if (projRem <= 0.01 && !estimatedFinishDate) {
+              projRem = 0;
               estimatedFinishDate = pt.rawDate;
             }
           }
-          pt.proiezione = projRem;
+          pt.proiezione = Number(projRem.toFixed(1));
         }
       }
 
-      while (projRem > 0 && projSteps < 365) {
-        projCursor = addDays(projCursor, 1);
-        const isRest = restDays.includes(parseLocalDate(projCursor).getDay());
-        if (!isRest) {
-          projRem = Math.max(0, projRem - realDailyAvg);
-          if (projRem === 0) {
-            estimatedFinishDate = projCursor;
-            break;
+      if (!estimatedFinishDate && projRem > 0) {
+        const lastChartDate =
+          chartData[chartData.length - 1]?.rawDate ||
+          addDays(projectionStartDate, -1);
+        projCursor =
+          lastChartDate >= projectionStartDate
+            ? lastChartDate
+            : addDays(projectionStartDate, -1);
+        while (projRem > 0.01 && projSteps < 365) {
+          projCursor = addDays(projCursor, 1);
+          const isRest = restDays.includes(parseLocalDate(projCursor).getDay());
+          if (!isRest) {
+            projRem = Math.max(0, projRem - realDailyAvg);
+            if (projRem <= 0.01) {
+              estimatedFinishDate = projCursor;
+              break;
+            }
           }
+          projSteps++;
         }
-        projSteps++;
       }
     }
 
@@ -2076,6 +2090,13 @@ export default function App() {
     let statusHeadline = '';
     let statusDetail = '';
 
+    const paceGap = newRequiredPace - realDailyAvg;
+    const isBehindRequiredPace =
+      realDailyAvg > 0 &&
+      estimatedFinishDate &&
+      estimatedFinishDate > studyDeadline &&
+      paceGap > 0.05;
+
     if (remainingPages === 0) {
       status = 'green';
       statusTitle = 'OBIETTIVO COMPLETATO';
@@ -2091,27 +2112,43 @@ export default function App() {
       )} pagine per restare perfettamente in tabella.`;
     } else if (
       delayPct >= 10 ||
-      (realDailyAvg > 0 &&
-        estimatedFinishDate &&
-        estimatedFinishDate > studyDeadline) ||
+      isBehindRequiredPace ||
       (remainingUsefulDays === 0 && remainingPages > 0)
     ) {
       status = 'red';
       statusTitle = 'RITARDO CRITICO';
-      const finishInfo = estimatedFinishDate
-        ? `Con il ritmo attuale (${realDailyAvg.toFixed(
-            1
-          )} pag/gg) finirai il ${formatShortDate(
-            estimatedFinishDate
-          )}, oltre la scadenza studio (${formatShortDate(studyDeadline)}).`
-        : 'Non hai ancora registrato abbastanza pagine rispetto alla tabella di marcia.';
-      statusHeadline = `Devi passare da ${realDailyAvg.toFixed(
-        1
-      )} a ${newRequiredPace.toFixed(1)} pag/giorno per arrivare in tempo.`;
-      statusDetail = `${finishInfo} Accelera di +${Math.max(
-        0,
-        newRequiredPace - realDailyAvg
-      ).toFixed(1)} pag/giorno nei prossimi ${remainingUsefulDays} giorni utili.`;
+
+      if (remainingUsefulDays === 0 && remainingPages > 0) {
+        statusHeadline = `Restano ${remainingPages} pagine e non hai più giorni utili prima della scadenza studio.`;
+        statusDetail = `Completa le ${remainingPages} pagine rimanenti entro il ${formatShortDate(
+          studyDeadline
+        )} oppure riduci i giorni di ripasso finale.`;
+      } else if (paceGap > 0.05) {
+        const finishInfo = estimatedFinishDate
+          ? `Con il ritmo attuale (${realDailyAvg.toFixed(
+              1
+            )} pag/gg) finirai il ${formatShortDate(
+              estimatedFinishDate
+            )}, oltre la scadenza studio (${formatShortDate(studyDeadline)}).`
+          : 'Non hai ancora registrato abbastanza pagine rispetto alla tabella di marcia.';
+        statusHeadline = `Devi passare da ${realDailyAvg.toFixed(
+          1
+        )} a ${newRequiredPace.toFixed(1)} pag/giorno per arrivare in tempo.`;
+        statusDetail = `${finishInfo} Accelera di +${paceGap.toFixed(
+          1
+        )} pag/giorno nei prossimi ${remainingUsefulDays} giorni utili.`;
+      } else {
+        statusHeadline = `Sei indietro di ${Math.round(
+          delayPages
+        )} pagine (${delayPct.toFixed(1)}% del programma).`;
+        statusDetail = `Ti servono ${newRequiredPace.toFixed(
+          1
+        )} pag/giorno nei prossimi ${remainingUsefulDays} giorni utili (ritmo attuale: ${realDailyAvg.toFixed(
+          1
+        )} pag/gg) per completare il programma entro il ${formatShortDate(
+          studyDeadline
+        )}.`;
+      }
     } else if (delayPages > 0) {
       status = 'yellow';
       statusTitle = 'ATTENZIONE (LIEVE RITARDO)';
