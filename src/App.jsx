@@ -1969,36 +1969,21 @@ export default function App() {
         ? remainingPages / remainingUsefulDays
         : remainingPages;
 
-    const initCutoff = addDays(startDate, -1);
-    const lastLogDate =
-      Object.keys(logMap)
-        .filter((d) => logMap[d] > 0)
-        .sort()
-        .pop() || '';
-    const yesterday = addDays(today, -1);
-    const realCutoffDate = loggedToday
-      ? lastLogDate > today
-        ? lastLogDate
-        : today
-      : today > startDate
-      ? lastLogDate > yesterday
-        ? lastLogDate
-        : yesterday
-      : initCutoff;
-
     const chartData = [];
     chartData.push({
       date: 'Inizio',
-      rawDate: initCutoff,
+      rawDate: addDays(startDate, -1),
       ideale: totalPages,
       reale: totalPages,
-      proiezione: realCutoffDate <= initCutoff ? totalPages : null,
+      proiezione: today < startDate ? totalPages : null,
       isRest: false,
       isReview: false,
     });
 
     let cumIdealPages = 0;
     let cumRealPages = 0;
+    const lastLogDate = Object.keys(logMap).sort().pop() || '';
+    const realCutoffDate = today > lastLogDate ? today : lastLogDate;
 
     Object.keys(logMap).forEach((d) => {
       if (d < startDate) cumRealPages += logMap[d];
@@ -2113,7 +2098,6 @@ export default function App() {
     ) {
       status = 'red';
       statusTitle = 'RITARDO CRITICO';
-      const paceIncrease = Math.max(0, newRequiredPace - realDailyAvg);
       const finishInfo = estimatedFinishDate
         ? `Con il ritmo attuale (${realDailyAvg.toFixed(
             1
@@ -2121,24 +2105,13 @@ export default function App() {
             estimatedFinishDate
           )}, oltre la scadenza studio (${formatShortDate(studyDeadline)}).`
         : 'Non hai ancora registrato abbastanza pagine rispetto alla tabella di marcia.';
-      if (remainingUsefulDays === 0) {
-        statusHeadline = `Devi completare le ultime ${remainingPages} pagine entro oggi (${formatShortDate(
-          studyDeadline
-        )}).`;
-        statusDetail = finishInfo;
-      } else if (paceIncrease >= 0.05) {
-        statusHeadline = `Devi passare da ${realDailyAvg.toFixed(
-          1
-        )} a ${newRequiredPace.toFixed(1)} pag/giorno per arrivare in tempo.`;
-        statusDetail = `${finishInfo} Accelera di +${paceIncrease.toFixed(
-          1
-        )} pag/giorno nei prossimi ${remainingUsefulDays} giorni utili.`;
-      } else {
-        statusHeadline = `Mantieni almeno ${newRequiredPace.toFixed(
-          1
-        )} pag/giorno per arrivare in tempo.`;
-        statusDetail = `${finishInfo} Hai ancora ${remainingUsefulDays} giorni utili prima del ripasso finale.`;
-      }
+      statusHeadline = `Devi passare da ${realDailyAvg.toFixed(
+        1
+      )} a ${newRequiredPace.toFixed(1)} pag/giorno per arrivare in tempo.`;
+      statusDetail = `${finishInfo} Accelera di +${Math.max(
+        0,
+        newRequiredPace - realDailyAvg
+      ).toFixed(1)} pag/giorno nei prossimi ${remainingUsefulDays} giorni utili.`;
     } else if (delayPages > 0) {
       status = 'yellow';
       statusTitle = 'ATTENZIONE (LIEVE RITARDO)';
@@ -4810,7 +4783,7 @@ export default function App() {
                       className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold cursor-pointer ${
                         authMode === 'login'
                           ? isDark
-                            ? 'bg-slate-900 text-indigo-400 shadow-sm'
+                            ? 'bg-slate-900 text-indigo-400'
                             : 'bg-white text-indigo-600 shadow-sm'
                           : isDark
                           ? 'text-slate-400'
@@ -4828,7 +4801,7 @@ export default function App() {
                       className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold cursor-pointer ${
                         authMode === 'signup'
                           ? isDark
-                            ? 'bg-slate-900 text-indigo-400 shadow-sm'
+                            ? 'bg-slate-900 text-indigo-400'
                             : 'bg-white text-indigo-600 shadow-sm'
                           : isDark
                           ? 'text-slate-400'
@@ -5224,3 +5197,944 @@ export default function App() {
                   <Target className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 </div>
               </div>
+              <div className="my-2">
+                <div
+                  className={`text-xl sm:text-3xl font-extrabold ${
+                    isDark ? 'text-slate-50' : 'text-slate-900'
+                  }`}
+                >
+                  {analytics.newRequiredPace.toFixed(1)}
+                  <span
+                    className={`text-xs sm:text-sm font-semibold ml-1 ${
+                      isDark ? 'text-slate-400' : 'text-slate-500'
+                    }`}
+                  >
+                    pag/gg
+                  </span>
+                </div>
+                <p
+                  className={`text-[11px] sm:text-xs mt-0.5 truncate ${
+                    isDark ? 'text-slate-400' : 'text-slate-500'
+                  }`}
+                >
+                  Reale:{' '}
+                  <strong
+                    className={isDark ? 'text-slate-200' : 'text-slate-700'}
+                  >
+                    {analytics.realDailyAvg.toFixed(1)}
+                  </strong>{' '}
+                  pag/gg
+                </p>
+              </div>
+              <div
+                className={`text-[11px] sm:text-xs font-medium truncate ${
+                  isDark ? 'text-slate-400' : 'text-slate-500'
+                }`}
+              >
+                Nei prossimi {analytics.remainingUsefulDays} giorni
+              </div>
+            </div>
+
+            <div
+              className={`rounded-2xl border p-3.5 sm:p-4 shadow-sm flex flex-col justify-between ${cardSurfaceClass}`}
+            >
+              <div className="flex items-center justify-between">
+                <span
+                  className={`text-[11px] sm:text-xs font-semibold uppercase tracking-wide truncate ${
+                    isDark ? 'text-slate-400' : 'text-slate-500'
+                  }`}
+                >
+                  Countdown
+                </span>
+                <div
+                  className={`p-1.5 sm:p-2 rounded-lg ${
+                    isDark
+                      ? 'bg-amber-950/80 text-amber-400 border border-amber-800/70'
+                      : 'bg-amber-50 text-amber-600 border border-amber-200'
+                  }`}
+                >
+                  <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                </div>
+              </div>
+              <div className="my-2">
+                <div
+                  className={`text-xl sm:text-3xl font-extrabold ${
+                    isDark ? 'text-slate-50' : 'text-slate-900'
+                  }`}
+                >
+                  -{analytics.daysToExam}
+                  <span
+                    className={`text-xs sm:text-sm font-semibold ml-1 ${
+                      isDark ? 'text-slate-400' : 'text-slate-500'
+                    }`}
+                  >
+                    gg
+                  </span>
+                </div>
+                <p
+                  className={`text-[11px] sm:text-xs mt-0.5 truncate ${
+                    isDark ? 'text-slate-400' : 'text-slate-500'
+                  }`}
+                >
+                  Appello il{' '}
+                  <strong
+                    className={isDark ? 'text-slate-200' : 'text-slate-700'}
+                  >
+                    {formatShortDate(activeExam.examDate)}
+                  </strong>
+                </p>
+              </div>
+              <div
+                className={`text-[11px] sm:text-xs font-medium flex items-center gap-1 truncate ${
+                  isDark ? 'text-slate-400' : 'text-slate-500'
+                }`}
+              >
+                <Clock className="w-3.5 h-3.5 shrink-0" />
+                <span>{analytics.remainingUsefulDays} gg utili studio</span>
+              </div>
+            </div>
+          </section>
+
+          {/* 3. GRIGLIA PRINCIPALE RIORDINABILE */}
+          <div
+            className={`grid grid-cols-1 ${
+              layout.left.length > 0 && layout.right.length > 0
+                ? 'lg:grid-cols-12'
+                : ''
+            } gap-6 items-start`}
+          >
+            {layout.left.length > 0 && (
+              <div
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  handleDropSection('left', layout.left.length);
+                }}
+                className={`${
+                  layout.right.length > 0 ? 'lg:col-span-8' : ''
+                } space-y-6`}
+              >
+                {layout.left.map((secId, idx) =>
+                  renderSection(secId, 'left', idx, layout.left.length)
+                )}
+              </div>
+            )}
+
+            {layout.right.length > 0 && (
+              <div
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  handleDropSection('right', layout.right.length);
+                }}
+                className={`${
+                  layout.left.length > 0 ? 'lg:col-span-4' : ''
+                } space-y-6`}
+              >
+                {layout.right.map((secId, idx) =>
+                  renderSection(secId, 'right', idx, layout.right.length)
+                )}
+              </div>
+            )}
+          </div>
+        </main>
+      )}
+
+      {/* =====================================================================
+          PAGINA 2: VOTI BLOCCHI (1°–6° ANNO MEDICINA)
+         ===================================================================== */}
+      {activeTab === 'libretto' && (
+        <main className="w-full px-3 sm:px-6 lg:px-8 py-5 sm:py-6 space-y-6">
+          {isBlockReorderMode && (
+            <div
+              className={`rounded-2xl border p-4 flex flex-wrap items-center justify-between gap-3 ${
+                isDark
+                  ? 'bg-indigo-950/60 border-indigo-800/80 text-indigo-100'
+                  : 'bg-indigo-50 border-indigo-200 text-indigo-950'
+              }`}
+            >
+              <div className="flex items-center gap-2.5">
+                <LayoutGrid
+                  className={`w-5 h-5 shrink-0 ${
+                    isDark ? 'text-indigo-400' : 'text-indigo-600'
+                  }`}
+                />
+                <div>
+                  <p className="text-sm font-bold">
+                    Personalizzazione ordine blocchi attiva ({selectedMedYear}° Anno)
+                  </p>
+                  <p className="text-xs opacity-85">
+                    Usa le frecce su/giù oppure trascina la maniglia di ogni
+                    blocco per cambiarne la posizione.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsBlockReorderMode(false)}
+                className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition cursor-pointer"
+              >
+                Fatto
+              </button>
+            </div>
+          )}
+
+          {/* 1. SELETTORE ANNI DI MEDICINA (1° - 6° ANNO) */}
+          <section
+            className={`rounded-2xl border p-4 sm:p-6 shadow-sm space-y-4 ${cardSurfaceClass}`}
+          >
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+              <div>
+                <h2
+                  className={`text-base sm:text-lg font-bold ${
+                    isDark ? 'text-slate-100' : 'text-slate-900'
+                  }`}
+                >
+                  Seleziona Anno di Corso
+                </h2>
+                <p
+                  className={`text-xs ${
+                    isDark ? 'text-slate-400' : 'text-slate-500'
+                  }`}
+                >
+                  Inserisci i blocchi dell&apos;anno e le relative materie per
+                  calcolare il voto ponderato di ciascun blocco
+                </p>
+              </div>
+
+              <form
+                onSubmit={handleAddMedBlock}
+                className="flex items-center gap-2 w-full md:w-auto"
+              >
+                <input
+                  type="text"
+                  placeholder={`Nuovo blocco (${selectedMedYear}° anno)...`}
+                  value={newBlockName}
+                  onChange={(e) => setNewBlockName(e.target.value)}
+                  required
+                  className={`h-10 sm:h-9 rounded-xl border px-3 text-xs sm:text-sm flex-1 md:w-64 ${inputMutedSurfaceClass}`}
+                />
+                <button
+                  type="submit"
+                  className="h-10 sm:h-9 inline-flex items-center justify-center gap-1.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-semibold shadow-sm transition cursor-pointer shrink-0"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Aggiungi Blocco</span>
+                </button>
+              </form>
+            </div>
+
+            <div className="grid grid-cols-3 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+              {[1, 2, 3, 4, 5, 6].map((yr) => {
+                const isSelected = selectedMedYear === yr;
+                const blocksCount = (medYears[yr] || []).length;
+                return (
+                  <button
+                    key={yr}
+                    type="button"
+                    onClick={() => {
+                      setSelectedMedYear(yr);
+                      setEditingBlockId(null);
+                    }}
+                    className={`rounded-xl border p-3 sm:px-3.5 sm:py-2.5 text-left transition cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 sm:gap-2 ${
+                      isSelected
+                        ? isDark
+                          ? 'bg-indigo-950/80 border-indigo-500 text-indigo-100 shadow-sm'
+                          : 'bg-indigo-50 border-indigo-500 text-indigo-950 shadow-sm'
+                        : isDark
+                        ? 'bg-slate-800/55 border-slate-700/80 text-slate-300 hover:bg-slate-800 hover:border-slate-600'
+                        : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-white hover:border-slate-300'
+                    }`}
+                  >
+                    <span className="text-xs sm:text-sm font-extrabold">{yr}° Anno</span>
+                    <span
+                      className={`text-[10px] sm:text-[11px] font-bold px-2 py-0.5 rounded-full shrink-0 w-max ${
+                        isSelected
+                          ? 'bg-indigo-600 text-white'
+                          : isDark
+                          ? 'bg-slate-700 text-slate-300'
+                          : 'bg-slate-200/80 text-slate-600'
+                      }`}
+                    >
+                      {blocksCount} {blocksCount === 1 ? 'blocco' : 'blocchi'}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+
+          {/* 2. BARRA CONTROLLO BLOCCHI DELL'ANNO */}
+          {currentYearBlocks.length > 0 && (
+            <div className="flex flex-wrap items-center justify-between gap-2 px-1">
+              <div className="flex items-center gap-2">
+                <h3
+                  className={`text-xs sm:text-sm font-bold uppercase tracking-wider ${
+                    isDark ? 'text-slate-300' : 'text-slate-700'
+                  }`}
+                >
+                  Blocchi {selectedMedYear}° Anno ({currentYearBlocks.length})
+                </h3>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleToggleAllCurrentBlocks}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition cursor-pointer ${
+                  isDark
+                    ? 'bg-slate-900 border-slate-800 text-slate-300 hover:bg-slate-800'
+                    : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
+                }`}
+              >
+                <ChevronsUpDown className="w-3.5 h-3.5 text-indigo-500" />
+                <span>
+                  {areAllCurrentBlocksExpanded
+                    ? 'Comprimi tutti'
+                    : 'Espandi tutti'}
+                </span>
+              </button>
+            </div>
+          )}
+
+          {/* 3. ELENCO BLOCCHI A SCOMPARSA (ACCORDION) */}
+          {currentYearBlocks.length === 0 ? (
+            <section
+              className={`rounded-2xl border border-dashed p-10 text-center space-y-2 ${
+                isDark
+                  ? 'bg-slate-900/50 border-slate-800 text-slate-400'
+                  : 'bg-white border-slate-300 text-slate-500'
+              }`}
+            >
+              <GraduationCap className="w-8 h-8 mx-auto opacity-50" />
+              <p className="text-sm font-bold">
+                Nessun blocco inserito per il {selectedMedYear}° Anno
+              </p>
+              <p className="text-xs max-w-md mx-auto">
+                Usa il campo &ldquo;Aggiungi Blocco&rdquo; qui sopra per creare
+                un esame integrato e inserire le materie con CFU e voti.
+              </p>
+            </section>
+          ) : (
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 items-stretch">
+              {currentYearBlocks.map((block, blkIndex) => {
+                const isExpanded = Boolean(expandedBlocks[block.id]);
+                const isBeingDragged = draggedBlockId === block.id;
+                const isDropTarget =
+                  dragOverBlockIdx === blkIndex &&
+                  draggedBlockId &&
+                  draggedBlockId !== block.id;
+
+                let blkWeightedSum = 0;
+                let blkGradedCfu = 0;
+                let blkTotalCfu = 0;
+                let gradedCount = 0;
+                let allLode = true;
+
+                (block.subjects || []).forEach((s) => {
+                  const c = Number(s.cfu) || 0;
+                  blkTotalCfu += c;
+                  const g = Number(s.grade);
+                  if (g >= 18 && g <= 30 && c > 0) {
+                    blkWeightedSum += g * c;
+                    blkGradedCfu += c;
+                    gradedCount += 1;
+                    if (!(g === 30 && s.lode)) {
+                      allLode = false;
+                    }
+                  }
+                });
+
+                const blkAvg =
+                  blkGradedCfu > 0 ? blkWeightedSum / blkGradedCfu : null;
+                const blkFinalGrade =
+                  blkAvg !== null
+                    ? blkAvg === 30 && gradedCount > 0 && allLode
+                      ? '30L'
+                      : `${Math.round(blkAvg)}/30`
+                    : null;
+
+                const draft = newSubjectDrafts[block.id] || {
+                  name: '',
+                  cfu: '6',
+                  grade: '',
+                };
+
+                return (
+                  <section
+                    key={block.id}
+                    draggable={blockDragReadyId === block.id}
+                    onDragStart={(e) => {
+                      setDraggedBlockId(block.id);
+                      e.dataTransfer.effectAllowed = 'move';
+                    }}
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      if (dragOverBlockIdx !== blkIndex) {
+                        setDragOverBlockIdx(blkIndex);
+                      }
+                    }}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleDropMedBlock(blkIndex);
+                    }}
+                    onDragEnd={() => {
+                      setDraggedBlockId(null);
+                      setDragOverBlockIdx(null);
+                      setBlockDragReadyId(null);
+                    }}
+                    className={`rounded-2xl border shadow-sm flex flex-col transition-all duration-200 ${cardSurfaceClass} ${
+                      isExpanded
+                        ? isDark
+                          ? 'border-indigo-500/40'
+                          : 'border-indigo-300'
+                        : ''
+                    } ${isBeingDragged ? 'opacity-45 scale-[0.99]' : ''} ${
+                      isDropTarget
+                        ? `ring-2 ring-indigo-500 ring-offset-4 ${
+                            isDark
+                              ? 'ring-offset-slate-950'
+                              : 'ring-offset-slate-50'
+                          }`
+                        : ''
+                    } ${
+                      isBlockReorderMode
+                        ? isDark
+                          ? 'ring-2 ring-indigo-500/45'
+                          : 'ring-2 ring-indigo-300/80'
+                        : ''
+                    }`}
+                  >
+                    {/* Header Blocco */}
+                    <div
+                      onClick={() => {
+                        if (editingBlockId !== block.id) {
+                          toggleBlockExpanded(block.id);
+                        }
+                      }}
+                      className={`p-3.5 sm:p-4 flex items-center justify-between gap-2.5 cursor-pointer select-none rounded-2xl transition-colors ${
+                        isExpanded
+                          ? `rounded-b-none border-b ${
+                              isDark
+                                ? 'border-slate-800 bg-slate-900'
+                                : 'border-slate-100 bg-white'
+                            }`
+                          : isDark
+                          ? 'hover:bg-slate-800/45'
+                          : 'hover:bg-slate-50/80'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                        <span
+                          className={`h-7 w-7 rounded-lg inline-flex items-center justify-center shrink-0 transition-colors ${
+                            isExpanded
+                              ? 'bg-indigo-600 text-white'
+                              : isDark
+                              ? 'bg-slate-800 text-slate-400'
+                              : 'bg-slate-100 text-slate-600'
+                          }`}
+                        >
+                          {isExpanded ? (
+                            <ChevronDown className="w-4 h-4" />
+                          ) : (
+                            <ChevronRight className="w-4 h-4" />
+                          )}
+                        </span>
+
+                        <div className="min-w-0 flex-1">
+                          {editingBlockId === block.id ? (
+                            <div
+                              className="flex items-center gap-1.5"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <input
+                                type="text"
+                                value={editingBlockTitle}
+                                onChange={(e) =>
+                                  setEditingBlockTitle(e.target.value)
+                                }
+                                onBlur={() =>
+                                  handleRenameMedBlock(
+                                    selectedMedYear,
+                                    block.id
+                                  )
+                                }
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') {
+                                    handleRenameMedBlock(
+                                      selectedMedYear,
+                                      block.id
+                                    );
+                                  }
+                                  if (e.key === 'Escape') {
+                                    setEditingBlockId(null);
+                                  }
+                                }}
+                                autoFocus
+                                className={`w-full text-sm font-bold border-b-2 border-indigo-600 bg-transparent focus:outline-none ${
+                                  isDark ? 'text-slate-50' : 'text-slate-900'
+                                }`}
+                              />
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  handleRenameMedBlock(
+                                    selectedMedYear,
+                                    block.id
+                                  )
+                                }
+                                className="p-1 text-emerald-500 cursor-pointer shrink-0"
+                              >
+                                <Check className="w-4 h-4" />
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-1.5 min-w-0">
+                              <h3
+                                title={block.name}
+                                className={`text-xs sm:text-sm font-bold truncate ${
+                                  isDark ? 'text-slate-100' : 'text-slate-900'
+                                }`}
+                              >
+                                {block.name}
+                              </h3>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setEditingBlockId(block.id);
+                                  setEditingBlockTitle(block.name);
+                                }}
+                                className={`p-1 rounded-md opacity-60 hover:opacity-100 transition cursor-pointer shrink-0 ${
+                                  isDark
+                                    ? 'text-slate-400 hover:bg-slate-800 hover:text-indigo-400'
+                                    : 'text-slate-500 hover:bg-slate-100 hover:text-indigo-600'
+                                }`}
+                                title="Rinomina blocco"
+                              >
+                                <Edit3 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          )}
+
+                          <p
+                            className={`text-[11px] truncate mt-0.5 ${
+                              isDark ? 'text-slate-400' : 'text-slate-500'
+                            }`}
+                          >
+                            {(block.subjects || []).length}{' '}
+                            {(block.subjects || []).length === 1
+                              ? 'materia'
+                              : 'materie'}{' '}
+                            · {blkGradedCfu}/{blkTotalCfu} CFU
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Voto Ponderato Blocco e comandi */}
+                      <div
+                        className="flex items-center gap-1.5 shrink-0"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <div
+                          onClick={() => toggleBlockExpanded(block.id)}
+                          className={`rounded-xl px-2.5 py-1.5 border cursor-pointer ${
+                            blkAvg !== null
+                              ? isDark
+                                ? 'bg-indigo-950/75 border-indigo-700/80 text-indigo-100'
+                                : 'bg-indigo-50 border-indigo-200 text-indigo-950'
+                              : isDark
+                              ? 'bg-slate-800/80 border-slate-700 text-slate-400'
+                              : 'bg-slate-50 border-slate-200 text-slate-500'
+                          }`}
+                        >
+                          <div className="text-[9px] font-bold uppercase tracking-wider opacity-75">
+                            Media
+                          </div>
+                          {blkAvg !== null ? (
+                            <div className="flex items-center gap-1 mt-0.5">
+                              <span className="text-xs sm:text-sm font-black tabular-nums leading-none">
+                                {blkAvg.toFixed(2)}
+                              </span>
+                              <span
+                                className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-indigo-600 text-white leading-none"
+                                title="Voto finale arrotondato"
+                              >
+                                → {blkFinalGrade}
+                              </span>
+                            </div>
+                          ) : (
+                            <div className="text-xs font-semibold mt-0.5 leading-none">
+                              —
+                            </div>
+                          )}
+                        </div>
+
+                        <div
+                          className={`inline-flex items-center gap-0.5 rounded-lg p-0.5 border transition shrink-0 ${
+                            isBlockReorderMode
+                              ? isDark
+                                ? 'bg-indigo-950/70 border-indigo-700 text-indigo-300 shadow-sm'
+                                : 'bg-indigo-50 border-indigo-300 text-indigo-700 shadow-sm'
+                              : isDark
+                              ? 'bg-slate-800 border-slate-700 text-slate-400 hover:text-slate-200'
+                              : 'bg-slate-50 border-slate-200/80 text-slate-500 hover:text-slate-800'
+                          }`}
+                        >
+                          <button
+                            type="button"
+                            onClick={() => moveBlockUp(blkIndex)}
+                            disabled={blkIndex === 0}
+                            className={`p-1.5 rounded disabled:opacity-30 disabled:pointer-events-none transition ${
+                              isDark ? 'hover:bg-slate-700' : 'hover:bg-white'
+                            }`}
+                            title="Sposta blocco prima"
+                          >
+                            <ArrowUp className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => moveBlockDown(blkIndex)}
+                            disabled={blkIndex === currentYearBlocks.length - 1}
+                            className={`p-1.5 rounded disabled:opacity-30 disabled:pointer-events-none transition ${
+                              isDark ? 'hover:bg-slate-700' : 'hover:bg-white'
+                            }`}
+                            title="Sposta blocco dopo"
+                          >
+                            <ArrowDown className="w-3.5 h-3.5" />
+                          </button>
+                          <span
+                            onMouseDown={() => setBlockDragReadyId(block.id)}
+                            onMouseUp={() => setBlockDragReadyId(null)}
+                            className={`p-1.5 rounded cursor-grab active:cursor-grabbing transition ${
+                              isDark ? 'hover:bg-slate-700' : 'hover:bg-white'
+                            }`}
+                            title="Trascina blocco"
+                          >
+                            <GripVertical className="w-3.5 h-3.5" />
+                          </span>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() =>
+                            handleDeleteMedBlock(selectedMedYear, block.id)
+                          }
+                          className={`h-8 w-8 inline-flex items-center justify-center rounded-xl border transition cursor-pointer shrink-0 ${
+                            isDark
+                              ? 'border-slate-800 text-slate-500 hover:text-rose-400 hover:bg-rose-950/60'
+                              : 'border-slate-200 text-slate-400 hover:text-rose-600 hover:bg-rose-50'
+                          }`}
+                          title="Elimina blocco"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Contenuto a scomparsa del Blocco */}
+                    {isExpanded && (
+                      <div className="p-3.5 sm:p-4 pt-2 flex-1 flex flex-col justify-between gap-3">
+                        {(block.subjects || []).length > 0 ? (
+                          <div className="overflow-x-auto">
+                            <table className="w-full text-left border-collapse text-xs sm:text-sm min-w-[320px]">
+                              <thead>
+                                <tr
+                                  className={`border-b text-[10px] sm:text-[11px] uppercase tracking-wider ${
+                                    isDark
+                                      ? 'border-slate-800 text-slate-400'
+                                      : 'border-slate-200 text-slate-500'
+                                  }`}
+                                >
+                                  <th className="py-2 font-semibold">
+                                    Materia
+                                  </th>
+                                  <th className="py-2 font-semibold w-14 text-center">
+                                    CFU
+                                  </th>
+                                  <th className="py-2 font-semibold w-24 text-center">
+                                    Voto
+                                  </th>
+                                  <th className="py-2 font-semibold w-12 text-right">
+                                    Peso
+                                  </th>
+                                  <th className="py-2 font-semibold w-8 text-right" />
+                                </tr>
+                              </thead>
+                              <tbody
+                                className={`divide-y ${
+                                  isDark
+                                    ? 'divide-slate-800/80'
+                                    : 'divide-slate-100'
+                                }`}
+                              >
+                                {(block.subjects || []).map((sub) => {
+                                  const subSelectVal =
+                                    sub.grade === 30 && sub.lode
+                                      ? '30L'
+                                      : sub.grade
+                                      ? String(sub.grade)
+                                      : '';
+                                  const weightPoints =
+                                    sub.grade >= 18 && sub.grade <= 30
+                                      ? (
+                                          Number(sub.grade) *
+                                          Number(sub.cfu || 0)
+                                        ).toFixed(0)
+                                      : '—';
+
+                                  return (
+                                    <tr
+                                      key={sub.id}
+                                      className={
+                                        isDark
+                                          ? 'hover:bg-slate-800/40'
+                                          : 'hover:bg-slate-50/70'
+                                      }
+                                    >
+                                      <td className="py-2.5 pr-2 min-w-[120px]">
+                                        <input
+                                          type="text"
+                                          value={sub.name}
+                                          onChange={(e) =>
+                                            handleUpdateMedSubject(
+                                              selectedMedYear,
+                                              block.id,
+                                              sub.id,
+                                              { name: e.target.value }
+                                            )
+                                          }
+                                          className={`w-full bg-transparent font-medium truncate focus:outline-none focus:underline ${
+                                            isDark
+                                              ? 'text-slate-100'
+                                              : 'text-slate-800'
+                                          }`}
+                                        />
+                                      </td>
+                                      <td className="py-2.5 px-1 text-center">
+                                        <input
+                                          type="number"
+                                          min="0.5"
+                                          max="30"
+                                          step="0.5"
+                                          value={sub.cfu}
+                                          onChange={(e) =>
+                                            handleUpdateMedSubject(
+                                              selectedMedYear,
+                                              block.id,
+                                              sub.id,
+                                              {
+                                                cfu: Math.max(
+                                                  0.5,
+                                                  Number(e.target.value) || 0.5
+                                                ),
+                                              }
+                                            )
+                                          }
+                                          className={`no-spinner h-8 w-12 text-center rounded-lg border px-1 text-xs font-bold tabular-nums ${inputMutedSurfaceClass}`}
+                                        />
+                                      </td>
+                                      <td className="py-2.5 px-1 text-center">
+                                        <div className="relative inline-block w-22 sm:w-24">
+                                          <select
+                                            value={subSelectVal}
+                                            onChange={(e) => {
+                                              const v = e.target.value;
+                                              if (v === '') {
+                                                handleUpdateMedSubject(
+                                                  selectedMedYear,
+                                                  block.id,
+                                                  sub.id,
+                                                  { grade: null, lode: false }
+                                                );
+                                              } else if (v === '30L') {
+                                                handleUpdateMedSubject(
+                                                  selectedMedYear,
+                                                  block.id,
+                                                  sub.id,
+                                                  { grade: 30, lode: true }
+                                                );
+                                              } else {
+                                                handleUpdateMedSubject(
+                                                  selectedMedYear,
+                                                  block.id,
+                                                  sub.id,
+                                                  {
+                                                    grade: Number(v),
+                                                    lode: false,
+                                                  }
+                                                );
+                                              }
+                                            }}
+                                            className={`appearance-none h-8 w-full rounded-lg border pl-2 pr-6 text-xs font-bold cursor-pointer ${
+                                              subSelectVal
+                                                ? isDark
+                                                  ? 'bg-indigo-950/80 border-indigo-700 text-indigo-200'
+                                                  : 'bg-indigo-50 border-indigo-200 text-indigo-800'
+                                                : inputMutedSurfaceClass
+                                            }`}
+                                          >
+                                            <option value="">Da dare</option>
+                                            <option value="30L">
+                                              30 e Lode
+                                            </option>
+                                            {[
+                                              30, 29, 28, 27, 26, 25, 24, 23,
+                                              22, 21, 20, 19, 18,
+                                            ].map((g) => (
+                                              <option key={g} value={String(g)}>
+                                                {g}
+                                              </option>
+                                            ))}
+                                          </select>
+                                          <ChevronDown
+                                            className={`w-3.5 h-3.5 pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2 ${
+                                              subSelectVal
+                                                ? isDark
+                                                  ? 'text-indigo-300'
+                                                  : 'text-indigo-700'
+                                                : isDark
+                                                ? 'text-slate-400'
+                                                : 'text-slate-500'
+                                            }`}
+                                          />
+                                        </div>
+                                      </td>
+                                      <td
+                                        className={`py-2.5 text-right text-xs font-semibold tabular-nums ${
+                                          isDark
+                                            ? 'text-slate-400'
+                                            : 'text-slate-500'
+                                        }`}
+                                      >
+                                        {weightPoints}
+                                      </td>
+                                      <td className="py-2.5 text-right">
+                                        <button
+                                          type="button"
+                                          onClick={() =>
+                                            handleDeleteMedSubject(
+                                              selectedMedYear,
+                                              block.id,
+                                              sub.id
+                                            )
+                                          }
+                                          className={`h-8 w-8 inline-flex items-center justify-center rounded-lg transition cursor-pointer ${
+                                            isDark
+                                              ? 'text-slate-500 hover:text-rose-400 hover:bg-rose-950/60'
+                                              : 'text-slate-400 hover:text-rose-600 hover:bg-rose-50'
+                                          }`}
+                                          title="Rimuovi materia"
+                                        >
+                                          <Trash2 className="w-3.5 h-3.5" />
+                                        </button>
+                                      </td>
+                                    </tr>
+                                  );
+                                })}
+                              </tbody>
+                            </table>
+                          </div>
+                        ) : (
+                          <div
+                            className={`rounded-xl border border-dashed py-3 px-3 text-center text-xs ${
+                              isDark
+                                ? 'border-slate-800 text-slate-400'
+                                : 'border-slate-200 text-slate-500'
+                            }`}
+                          >
+                            Nessuna materia inserita in questo blocco.
+                          </div>
+                        )}
+
+                        {/* Form rapido aggiunta materia */}
+                        <form
+                          onSubmit={(e) =>
+                            handleAddMedSubject(e, selectedMedYear, block.id)
+                          }
+                          className={`mt-auto pt-3 border-t flex flex-col sm:flex-row items-stretch sm:items-center gap-2 ${
+                            isDark ? 'border-slate-800' : 'border-slate-100'
+                          }`}
+                        >
+                          <input
+                            type="text"
+                            placeholder="Nuova materia..."
+                            value={draft.name}
+                            onChange={(e) =>
+                              setNewSubjectDrafts((prev) => ({
+                                ...prev,
+                                [block.id]: { ...draft, name: e.target.value },
+                              }))
+                            }
+                            required
+                            className={`h-10 sm:h-9 flex-1 rounded-xl border px-3 text-xs ${inputMutedSurfaceClass}`}
+                          />
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="number"
+                              min="0.5"
+                              max="30"
+                              step="0.5"
+                              placeholder="CFU"
+                              value={draft.cfu}
+                              onChange={(e) =>
+                                setNewSubjectDrafts((prev) => ({
+                                  ...prev,
+                                  [block.id]: { ...draft, cfu: e.target.value },
+                                }))
+                              }
+                              required
+                              className={`no-spinner h-10 sm:h-9 w-16 rounded-xl border px-2 text-xs text-center font-bold tabular-nums shrink-0 ${inputMutedSurfaceClass}`}
+                            />
+                            <div className="relative flex-1 sm:w-24 shrink-0">
+                              <select
+                                value={draft.grade}
+                                onChange={(e) =>
+                                  setNewSubjectDrafts((prev) => ({
+                                    ...prev,
+                                    [block.id]: {
+                                      ...draft,
+                                      grade: e.target.value,
+                                    },
+                                  }))
+                                }
+                                className={`appearance-none h-10 sm:h-9 w-full rounded-xl border pl-2.5 pr-6 text-xs font-semibold cursor-pointer ${inputMutedSurfaceClass}`}
+                              >
+                                <option value="">Da dare</option>
+                                <option value="30L">30L</option>
+                                {[
+                                  30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20,
+                                  19, 18,
+                                ].map((g) => (
+                                  <option key={g} value={String(g)}>
+                                    {g}
+                                  </option>
+                                ))}
+                              </select>
+                              <ChevronDown
+                                className={`w-3.5 h-3.5 pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 ${
+                                  isDark ? 'text-slate-400' : 'text-slate-500'
+                                }`}
+                              />
+                            </div>
+                            <button
+                              type="submit"
+                              className="h-10 sm:h-9 px-4 inline-flex items-center justify-center gap-1 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shadow-sm transition cursor-pointer shrink-0"
+                            >
+                              <Plus className="w-3.5 h-3.5" />
+                              <span>Aggiungi</span>
+                            </button>
+                          </div>
+                        </form>
+                      </div>
+                    )}
+                  </section>
+                );
+              })}
+            </div>
+          )}
+        </main>
+      )}
+    </div>
+  );
+}
