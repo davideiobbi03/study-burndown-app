@@ -51,8 +51,6 @@ import {
   Download,
   Upload,
   GraduationCap,
-  Calculator,
-  Award,
 } from 'lucide-react';
 
 // ============================================================================
@@ -600,59 +598,6 @@ export default function App() {
       ),
     }));
   };
-
-  const medAnalytics = useMemo(() => {
-    let totalWeightedSum = 0;
-    let totalGradedCfu = 0;
-    let totalAllCfu = 0;
-    let totalLodi = 0;
-
-    const perYear = {};
-
-    [1, 2, 3, 4, 5, 6].forEach((yr) => {
-      let yrWeightedSum = 0;
-      let yrGradedCfu = 0;
-      let yrAllCfu = 0;
-
-      (medYears[yr] || []).forEach((blk) => {
-        (blk.subjects || []).forEach((sub) => {
-          const cfu = Number(sub.cfu) || 0;
-          yrAllCfu += cfu;
-          totalAllCfu += cfu;
-
-          const grade = Number(sub.grade);
-          if (grade >= 18 && grade <= 30 && cfu > 0) {
-            yrWeightedSum += grade * cfu;
-            yrGradedCfu += cfu;
-            totalWeightedSum += grade * cfu;
-            totalGradedCfu += cfu;
-            if (sub.lode && grade === 30) totalLodi += 1;
-          }
-        });
-      });
-
-      perYear[yr] = {
-        blocksCount: (medYears[yr] || []).length,
-        gradedCfu: yrGradedCfu,
-        totalCfu: yrAllCfu,
-        weightedAvg: yrGradedCfu > 0 ? yrWeightedSum / yrGradedCfu : null,
-      };
-    });
-
-    const overallWeightedAvg =
-      totalGradedCfu > 0 ? totalWeightedSum / totalGradedCfu : null;
-    const graduationBase =
-      overallWeightedAvg !== null ? (overallWeightedAvg * 110) / 30 : null;
-
-    return {
-      overallWeightedAvg,
-      graduationBase,
-      totalGradedCfu,
-      totalAllCfu,
-      totalLodi,
-      perYear,
-    };
-  }, [medYears]);
 
   const [layout, setLayout] = useState(() => {
     try {
@@ -4293,7 +4238,7 @@ export default function App() {
                 >
                   {activeTab === 'tracker'
                     ? 'Tracker Esami Universitari'
-                    : 'Medicina e Chirurgia • Anni & Blocchi'}
+                    : 'Medicina • Anni & Calcolo Voto Blocchi'}
                 </span>
               </div>
 
@@ -4361,7 +4306,7 @@ export default function App() {
                     isDark ? 'text-slate-50' : 'text-slate-900'
                   }`}
                 >
-                  Libretto &amp; Calcolatore Blocchi
+                  Calcolatore Voto Blocchi (1° – 6° Anno)
                 </h1>
               )}
             </div>
@@ -4406,7 +4351,7 @@ export default function App() {
                 }`}
               >
                 <GraduationCap className="w-3.5 h-3.5" />
-                <span>Libretto &amp; Medie</span>
+                <span>Voti Blocchi</span>
               </button>
             </div>
 
@@ -4681,7 +4626,7 @@ export default function App() {
                       isDark ? 'text-slate-300' : 'text-slate-600'
                     }`}
                   >
-                    Ogni modifica a pagine, esami, libretto, timer e ripassi
+                    Ogni modifica a pagine, esami, blocchi, timer e ripassi
                     viene salvata automaticamente sul cloud e caricata quando
                     apri l&apos;app su iPad o Mac.
                   </p>
@@ -5307,257 +5252,11 @@ export default function App() {
       )}
 
       {/* =====================================================================
-          PAGINA 2: LIBRETTO MEDICINA (1°–6° ANNO, BLOCCHI E MEDIA PONDERATA)
+          PAGINA 2: CALCOLATORE MEDIA PONDERATA BLOCCHI (1°–6° ANNO MEDICINA)
          ===================================================================== */}
       {activeTab === 'libretto' && (
         <main className="w-full px-4 sm:px-6 lg:px-8 py-6 space-y-6">
-          {/* 1. RIGA 4 KPI CARDS GENERALI */}
-          <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div
-              className={`rounded-2xl border p-4 shadow-sm flex flex-col justify-between ${cardSurfaceClass}`}
-            >
-              <div className="flex items-center justify-between">
-                <span
-                  className={`text-xs font-semibold uppercase tracking-wide ${
-                    isDark ? 'text-slate-400' : 'text-slate-500'
-                  }`}
-                >
-                  Media Ponderata Totale
-                </span>
-                <div className={`p-2 rounded-lg ${indigoPillClass}`}>
-                  <Calculator className="w-4 h-4" />
-                </div>
-              </div>
-              <div className="my-2">
-                <div
-                  className={`text-2xl sm:text-3xl font-extrabold ${
-                    isDark ? 'text-slate-50' : 'text-slate-900'
-                  }`}
-                >
-                  {medAnalytics.overallWeightedAvg !== null
-                    ? medAnalytics.overallWeightedAvg.toFixed(2)
-                    : '—'}
-                  <span
-                    className={`text-sm font-semibold ml-1 ${
-                      isDark ? 'text-slate-400' : 'text-slate-500'
-                    }`}
-                  >
-                    / 30
-                  </span>
-                </div>
-                <p
-                  className={`text-xs mt-0.5 ${
-                    isDark ? 'text-slate-400' : 'text-slate-500'
-                  }`}
-                >
-                  Su{' '}
-                  <strong
-                    className={isDark ? 'text-slate-200' : 'text-slate-700'}
-                  >
-                    {medAnalytics.totalGradedCfu}
-                  </strong>{' '}
-                  CFU valutati
-                </p>
-              </div>
-              <div
-                className={`text-xs font-medium ${
-                  isDark ? 'text-slate-400' : 'text-slate-500'
-                }`}
-              >
-                Lodi conseguite:{' '}
-                <span
-                  className={`font-semibold ${
-                    isDark ? 'text-indigo-400' : 'text-indigo-600'
-                  }`}
-                >
-                  {medAnalytics.totalLodi}
-                </span>
-              </div>
-            </div>
-
-            <div
-              className={`rounded-2xl border p-4 shadow-sm flex flex-col justify-between ${cardSurfaceClass}`}
-            >
-              <div className="flex items-center justify-between">
-                <span
-                  className={`text-xs font-semibold uppercase tracking-wide ${
-                    isDark ? 'text-slate-400' : 'text-slate-500'
-                  }`}
-                >
-                  Base Voto di Laurea
-                </span>
-                <div
-                  className={`p-2 rounded-lg ${
-                    isDark
-                      ? 'bg-emerald-950/80 text-emerald-400 border border-emerald-800/70'
-                      : 'bg-emerald-50 text-emerald-600 border border-emerald-200'
-                  }`}
-                >
-                  <Award className="w-4 h-4" />
-                </div>
-              </div>
-              <div className="my-2">
-                <div
-                  className={`text-2xl sm:text-3xl font-extrabold ${
-                    isDark ? 'text-slate-50' : 'text-slate-900'
-                  }`}
-                >
-                  {medAnalytics.graduationBase !== null
-                    ? medAnalytics.graduationBase.toFixed(2)
-                    : '—'}
-                  <span
-                    className={`text-sm font-semibold ml-1 ${
-                      isDark ? 'text-slate-400' : 'text-slate-500'
-                    }`}
-                  >
-                    / 110
-                  </span>
-                </div>
-                <p
-                  className={`text-xs mt-0.5 ${
-                    isDark ? 'text-slate-400' : 'text-slate-500'
-                  }`}
-                >
-                  Calcolo: (Media × 110) / 30
-                </p>
-              </div>
-              <div
-                className={`text-xs font-medium ${
-                  isDark ? 'text-slate-400' : 'text-slate-500'
-                }`}
-              >
-                Esclusi punti tesi e bonus
-              </div>
-            </div>
-
-            <div
-              className={`rounded-2xl border p-4 shadow-sm flex flex-col justify-between ${cardSurfaceClass}`}
-            >
-              <div className="flex items-center justify-between">
-                <span
-                  className={`text-xs font-semibold uppercase tracking-wide ${
-                    isDark ? 'text-slate-400' : 'text-slate-500'
-                  }`}
-                >
-                  Avanzamento CFU
-                </span>
-                <div
-                  className={`p-2 rounded-lg ${
-                    isDark
-                      ? 'bg-sky-950/80 text-sky-400 border border-sky-800/70'
-                      : 'bg-sky-50 text-sky-600 border border-sky-200'
-                  }`}
-                >
-                  <Layers className="w-4 h-4" />
-                </div>
-              </div>
-              <div className="my-2">
-                <div
-                  className={`text-2xl sm:text-3xl font-extrabold ${
-                    isDark ? 'text-slate-50' : 'text-slate-900'
-                  }`}
-                >
-                  {medAnalytics.totalGradedCfu}
-                  <span
-                    className={`text-sm font-semibold ml-1 ${
-                      isDark ? 'text-slate-400' : 'text-slate-500'
-                    }`}
-                  >
-                    / 360 CFU
-                  </span>
-                </div>
-                <p
-                  className={`text-xs mt-0.5 ${
-                    isDark ? 'text-slate-400' : 'text-slate-500'
-                  }`}
-                >
-                  {((medAnalytics.totalGradedCfu / 360) * 100).toFixed(1)}% del
-                  corso di laurea
-                </p>
-              </div>
-              <div
-                className={`w-full h-2 rounded-full overflow-hidden ${
-                  isDark ? 'bg-slate-800' : 'bg-slate-100'
-                }`}
-              >
-                <div
-                  className="h-full bg-indigo-600 rounded-full transition-all duration-500"
-                  style={{
-                    width: `${Math.min(
-                      100,
-                      (medAnalytics.totalGradedCfu / 360) * 100
-                    )}%`,
-                  }}
-                />
-              </div>
-            </div>
-
-            <div
-              className={`rounded-2xl border p-4 shadow-sm flex flex-col justify-between ${cardSurfaceClass}`}
-            >
-              <div className="flex items-center justify-between">
-                <span
-                  className={`text-xs font-semibold uppercase tracking-wide ${
-                    isDark ? 'text-slate-400' : 'text-slate-500'
-                  }`}
-                >
-                  Media {selectedMedYear}° Anno
-                </span>
-                <div
-                  className={`p-2 rounded-lg ${
-                    isDark
-                      ? 'bg-amber-950/80 text-amber-400 border border-amber-800/70'
-                      : 'bg-amber-50 text-amber-600 border border-amber-200'
-                  }`}
-                >
-                  <GraduationCap className="w-4 h-4" />
-                </div>
-              </div>
-              <div className="my-2">
-                <div
-                  className={`text-2xl sm:text-3xl font-extrabold ${
-                    isDark ? 'text-slate-50' : 'text-slate-900'
-                  }`}
-                >
-                  {medAnalytics.perYear[selectedMedYear]?.weightedAvg !== null
-                    ? medAnalytics.perYear[
-                        selectedMedYear
-                      ].weightedAvg.toFixed(2)
-                    : '—'}
-                  <span
-                    className={`text-sm font-semibold ml-1 ${
-                      isDark ? 'text-slate-400' : 'text-slate-500'
-                    }`}
-                  >
-                    / 30
-                  </span>
-                </div>
-                <p
-                  className={`text-xs mt-0.5 ${
-                    isDark ? 'text-slate-400' : 'text-slate-500'
-                  }`}
-                >
-                  <strong
-                    className={isDark ? 'text-slate-200' : 'text-slate-700'}
-                  >
-                    {medAnalytics.perYear[selectedMedYear]?.gradedCfu || 0}
-                  </strong>{' '}
-                  / {medAnalytics.perYear[selectedMedYear]?.totalCfu || 0} CFU
-                  inseriti nell&apos;anno
-                </p>
-              </div>
-              <div
-                className={`text-xs font-medium ${
-                  isDark ? 'text-slate-400' : 'text-slate-500'
-                }`}
-              >
-                {medAnalytics.perYear[selectedMedYear]?.blocksCount || 0}{' '}
-                blocchi configurati
-              </div>
-            </div>
-          </section>
-
-          {/* 2. SELETTORE ANNI DI MEDICINA (1° - 6° ANNO) */}
+          {/* 1. SELETTORE ANNI DI MEDICINA (1° - 6° ANNO) */}
           <section
             className={`rounded-2xl border p-4 sm:p-5 shadow-sm space-y-4 ${cardSurfaceClass}`}
           >
@@ -5575,8 +5274,8 @@ export default function App() {
                     isDark ? 'text-slate-400' : 'text-slate-500'
                   }`}
                 >
-                  Organizza gli esami integrati in blocchi e calcola la media
-                  ponderata dei singoli moduli
+                  Inserisci i blocchi dell&apos;anno e le relative materie per
+                  calcolare il voto ponderato di ciascun blocco
                 </p>
               </div>
 
@@ -5605,7 +5304,7 @@ export default function App() {
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
               {[1, 2, 3, 4, 5, 6].map((yr) => {
                 const isSelected = selectedMedYear === yr;
-                const yrStat = medAnalytics.perYear[yr];
+                const blocksCount = (medYears[yr] || []).length;
                 return (
                   <button
                     key={yr}
@@ -5614,7 +5313,7 @@ export default function App() {
                       setSelectedMedYear(yr);
                       setEditingBlockId(null);
                     }}
-                    className={`rounded-xl border p-3 text-left transition cursor-pointer flex flex-col justify-between ${
+                    className={`rounded-xl border p-3 text-left transition cursor-pointer flex items-center justify-between gap-2 ${
                       isSelected
                         ? isDark
                           ? 'bg-indigo-950/75 border-indigo-600 text-indigo-100 shadow-xs'
@@ -5624,54 +5323,25 @@ export default function App() {
                         : 'bg-slate-50/80 border-slate-200 text-slate-700 hover:bg-white'
                     }`}
                   >
-                    <div className="flex items-center justify-between gap-1">
-                      <span className="text-sm font-extrabold">
-                        {yr}° Anno
-                      </span>
-                      <span
-                        className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                          isSelected
-                            ? 'bg-indigo-600 text-white'
-                            : isDark
-                            ? 'bg-slate-700 text-slate-300'
-                            : 'bg-slate-200/80 text-slate-600'
-                        }`}
-                      >
-                        {yrStat.blocksCount}{' '}
-                        {yrStat.blocksCount === 1 ? 'blocco' : 'blocchi'}
-                      </span>
-                    </div>
-                    <div className="mt-2 flex items-center justify-between text-[11px]">
-                      <span
-                        className={
-                          isSelected
-                            ? isDark
-                              ? 'text-indigo-300 font-semibold'
-                              : 'text-indigo-700 font-semibold'
-                            : isDark
-                            ? 'text-slate-400'
-                            : 'text-slate-500'
-                        }
-                      >
-                        {yrStat.weightedAvg !== null
-                          ? `Media: ${yrStat.weightedAvg.toFixed(2)}`
-                          : 'Nessun voto'}
-                      </span>
-                      <span
-                        className={
-                          isDark ? 'text-slate-400' : 'text-slate-500'
-                        }
-                      >
-                        {yrStat.gradedCfu} CFU
-                      </span>
-                    </div>
+                    <span className="text-sm font-extrabold">{yr}° Anno</span>
+                    <span
+                      className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                        isSelected
+                          ? 'bg-indigo-600 text-white'
+                          : isDark
+                          ? 'bg-slate-700 text-slate-300'
+                          : 'bg-slate-200/80 text-slate-600'
+                      }`}
+                    >
+                      {blocksCount} {blocksCount === 1 ? 'blocco' : 'blocchi'}
+                    </span>
                   </button>
                 );
               })}
             </div>
           </section>
 
-          {/* 3. ELENCO BLOCCHI DELL'ANNO SELEZIONATO */}
+          {/* 2. ELENCO BLOCCHI DELL'ANNO SELEZIONATO */}
           {(medYears[selectedMedYear] || []).length === 0 ? (
             <section
               className={`rounded-2xl border border-dashed p-10 text-center space-y-2 ${
@@ -5686,8 +5356,8 @@ export default function App() {
               </p>
               <p className="text-xs">
                 Usa il campo &ldquo;Aggiungi Blocco&rdquo; qui sopra per creare
-                un esame integrato (es. Anatomia Umana, Patologia Integrata) e
-                inserire le relative materie con CFU e voti.
+                un esame integrato e inserire le materie con CFU e voti per
+                vedere quanto ti uscirà al blocco.
               </p>
             </section>
           ) : (
@@ -5697,6 +5367,8 @@ export default function App() {
                 let blkWeightedSum = 0;
                 let blkGradedCfu = 0;
                 let blkTotalCfu = 0;
+                let gradedCount = 0;
+                let allLode = true;
 
                 (block.subjects || []).forEach((s) => {
                   const c = Number(s.cfu) || 0;
@@ -5705,12 +5377,21 @@ export default function App() {
                   if (g >= 18 && g <= 30 && c > 0) {
                     blkWeightedSum += g * c;
                     blkGradedCfu += c;
+                    gradedCount += 1;
+                    if (!(g === 30 && s.lode)) {
+                      allLode = false;
+                    }
                   }
                 });
 
                 const blkAvg =
                   blkGradedCfu > 0 ? blkWeightedSum / blkGradedCfu : null;
-                const blkRounded = blkAvg !== null ? Math.round(blkAvg) : null;
+                const blkFinalGrade =
+                  blkAvg !== null
+                    ? blkAvg === 30 && gradedCount > 0 && allLode
+                      ? '30 e Lode'
+                      : `${Math.round(blkAvg)}/30`
+                    : null;
 
                 const draft = newSubjectDrafts[block.id] || {
                   name: '',
@@ -5723,7 +5404,7 @@ export default function App() {
                     key={block.id}
                     className={`rounded-2xl border p-4 sm:p-6 shadow-sm space-y-4 ${cardSurfaceClass}`}
                   >
-                    {/* Header del Blocco + Risultato Media Ponderata */}
+                    {/* Header del Blocco + Risultato Media Ponderata Blocco */}
                     <div
                       className={`flex flex-wrap items-start justify-between gap-3 pb-3.5 border-b ${
                         isDark ? 'border-slate-800' : 'border-slate-100'
@@ -5805,10 +5486,10 @@ export default function App() {
                         </p>
                       </div>
 
-                      {/* Badge Calcolatore Media Ponderata Blocco */}
+                      {/* Badge Media Ponderata del Blocco */}
                       <div className="flex items-center gap-2 shrink-0">
                         <div
-                          className={`rounded-xl px-3 py-1.5 border text-right ${
+                          className={`rounded-xl px-3.5 py-1.5 border text-right ${
                             blkAvg !== null
                               ? isDark
                                 ? 'bg-indigo-950/75 border-indigo-700/80 text-indigo-100'
@@ -5819,7 +5500,7 @@ export default function App() {
                           }`}
                         >
                           <div className="text-[10px] font-bold uppercase tracking-wider opacity-80">
-                            Media Ponderata Blocco
+                            Voto Blocco (Media Ponderata)
                           </div>
                           {blkAvg !== null ? (
                             <div className="flex items-baseline justify-end gap-1.5">
@@ -5827,14 +5508,10 @@ export default function App() {
                                 {blkAvg.toFixed(2)}
                               </span>
                               <span
-                                className={`text-xs font-bold px-1.5 py-0.2 rounded ${
-                                  isDark
-                                    ? 'bg-indigo-600 text-white'
-                                    : 'bg-indigo-600 text-white'
-                                }`}
+                                className="text-xs font-bold px-2 py-0.5 rounded bg-indigo-600 text-white"
                                 title="Voto finale arrotondato del blocco"
                               >
-                                → {blkRounded}/30
+                                → {blkFinalGrade}
                               </span>
                             </div>
                           ) : (
