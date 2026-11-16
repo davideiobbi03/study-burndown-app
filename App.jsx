@@ -24,7 +24,6 @@ import {
   X,
   RotateCcw,
   Copy,
-  Sparkles,
   Clock,
   Target,
   Layers,
@@ -51,7 +50,10 @@ import {
   LogOut,
   Download,
   Upload,
-  Palette,
+  GraduationCap,
+  ChevronDown,
+  ChevronRight,
+  ChevronsUpDown,
 } from 'lucide-react';
 
 // ============================================================================
@@ -60,60 +62,6 @@ import {
 const SUPABASE_URL = 'https://lubcesnljpwvgvsnhtcl.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_psF0qMa_982qxlfRWaFGHA_JlFL_9zW';
 // ============================================================================
-
-// --- PALETTE COLORI ACCENTO ---
-const ACCENT_COLORS = {
-  indigo: {
-    label: 'Indigo',
-    primary: 'bg-indigo-600 hover:bg-indigo-700 text-white',
-    primaryHover: 'hover:bg-indigo-700',
-    border: 'border-indigo-500',
-    ring: 'focus:ring-indigo-500',
-    text: 'text-indigo-600 dark:text-indigo-400',
-    bgLight: 'bg-indigo-50 dark:bg-indigo-950/70 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800/70',
-    hex: '#4f46e5',
-  },
-  emerald: {
-    label: 'Emerald',
-    primary: 'bg-emerald-600 hover:bg-emerald-700 text-white',
-    primaryHover: 'hover:bg-emerald-700',
-    border: 'border-emerald-500',
-    ring: 'focus:ring-emerald-500',
-    text: 'text-emerald-600 dark:text-emerald-400',
-    bgLight: 'bg-emerald-50 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800/70',
-    hex: '#059669',
-  },
-  violet: {
-    label: 'Violet',
-    primary: 'bg-violet-600 hover:bg-violet-700 text-white',
-    primaryHover: 'hover:bg-violet-700',
-    border: 'border-violet-500',
-    ring: 'focus:ring-violet-500',
-    text: 'text-violet-600 dark:text-violet-400',
-    bgLight: 'bg-violet-50 dark:bg-violet-950/70 text-violet-700 dark:text-violet-300 border-violet-200 dark:border-violet-800/70',
-    hex: '#7c3aed',
-  },
-  rose: {
-    label: 'Rose',
-    primary: 'bg-rose-600 hover:bg-rose-700 text-white',
-    primaryHover: 'hover:bg-rose-700',
-    border: 'border-rose-500',
-    ring: 'focus:ring-rose-500',
-    text: 'text-rose-600 dark:text-rose-400',
-    bgLight: 'bg-rose-50 dark:bg-rose-950/70 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800/70',
-    hex: '#e11d48',
-  },
-  amber: {
-    label: 'Amber',
-    primary: 'bg-amber-600 hover:bg-amber-700 text-white',
-    primaryHover: 'hover:bg-amber-700',
-    border: 'border-amber-500',
-    ring: 'focus:ring-amber-500',
-    text: 'text-amber-600 dark:text-amber-400',
-    bgLight: 'bg-amber-50 dark:bg-amber-950/70 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800/70',
-    hex: '#d97706',
-  },
-};
 
 // --- UTILITY DATE ---
 function getTodayStr() {
@@ -171,14 +119,97 @@ function formatMinutesHuman(totalMinutes) {
   return m > 0 ? `${h}h ${m}m` : `${h}h`;
 }
 
+// --- DATI INIZIALI LIBRETTO MEDICINA (1° - 6° ANNO) ---
+function createDefaultMedYears() {
+  return {
+    1: [
+      {
+        id: 'blk_y1_1',
+        name: 'Biologia e Genetica',
+        subjects: [
+          {
+            id: 'sub_y1_1a',
+            name: 'Biologia Cellulare e Molecolare',
+            cfu: 6,
+            grade: 28,
+            lode: false,
+          },
+          {
+            id: 'sub_y1_1b',
+            name: 'Genetica Medica',
+            cfu: 4,
+            grade: 30,
+            lode: true,
+          },
+        ],
+      },
+      {
+        id: 'blk_y1_2',
+        name: 'Istologia ed Embriologia',
+        subjects: [
+          {
+            id: 'sub_y1_2a',
+            name: 'Istologia',
+            cfu: 6,
+            grade: 27,
+            lode: false,
+          },
+          {
+            id: 'sub_y1_2b',
+            name: 'Embriologia Umana',
+            cfu: 3,
+            grade: 29,
+            lode: false,
+          },
+        ],
+      },
+    ],
+    2: [],
+    3: [],
+    4: [
+      {
+        id: 'blk_y4_1',
+        name: 'Medicina di Laboratorio',
+        subjects: [
+          {
+            id: 'sub_y4_1a',
+            name: 'Biochimica Clinica',
+            cfu: 4,
+            grade: null,
+            lode: false,
+          },
+          {
+            id: 'sub_y4_1b',
+            name: 'Patologia Clinica',
+            cfu: 4,
+            grade: null,
+            lode: false,
+          },
+        ],
+      },
+    ],
+    5: [],
+    6: [],
+  };
+}
+
+function normalizeMedYears(raw) {
+  const base = { 1: [], 2: [], 3: [], 4: [], 5: [], 6: [] };
+  if (!raw || typeof raw !== 'object') return createDefaultMedYears();
+  [1, 2, 3, 4, 5, 6].forEach((yr) => {
+    base[yr] = Array.isArray(raw[yr]) ? raw[yr] : [];
+  });
+  return base;
+}
+
 // --- CITAZIONI MOTIVAZIONALI POMODORO ---
 const POMO_QUOTES = [
-  "“La costanza è il mattone fondamentale del successo clinico e accademico.”",
-  "“Un capitolo alla volta, un Pomodoro alla volta: la meta si avvicina.”",
-  "“La mente focalizzata è il tuo strumento diagnostico più potente.”",
-  "“Il successo non viene dai colpi di genio isolati, ma dalla disciplina quotidiana.”",
-  "“Rilassati, respira e riparti: il recupero è parte integrante dello studio.”",
-  "“Trasforma la complessità in schemi chiari. Tu domini la materia.”",
+  '“La costanza è il mattone fondamentale del successo clinico e accademico.”',
+  '“Un capitolo alla volta, un Pomodoro alla volta: la meta si avvicina.”',
+  '“La mente focalizzata è il tuo strumento diagnostico più potente.”',
+  '“Il successo non viene dai colpi di genio isolati, ma dalla disciplina quotidiana.”',
+  '“Rilassati, respira e riparti: il recupero è parte integrante dello studio.”',
+  '“Trasforma la complessità in schemi chiari. Tu domini la materia.”',
 ];
 
 // --- MOTORE AUDIO POMODORO ---
@@ -378,12 +409,13 @@ function createDefaultExam(name = 'Biochimica Clinica') {
 const STORAGE_KEY = 'studyburn_state_v2';
 const LAYOUT_STORAGE_KEY = 'studyburn_layout_v1';
 const THEME_STORAGE_KEY = 'studyburn_theme_v1';
-const ACCENT_STORAGE_KEY = 'studyburn_accent_v1';
 const POMO_PREFS_STORAGE_KEY = 'studyburn_pomo_prefs_v1';
 const CLOUD_CONFIG_STORAGE_KEY = 'studyburn_cloud_config_v1';
 const CLOUD_SESSION_STORAGE_KEY = 'studyburn_cloud_session_v1';
 
 export default function App() {
+  const [activeTab, setActiveTab] = useState('tracker'); // 'tracker' | 'libretto'
+
   const [isDark, setIsDark] = useState(() => {
     try {
       const savedTheme = localStorage.getItem(THEME_STORAGE_KEY);
@@ -402,26 +434,6 @@ export default function App() {
     return false;
   });
 
-  const [accentKey, setAccentKey] = useState(() => {
-    try {
-      const saved = localStorage.getItem(ACCENT_STORAGE_KEY);
-      if (saved && ACCENT_COLORS[saved]) return saved;
-    } catch (e) {
-      console.error('Errore lettura colore accento:', e);
-    }
-    return 'indigo';
-  });
-
-  const currentAccent = ACCENT_COLORS[accentKey] || ACCENT_COLORS.indigo;
-
-  useEffect(() => {
-    try {
-      localStorage.setItem(ACCENT_STORAGE_KEY, accentKey);
-    } catch (e) {
-      console.error('Errore salvataggio colore accento:', e);
-    }
-  }, [accentKey]);
-
   useEffect(() => {
     try {
       localStorage.setItem(THEME_STORAGE_KEY, isDark ? 'dark' : 'light');
@@ -438,7 +450,10 @@ export default function App() {
       if (saved) {
         const parsed = JSON.parse(saved);
         if (parsed && Array.isArray(parsed.exams) && parsed.exams.length > 0) {
-          return parsed;
+          return {
+            ...parsed,
+            medYears: normalizeMedYears(parsed.medYears),
+          };
         }
       }
     } catch (e) {
@@ -448,8 +463,215 @@ export default function App() {
     return {
       exams: [initial],
       activeExamId: initial.id,
+      medYears: createDefaultMedYears(),
     };
   });
+
+  // --- STATO PAGINA VOTI BLOCCHI (1° - 6° ANNO MEDICINA) ---
+  const [selectedMedYear, setSelectedMedYear] = useState(1);
+  const [newBlockName, setNewBlockName] = useState('');
+  const [editingBlockId, setEditingBlockId] = useState(null);
+  const [editingBlockTitle, setEditingBlockTitle] = useState('');
+  const [newSubjectDrafts, setNewSubjectDrafts] = useState({});
+  const [expandedBlocks, setExpandedBlocks] = useState({});
+
+  // Stato riordinamento blocchi
+  const [isBlockReorderMode, setIsBlockReorderMode] = useState(false);
+  const [blockDragReadyId, setBlockDragReadyId] = useState(null);
+  const [draggedBlockId, setDraggedBlockId] = useState(null);
+  const [dragOverBlockIdx, setDragOverBlockIdx] = useState(null);
+
+  const medYears = useMemo(
+    () => normalizeMedYears(state.medYears),
+    [state.medYears]
+  );
+
+  const toggleBlockExpanded = (blockId) => {
+    setExpandedBlocks((prev) => ({
+      ...prev,
+      [blockId]: !prev[blockId],
+    }));
+  };
+
+  const currentYearBlocks = useMemo(
+    () => medYears[selectedMedYear] || [],
+    [medYears, selectedMedYear]
+  );
+
+  const areAllCurrentBlocksExpanded = useMemo(() => {
+    if (currentYearBlocks.length === 0) return false;
+    return currentYearBlocks.every((b) => Boolean(expandedBlocks[b.id]));
+  }, [currentYearBlocks, expandedBlocks]);
+
+  const handleToggleAllCurrentBlocks = () => {
+    const nextState = !areAllCurrentBlocksExpanded;
+    setExpandedBlocks((prev) => {
+      const updated = { ...prev };
+      currentYearBlocks.forEach((b) => {
+        updated[b.id] = nextState;
+      });
+      return updated;
+    });
+  };
+
+  const updateMedYears = (updater, saveUndo = true) => {
+    setState((prev) => {
+      if (saveUndo) {
+        setUndoStack((u) => [prev, ...u.slice(0, 9)]);
+      }
+      const currentYears = normalizeMedYears(prev.medYears);
+      const nextYears =
+        typeof updater === 'function' ? updater(currentYears) : updater;
+      return {
+        ...prev,
+        medYears: nextYears,
+      };
+    });
+  };
+
+  const moveBlockUp = (index) => {
+    if (index <= 0) return;
+    updateMedYears((yrs) => {
+      const list = [...(yrs[selectedMedYear] || [])];
+      [list[index - 1], list[index]] = [list[index], list[index - 1]];
+      return { ...yrs, [selectedMedYear]: list };
+    });
+  };
+
+  const moveBlockDown = (index) => {
+    if (index >= currentYearBlocks.length - 1) return;
+    updateMedYears((yrs) => {
+      const list = [...(yrs[selectedMedYear] || [])];
+      [list[index], list[index + 1]] = [list[index + 1], list[index]];
+      return { ...yrs, [selectedMedYear]: list };
+    });
+  };
+
+  const handleDropMedBlock = (targetIndex) => {
+    if (!draggedBlockId) return;
+    updateMedYears((yrs) => {
+      const list = [...(yrs[selectedMedYear] || [])];
+      const sourceIndex = list.findIndex((b) => b.id === draggedBlockId);
+      if (sourceIndex === -1 || sourceIndex === targetIndex) return yrs;
+      const [moved] = list.splice(sourceIndex, 1);
+      const safeIdx = Math.max(0, Math.min(list.length, targetIndex));
+      list.splice(safeIdx, 0, moved);
+      return { ...yrs, [selectedMedYear]: list };
+    });
+    setDraggedBlockId(null);
+    setDragOverBlockIdx(null);
+    setBlockDragReadyId(null);
+  };
+
+  const handleAddMedBlock = (e) => {
+    e.preventDefault();
+    const cleanName = newBlockName.trim();
+    if (!cleanName) return;
+    const newId = `blk_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+    const newBlock = {
+      id: newId,
+      name: cleanName,
+      subjects: [],
+    };
+    updateMedYears((yrs) => ({
+      ...yrs,
+      [selectedMedYear]: [...yrs[selectedMedYear], newBlock],
+    }));
+    setExpandedBlocks((prev) => ({ ...prev, [newId]: true }));
+    setNewBlockName('');
+  };
+
+  const handleRenameMedBlock = (yearNum, blockId) => {
+    const clean = editingBlockTitle.trim();
+    if (!clean) {
+      setEditingBlockId(null);
+      return;
+    }
+    updateMedYears((yrs) => ({
+      ...yrs,
+      [yearNum]: yrs[yearNum].map((b) =>
+        b.id === blockId ? { ...b, name: clean } : b
+      ),
+    }));
+    setEditingBlockId(null);
+  };
+
+  const handleDeleteMedBlock = (yearNum, blockId) => {
+    updateMedYears((yrs) => ({
+      ...yrs,
+      [yearNum]: yrs[yearNum].filter((b) => b.id !== blockId),
+    }));
+  };
+
+  const handleAddMedSubject = (e, yearNum, blockId) => {
+    e.preventDefault();
+    const draft = newSubjectDrafts[blockId] || {
+      name: '',
+      cfu: '6',
+      grade: '',
+    };
+    const cleanName = (draft.name || '').trim();
+    const cfuVal = Math.max(0.5, Number(draft.cfu) || 0);
+    if (!cleanName || cfuVal <= 0) return;
+
+    let gradeVal = null;
+    let lodeVal = false;
+    if (draft.grade === '30L') {
+      gradeVal = 30;
+      lodeVal = true;
+    } else if (draft.grade !== '' && draft.grade !== null) {
+      const parsedGrade = Number(draft.grade);
+      if (parsedGrade >= 18 && parsedGrade <= 30) {
+        gradeVal = parsedGrade;
+      }
+    }
+
+    const newSub = {
+      id: `sub_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+      name: cleanName,
+      cfu: cfuVal,
+      grade: gradeVal,
+      lode: lodeVal,
+    };
+
+    updateMedYears((yrs) => ({
+      ...yrs,
+      [yearNum]: yrs[yearNum].map((b) =>
+        b.id === blockId ? { ...b, subjects: [...b.subjects, newSub] } : b
+      ),
+    }));
+
+    setNewSubjectDrafts((prev) => ({
+      ...prev,
+      [blockId]: { name: '', cfu: '6', grade: '' },
+    }));
+  };
+
+  const handleUpdateMedSubject = (yearNum, blockId, subjectId, patch) => {
+    updateMedYears((yrs) => ({
+      ...yrs,
+      [yearNum]: yrs[yearNum].map((b) => {
+        if (b.id !== blockId) return b;
+        return {
+          ...b,
+          subjects: b.subjects.map((s) =>
+            s.id === subjectId ? { ...s, ...patch } : s
+          ),
+        };
+      }),
+    }));
+  };
+
+  const handleDeleteMedSubject = (yearNum, blockId, subjectId) => {
+    updateMedYears((yrs) => ({
+      ...yrs,
+      [yearNum]: yrs[yearNum].map((b) =>
+        b.id === blockId
+          ? { ...b, subjects: b.subjects.filter((s) => s.id !== subjectId) }
+          : b
+      ),
+    }));
+  };
 
   const [layout, setLayout] = useState(() => {
     try {
@@ -715,7 +937,12 @@ export default function App() {
       Array.isArray(payload.state.exams) &&
       payload.state.exams.length > 0
     ) {
-      setState(payload.state);
+      setState((prev) => ({
+        ...payload.state,
+        medYears: payload.state.medYears
+          ? normalizeMedYears(payload.state.medYears)
+          : normalizeMedYears(prev.medYears),
+      }));
     }
     if (payload.layout) {
       setLayout(sanitizeLayout(payload.layout));
@@ -1546,6 +1773,7 @@ export default function App() {
     const newExam = createDefaultExam(`Nuovo Esame ${count}`);
     setUndoStack((u) => [state, ...u.slice(0, 9)]);
     setState((prev) => ({
+      ...prev,
       exams: [...prev.exams, newExam],
       activeExamId: newExam.id,
     }));
@@ -1567,6 +1795,7 @@ export default function App() {
     };
     setUndoStack((u) => [state, ...u.slice(0, 9)]);
     setState((prev) => ({
+      ...prev,
       exams: [...prev.exams, copy],
       activeExamId: copy.id,
     }));
@@ -1579,6 +1808,7 @@ export default function App() {
     setState((prev) => {
       const remaining = prev.exams.filter((ex) => ex.id !== activeExam.id);
       return {
+        ...prev,
         exams: remaining,
         activeExamId: remaining[0].id,
       };
@@ -1953,10 +2183,12 @@ export default function App() {
   const statusStyles = {
     green: {
       wrapper: isDark
-        ? 'bg-emerald-950/45 border-emerald-800/70 text-emerald-100'
-        : 'bg-emerald-50/90 border-emerald-200 text-emerald-950',
+        ? 'bg-emerald-950/55 border-emerald-800/80 text-emerald-100'
+        : 'bg-emerald-50 border-emerald-200 text-emerald-950',
+      headlineColor: isDark ? 'text-emerald-50' : 'text-emerald-950',
+      detailColor: isDark ? 'text-emerald-200' : 'text-emerald-900',
       badge: isDark
-        ? 'bg-emerald-900/70 text-emerald-200 border-emerald-700/70'
+        ? 'bg-emerald-900/80 text-emerald-200 border-emerald-700/80'
         : 'bg-emerald-100 text-emerald-800 border-emerald-200',
       iconBg: 'bg-emerald-600 text-white',
       lineColor: '#10b981',
@@ -1964,10 +2196,12 @@ export default function App() {
     },
     yellow: {
       wrapper: isDark
-        ? 'bg-amber-950/45 border-amber-800/70 text-amber-100'
-        : 'bg-amber-50/90 border-amber-200 text-amber-950',
+        ? 'bg-amber-950/55 border-amber-800/80 text-amber-100'
+        : 'bg-amber-50 border-amber-200 text-amber-950',
+      headlineColor: isDark ? 'text-amber-50' : 'text-amber-950',
+      detailColor: isDark ? 'text-amber-200' : 'text-amber-900',
       badge: isDark
-        ? 'bg-amber-900/70 text-amber-200 border-amber-700/70'
+        ? 'bg-amber-900/80 text-amber-200 border-amber-700/80'
         : 'bg-amber-100 text-amber-800 border-amber-200',
       iconBg: 'bg-amber-500 text-white',
       lineColor: '#f59e0b',
@@ -1975,11 +2209,13 @@ export default function App() {
     },
     red: {
       wrapper: isDark
-        ? 'bg-rose-950/45 border-rose-800/70 text-rose-100'
-        : 'bg-rose-50/90 border-rose-200 text-rose-950',
+        ? 'bg-rose-950/55 border-rose-800/80 text-rose-100'
+        : 'bg-rose-50 border-rose-200 text-rose-950',
+      headlineColor: isDark ? 'text-rose-50' : 'text-rose-950',
+      detailColor: isDark ? 'text-rose-200' : 'text-rose-900',
       badge: isDark
-        ? 'bg-rose-900/70 text-rose-200 border-rose-700/70'
-        : 'bg-rose-100 text-rose-800 border-rose-200',
+        ? 'bg-rose-900/80 text-rose-200 border-rose-700/80'
+        : 'bg-rose-100 text-rose-700 border-rose-200',
       iconBg: 'bg-rose-600 text-white',
       lineColor: '#e11d48',
       Icon: AlertOctagon,
@@ -2001,11 +2237,14 @@ export default function App() {
     ? 'bg-slate-800/55 border-slate-700/80'
     : 'bg-slate-50 border-slate-200/80';
   const inputSurfaceClass = isDark
-    ? `bg-slate-800 border-slate-700 text-slate-100 placeholder-slate-500 focus:bg-slate-800 focus:outline-none focus:ring-2 ${currentAccent.ring}`
-    : `bg-white border-slate-300 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 ${currentAccent.ring}`;
+    ? 'bg-slate-800 border-slate-700 text-slate-100 placeholder-slate-500 focus:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500'
+    : 'bg-white border-slate-300 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500';
   const inputMutedSurfaceClass = isDark
-    ? `bg-slate-800 border-slate-700 text-slate-100 placeholder-slate-500 focus:bg-slate-800 focus:outline-none focus:ring-2 ${currentAccent.ring}`
-    : `bg-slate-50 border-slate-300 text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 ${currentAccent.ring}`;
+    ? 'bg-slate-800 border-slate-700 text-slate-100 placeholder-slate-500 focus:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500'
+    : 'bg-slate-50 border-slate-300 text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500';
+  const indigoPillClass = isDark
+    ? 'bg-indigo-950/75 text-indigo-300 border border-indigo-800/70'
+    : 'bg-indigo-50 text-indigo-700 border border-indigo-200';
 
   const chartGridStroke = isDark ? '#1e293b' : '#e2e8f0';
   const chartTickFill = isDark ? '#94a3b8' : '#64748b';
@@ -2016,39 +2255,39 @@ export default function App() {
       className={`inline-flex items-center gap-0.5 rounded-lg p-0.5 border transition shrink-0 ${
         isReorderMode
           ? isDark
-            ? 'bg-indigo-950/70 border-indigo-700 text-indigo-300 shadow-xs'
-            : 'bg-indigo-50 border-indigo-300 text-indigo-700 shadow-xs'
+            ? 'bg-indigo-950/70 border-indigo-700 text-indigo-300 shadow-sm'
+            : 'bg-indigo-50 border-indigo-300 text-indigo-700 shadow-sm'
           : isDark
           ? 'bg-slate-800 border-slate-700 text-slate-400 hover:text-slate-200'
-          : 'bg-slate-50 border-slate-200/80 text-slate-400 hover:text-slate-700'
+          : 'bg-slate-50 border-slate-200/80 text-slate-500 hover:text-slate-800'
       }`}
     >
       <button
         type="button"
         onClick={() => moveSectionUp(col, index)}
         disabled={index === 0}
-        className={`p-1 rounded disabled:opacity-30 disabled:pointer-events-none transition ${
+        className={`p-1.5 rounded disabled:opacity-30 disabled:pointer-events-none transition ${
           isDark ? 'hover:bg-slate-700' : 'hover:bg-white'
         }`}
         title="Sposta sezione in alto"
       >
-        <ArrowUp className="w-3.5 h-3.5" />
+        <ArrowUp className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
       </button>
       <button
         type="button"
         onClick={() => moveSectionDown(col, index)}
         disabled={index === totalInCol - 1}
-        className={`p-1 rounded disabled:opacity-30 disabled:pointer-events-none transition ${
+        className={`p-1.5 rounded disabled:opacity-30 disabled:pointer-events-none transition ${
           isDark ? 'hover:bg-slate-700' : 'hover:bg-white'
         }`}
         title="Sposta sezione in basso"
       >
-        <ArrowDown className="w-3.5 h-3.5" />
+        <ArrowDown className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
       </button>
       <button
         type="button"
         onClick={() => moveSectionAcross(col, index)}
-        className={`p-1 rounded transition ${
+        className={`p-1.5 rounded transition ${
           isDark ? 'hover:bg-slate-700' : 'hover:bg-white'
         }`}
         title={
@@ -2057,17 +2296,17 @@ export default function App() {
             : 'Sposta nella colonna principale'
         }
       >
-        <ArrowLeftRight className="w-3.5 h-3.5" />
+        <ArrowLeftRight className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
       </button>
       <span
         onMouseDown={() => setDragReadyId(sectionId)}
         onMouseUp={() => setDragReadyId(null)}
-        className={`p-1 rounded cursor-grab active:cursor-grabbing transition ${
+        className={`p-1.5 rounded cursor-grab active:cursor-grabbing transition ${
           isDark ? 'hover:bg-slate-700' : 'hover:bg-white'
         }`}
         title="Trascina per riordinare"
       >
-        <GripVertical className="w-3.5 h-3.5" />
+        <GripVertical className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
       </span>
     </div>
   );
@@ -2132,7 +2371,7 @@ export default function App() {
                   className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full ${
                     isDark
                       ? 'bg-emerald-950/70 text-emerald-300 border border-emerald-800/60'
-                      : 'bg-emerald-50 text-emerald-800'
+                      : 'bg-emerald-50 text-emerald-800 border border-emerald-200'
                   }`}
                 >
                   <span
@@ -2142,9 +2381,9 @@ export default function App() {
                   Reale
                 </span>
                 <span
-                  className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full ${currentAccent.bgLight}`}
+                  className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full ${indigoPillClass}`}
                 >
-                  <span className="w-3 h-0.5 border-t-2 border-dotted" style={{ borderColor: currentAccent.hex }} />
+                  <span className="w-3 h-0.5 border-t-2 border-dotted border-indigo-500" />
                   Proiezione
                 </span>
               </div>
@@ -2206,12 +2445,12 @@ export default function App() {
 
                 <ReferenceLine
                   x={analytics.todayShort}
-                  stroke={currentAccent.hex}
+                  stroke="#6366f1"
                   strokeDasharray="4 4"
                   label={{
                     value: 'Oggi',
                     position: 'top',
-                    fill: currentAccent.hex,
+                    fill: isDark ? '#818cf8' : '#4f46e5',
                     fontSize: 11,
                     fontWeight: 700,
                   }}
@@ -2255,7 +2494,7 @@ export default function App() {
                 <Line
                   type="monotone"
                   dataKey="proiezione"
-                  stroke={currentAccent.hex}
+                  stroke={isDark ? '#818cf8' : '#6366f1'}
                   strokeWidth={2.5}
                   strokeDasharray="2 5"
                   dot={false}
@@ -2278,7 +2517,7 @@ export default function App() {
           >
             <div className="flex items-start gap-2.5">
               <div
-                className={`p-2 rounded-xl mt-0.5 shrink-0 ${currentAccent.bgLight}`}
+                className={`p-2 rounded-xl mt-0.5 shrink-0 ${indigoPillClass}`}
               >
                 <Repeat className="w-4 h-4" />
               </div>
@@ -2352,7 +2591,7 @@ export default function App() {
                   Oggi / Scaduti
                 </span>
                 <span className="inline-flex items-center gap-1.5">
-                  <span className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: currentAccent.hex }} />
+                  <span className="w-2.5 h-2.5 rounded-sm bg-indigo-500" />
                   In programma
                 </span>
               </div>
@@ -2441,7 +2680,9 @@ export default function App() {
                         fill={
                           entry.isToday
                             ? '#f59e0b'
-                            : currentAccent.hex
+                            : isDark
+                            ? '#818cf8'
+                            : '#6366f1'
                         }
                       />
                     ))}
@@ -2506,7 +2747,7 @@ export default function App() {
             <div className="sm:col-span-2">
               <button
                 type="submit"
-                className={`w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold shadow-xs transition cursor-pointer ${currentAccent.primary}`}
+                className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-semibold shadow-sm transition cursor-pointer"
               >
                 <Plus className="w-4 h-4" />
                 Aggiungi
@@ -2528,17 +2769,17 @@ export default function App() {
                     srFilter === 'due'
                       ? srAnalytics.dueTotalCount > 0
                         ? isDark
-                          ? 'bg-slate-900 text-amber-400 shadow-xs'
-                          : 'bg-white text-amber-700 shadow-xs'
+                          ? 'bg-slate-900 text-amber-400 shadow-sm'
+                          : 'bg-white text-amber-700 shadow-sm'
                         : isDark
-                        ? 'bg-slate-900 text-emerald-400 shadow-xs'
-                        : 'bg-white text-emerald-700 shadow-xs'
+                        ? 'bg-slate-900 text-emerald-400 shadow-sm'
+                        : 'bg-white text-emerald-700 shadow-sm'
                       : isDark
                       ? 'text-slate-400 hover:text-slate-200'
                       : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
-                  Da ripassare oggi ({srAnalytics.dueTotalCount})
+                  Oggi ({srAnalytics.dueTotalCount})
                 </button>
                 <button
                   type="button"
@@ -2546,8 +2787,8 @@ export default function App() {
                   className={`px-3 py-1 rounded-lg text-xs font-semibold transition cursor-pointer ${
                     srFilter === 'upcoming'
                       ? isDark
-                        ? 'bg-slate-900 text-indigo-400 shadow-xs'
-                        : 'bg-white text-indigo-600 shadow-xs'
+                        ? 'bg-slate-900 text-indigo-400 shadow-sm'
+                        : 'bg-white text-indigo-600 shadow-sm'
                       : isDark
                       ? 'text-slate-400 hover:text-slate-200'
                       : 'text-slate-600 hover:text-slate-900'
@@ -2562,8 +2803,8 @@ export default function App() {
                   className={`px-3 py-1 rounded-lg text-xs font-semibold transition cursor-pointer ${
                     srFilter === 'all'
                       ? isDark
-                        ? 'bg-slate-900 text-slate-100 shadow-xs'
-                        : 'bg-white text-slate-900 shadow-xs'
+                        ? 'bg-slate-900 text-slate-100 shadow-sm'
+                        : 'bg-white text-slate-900 shadow-sm'
                       : isDark
                       ? 'text-slate-400 hover:text-slate-200'
                       : 'text-slate-600 hover:text-slate-900'
@@ -2587,7 +2828,7 @@ export default function App() {
                 className={`rounded-xl border border-dashed p-5 text-center text-xs ${
                   isDark
                     ? 'border-slate-800 text-slate-400 bg-slate-800/30'
-                    : 'border-slate-200 text-slate-400 bg-slate-50/40'
+                    : 'border-slate-200 text-slate-500 bg-slate-50/40'
                 }`}
               >
                 {srAnalytics.totalTopics === 0
@@ -2679,7 +2920,7 @@ export default function App() {
                           )}
                           {!topic.isDue && (
                             <span
-                              className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${currentAccent.bgLight}`}
+                              className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${indigoPillClass}`}
                             >
                               Tra {topic.deltaDays}g (
                               {formatShortDate(topic.nextReviewDate)})
@@ -2730,7 +2971,7 @@ export default function App() {
                         <button
                           type="button"
                           onClick={() => handleReviewSrTopic(topic.id, 'hard')}
-                          className={`px-2 py-1 rounded-lg text-[11px] font-semibold border transition cursor-pointer ${
+                          className={`px-2.5 py-1.5 rounded-lg text-[11px] font-semibold border transition cursor-pointer ${
                             isDark
                               ? 'bg-rose-950/70 hover:bg-rose-900/80 text-rose-200 border-rose-800/70'
                               : 'bg-rose-50 hover:bg-rose-100 text-rose-700 border-rose-200'
@@ -2742,7 +2983,7 @@ export default function App() {
                         <button
                           type="button"
                           onClick={() => handleReviewSrTopic(topic.id, 'good')}
-                          className={`px-2 py-1 rounded-lg text-[11px] font-semibold border transition cursor-pointer ${
+                          className={`px-2.5 py-1.5 rounded-lg text-[11px] font-semibold border transition cursor-pointer ${
                             isDark
                               ? 'bg-emerald-950/70 hover:bg-emerald-900/80 text-emerald-200 border-emerald-800/70'
                               : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border-emerald-200'
@@ -2754,7 +2995,11 @@ export default function App() {
                         <button
                           type="button"
                           onClick={() => handleReviewSrTopic(topic.id, 'easy')}
-                          className={`px-2 py-1 rounded-lg text-[11px] font-semibold border transition cursor-pointer ${currentAccent.bgLight}`}
+                          className={`px-2.5 py-1.5 rounded-lg text-[11px] font-semibold border transition cursor-pointer ${
+                            isDark
+                              ? 'bg-indigo-950/70 hover:bg-indigo-900/80 text-indigo-200 border border-indigo-800/70'
+                              : 'bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200'
+                          }`}
                           title="Facile: estende l'intervallo di ripasso"
                         >
                           Facile ({previewEasy}g)
@@ -2762,14 +3007,14 @@ export default function App() {
                         <button
                           type="button"
                           onClick={() => handleDeleteSrTopic(topic.id)}
-                          className={`p-1.5 rounded-lg transition cursor-pointer ${
+                          className={`p-2 rounded-lg transition cursor-pointer ${
                             isDark
                               ? 'text-slate-500 hover:text-rose-400 hover:bg-rose-950/60'
                               : 'text-slate-400 hover:text-rose-600 hover:bg-rose-50'
                           }`}
                           title="Elimina argomento"
                         >
-                          <Trash2 className="w-3.5 h-3.5" />
+                          <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
                     </div>
@@ -2815,8 +3060,8 @@ export default function App() {
                   className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
                     logMode === 'daily'
                       ? isDark
-                        ? 'bg-slate-900 text-indigo-400 shadow-xs'
-                        : 'bg-white text-indigo-600 shadow-xs'
+                        ? 'bg-slate-900 text-indigo-400 shadow-sm'
+                        : 'bg-white text-indigo-600 shadow-sm'
                       : isDark
                       ? 'text-slate-400 hover:text-slate-200'
                       : 'text-slate-600 hover:text-slate-900'
@@ -2830,8 +3075,8 @@ export default function App() {
                   className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
                     logMode === 'cumulative'
                       ? isDark
-                        ? 'bg-slate-900 text-indigo-400 shadow-xs'
-                        : 'bg-white text-indigo-600 shadow-xs'
+                        ? 'bg-slate-900 text-indigo-400 shadow-sm'
+                        : 'bg-white text-indigo-600 shadow-sm'
                       : isDark
                       ? 'text-slate-400 hover:text-slate-200'
                       : 'text-slate-600 hover:text-slate-900'
@@ -2897,7 +3142,7 @@ export default function App() {
             <div className="sm:col-span-3">
               <button
                 type="submit"
-                className={`w-full inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold shadow-xs transition cursor-pointer ${currentAccent.primary}`}
+                className="w-full inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold shadow-sm transition cursor-pointer"
               >
                 <Plus className="w-4 h-4" />
                 Registra
@@ -2934,7 +3179,7 @@ export default function App() {
                 className={`rounded-xl border border-dashed p-6 text-center text-sm ${
                   isDark
                     ? 'border-slate-800 text-slate-400'
-                    : 'border-slate-200 text-slate-400'
+                    : 'border-slate-200 text-slate-500'
                 }`}
               >
                 Nessuna sessione ancora registrata. Inserisci le prime pagine
@@ -2942,7 +3187,7 @@ export default function App() {
               </div>
             ) : (
               <div className="overflow-x-auto max-h-64 overflow-y-auto pr-1">
-                <table className="w-full text-left border-collapse text-sm">
+                <table className="w-full text-left border-collapse text-sm min-w-[340px]">
                   <thead>
                     <tr
                       className={`border-b text-xs ${
@@ -2972,7 +3217,7 @@ export default function App() {
                         }`}
                       >
                         <td
-                          className={`py-2.5 font-medium ${
+                          className={`py-2.5 font-medium whitespace-nowrap ${
                             isDark ? 'text-slate-200' : 'text-slate-800'
                           }`}
                         >
@@ -2996,7 +3241,7 @@ export default function App() {
                             </span>
                           )}
                         </td>
-                        <td className="py-2.5">
+                        <td className="py-2.5 whitespace-nowrap">
                           {editingLogDate === row.date ? (
                             <input
                               type="number"
@@ -3012,34 +3257,34 @@ export default function App() {
                               }}
                               className={`w-20 rounded-lg border px-2 py-1 text-sm font-semibold focus:outline-none ${
                                 isDark
-                                  ? `border-slate-600 bg-slate-800 text-slate-100`
-                                  : `border-slate-400 bg-white text-slate-900`
+                                  ? 'border-indigo-500 bg-slate-800 text-slate-100'
+                                  : 'border-indigo-400 bg-white text-slate-900'
                               }`}
                               autoFocus
                             />
                           ) : (
                             <span
-                              className={`inline-flex items-center px-2 py-0.5 rounded-md font-semibold text-xs ${currentAccent.bgLight}`}
+                              className={`inline-flex items-center px-2 py-0.5 rounded-md font-semibold text-xs ${indigoPillClass}`}
                             >
                               +{row.pages} pag
                             </span>
                           )}
                         </td>
                         <td
-                          className={`py-2.5 text-xs ${
+                          className={`py-2.5 text-xs whitespace-nowrap ${
                             isDark ? 'text-slate-400' : 'text-slate-600'
                           }`}
                         >
                           {row.cumulative} / {analytics.totalPages} pag
                         </td>
-                        <td className="py-2.5 text-right">
+                        <td className="py-2.5 text-right whitespace-nowrap">
                           <div className="inline-flex items-center gap-1">
                             {editingLogDate === row.date ? (
                               <>
                                 <button
                                   type="button"
                                   onClick={() => handleSaveEditedLog(row.date)}
-                                  className={`p-1.5 rounded-lg cursor-pointer ${
+                                  className={`p-2 rounded-lg cursor-pointer ${
                                     isDark
                                       ? 'text-emerald-400 hover:bg-emerald-950/70'
                                       : 'text-emerald-600 hover:bg-emerald-50'
@@ -3051,7 +3296,7 @@ export default function App() {
                                 <button
                                   type="button"
                                   onClick={() => setEditingLogDate(null)}
-                                  className={`p-1.5 rounded-lg cursor-pointer ${
+                                  className={`p-2 rounded-lg cursor-pointer ${
                                     isDark
                                       ? 'text-slate-400 hover:bg-slate-800'
                                       : 'text-slate-500 hover:bg-slate-100'
@@ -3069,26 +3314,26 @@ export default function App() {
                                     setEditingLogDate(row.date);
                                     setEditingLogPages(String(row.pages));
                                   }}
-                                  className={`p-1.5 rounded-lg cursor-pointer ${
+                                  className={`p-2 rounded-lg cursor-pointer ${
                                     isDark
                                       ? 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
                                       : 'text-slate-400 hover:text-slate-700 hover:bg-slate-100'
                                   }`}
                                   title="Modifica pagine"
                                 >
-                                  <Edit3 className="w-3.5 h-3.5" />
+                                  <Edit3 className="w-4 h-4" />
                                 </button>
                                 <button
                                   type="button"
                                   onClick={() => handleDeleteLog(row.date)}
-                                  className={`p-1.5 rounded-lg cursor-pointer ${
+                                  className={`p-2 rounded-lg cursor-pointer ${
                                     isDark
                                       ? 'text-slate-400 hover:text-rose-400 hover:bg-rose-950/60'
                                       : 'text-slate-400 hover:text-rose-600 hover:bg-rose-50'
                                   }`}
                                   title="Elimina riga"
                                 >
-                                  <Trash2 className="w-3.5 h-3.5" />
+                                  <Trash2 className="w-4 h-4" />
                                 </button>
                               </>
                             )}
@@ -3114,7 +3359,9 @@ export default function App() {
                 <Clock
                   className={`w-4 h-4 ${
                     pomoPhase === 'study'
-                      ? currentAccent.text
+                      ? isDark
+                        ? 'text-indigo-400'
+                        : 'text-indigo-600'
                       : isDark
                       ? 'text-emerald-400'
                       : 'text-emerald-600'
@@ -3146,19 +3393,19 @@ export default function App() {
                   setPomoSound(next);
                   if (next) playPomodoroSound(pomoSoundType, 'study');
                 }}
-                className={`p-1.5 rounded-lg border text-xs transition cursor-pointer ${
+                className={`p-2 rounded-lg text-xs transition cursor-pointer ${
                   pomoSound
-                    ? currentAccent.bgLight
+                    ? indigoPillClass
                     : isDark
-                    ? 'bg-slate-800 border-slate-700 text-slate-500'
-                    : 'bg-slate-50 border-slate-200 text-slate-400'
+                    ? 'bg-slate-800 border border-slate-700 text-slate-500'
+                    : 'bg-slate-50 border border-slate-200 text-slate-400'
                 }`}
                 title={pomoSound ? 'Suono attivo' : 'Suono disattivato'}
               >
                 {pomoSound ? (
-                  <Volume2 className="w-3.5 h-3.5" />
+                  <Volume2 className="w-4 h-4" />
                 ) : (
-                  <VolumeX className="w-3.5 h-3.5" />
+                  <VolumeX className="w-4 h-4" />
                 )}
               </button>
               {orderControls}
@@ -3173,11 +3420,11 @@ export default function App() {
             <button
               type="button"
               onClick={() => handlePomoSwitchPhase('study')}
-              className={`py-1.5 px-2 rounded-lg text-xs font-semibold transition cursor-pointer ${
+              className={`py-2 px-2 rounded-lg text-xs font-semibold transition cursor-pointer ${
                 pomoPhase === 'study'
                   ? isDark
-                    ? 'bg-slate-900 text-slate-100 shadow-xs'
-                    : 'bg-white text-slate-900 shadow-xs'
+                    ? 'bg-slate-900 text-indigo-400 shadow-sm'
+                    : 'bg-white text-indigo-600 shadow-sm'
                   : isDark
                   ? 'text-slate-400 hover:text-slate-200'
                   : 'text-slate-600 hover:text-slate-900'
@@ -3188,11 +3435,11 @@ export default function App() {
             <button
               type="button"
               onClick={() => handlePomoSwitchPhase('short_break')}
-              className={`py-1.5 px-2 rounded-lg text-xs font-semibold transition cursor-pointer ${
+              className={`py-2 px-2 rounded-lg text-xs font-semibold transition cursor-pointer ${
                 pomoPhase === 'short_break'
                   ? isDark
-                    ? 'bg-slate-900 text-emerald-400 shadow-xs'
-                    : 'bg-white text-emerald-600 shadow-xs'
+                    ? 'bg-slate-900 text-emerald-400 shadow-sm'
+                    : 'bg-white text-emerald-600 shadow-sm'
                   : isDark
                   ? 'text-slate-400 hover:text-slate-200'
                   : 'text-slate-600 hover:text-slate-900'
@@ -3203,11 +3450,11 @@ export default function App() {
             <button
               type="button"
               onClick={() => handlePomoSwitchPhase('long_break')}
-              className={`py-1.5 px-2 rounded-lg text-xs font-semibold transition cursor-pointer ${
+              className={`py-2 px-2 rounded-lg text-xs font-semibold transition cursor-pointer ${
                 pomoPhase === 'long_break'
                   ? isDark
-                    ? 'bg-slate-900 text-teal-400 shadow-xs'
-                    : 'bg-white text-teal-700 shadow-xs'
+                    ? 'bg-slate-900 text-teal-400 shadow-sm'
+                    : 'bg-white text-teal-700 shadow-sm'
                   : isDark
                   ? 'text-slate-400 hover:text-slate-200'
                   : 'text-slate-600 hover:text-slate-900'
@@ -3217,16 +3464,16 @@ export default function App() {
             </button>
           </div>
 
-          {/* BOX GRAFICA RILASSANTE E STIMOLANTE (ZEN ATMOSPHERE) */}
+          {/* BOX TIMER ZEN */}
           <div
             className={`relative overflow-hidden rounded-2xl p-5 text-center border transition-all duration-700 ${
               pomoPhase === 'study'
                 ? isDark
-                  ? 'bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950 border-slate-800'
-                  : 'bg-gradient-to-br from-slate-50 via-white to-slate-100 border-slate-200'
+                  ? 'bg-gradient-to-br from-indigo-950/70 via-slate-900 to-indigo-950/40 border-indigo-700/60 shadow-[0_0_25px_rgba(99,102,241,0.15)]'
+                  : 'bg-gradient-to-br from-indigo-50/90 via-white to-indigo-50/40 border-indigo-200/80 shadow-[0_10px_25px_rgba(99,102,241,0.08)]'
                 : isDark
                 ? 'bg-gradient-to-br from-emerald-950/70 via-slate-900 to-emerald-950/40 border-emerald-700/60 shadow-[0_0_25px_rgba(16,185,129,0.15)]'
-                : 'bg-gradient-to-br from-emerald-50/90 via-white to-emerald-50/40 border-emerald-200 shadow-[0_10px_25px_rgba(16,185,129,0.08)]'
+                : 'bg-gradient-to-br from-emerald-50/90 via-white to-emerald-50/40 border-emerald-200/80 shadow-[0_10px_25px_rgba(16,185,129,0.08)]'
             }`}
           >
             {pomoRunning && (
@@ -3243,11 +3490,11 @@ export default function App() {
                 {[1, 2, 3, 4].map((dot) => (
                   <span
                     key={dot}
-                    className={`h-2 w-6 rounded-full transition-all ${
+                    className={`h-2.5 w-7 sm:w-6 rounded-full transition-all ${
                       dot <= pomoCycleCount
                         ? pomoPhase === 'study'
-                          ? 'bg-indigo-500 shadow-xs'
-                          : 'bg-emerald-500 shadow-xs'
+                          ? 'bg-indigo-500 shadow-sm'
+                          : 'bg-emerald-500 shadow-sm'
                         : isDark
                         ? 'bg-slate-800'
                         : 'bg-slate-200'
@@ -3263,7 +3510,7 @@ export default function App() {
                 } ${
                   pomoPhase === 'study'
                     ? isDark
-                      ? 'text-slate-50'
+                      ? 'text-indigo-100'
                       : 'text-slate-900'
                     : isDark
                     ? 'text-emerald-200'
@@ -3276,7 +3523,9 @@ export default function App() {
               <p
                 className={`text-xs font-semibold tracking-wide uppercase mb-3 ${
                   pomoPhase === 'study'
-                    ? currentAccent.text
+                    ? isDark
+                      ? 'text-indigo-300'
+                      : 'text-indigo-700'
                     : isDark
                     ? 'text-emerald-300'
                     : 'text-emerald-700'
@@ -3290,32 +3539,29 @@ export default function App() {
               </p>
 
               <div
-                className={`mb-4 px-3 py-2 rounded-xl text-[11px] italic font-medium border transition-all ${
+                className={`mb-4 px-3 py-2.5 rounded-xl text-xs italic font-medium border transition-all ${
                   isDark
                     ? 'bg-slate-950/40 border-slate-800/80 text-slate-300'
-                    : 'bg-white/70 border-slate-200/80 text-slate-600'
+                    : 'bg-white/80 border-slate-200/80 text-slate-600'
                 }`}
               >
                 {POMO_QUOTES[currentQuoteIndex]}
               </div>
 
               <div
-                className={`w-full h-2 rounded-full overflow-hidden mb-4 ${
+                className={`w-full h-2.5 rounded-full overflow-hidden mb-4 ${
                   isDark
                     ? 'bg-slate-800/90'
                     : pomoPhase === 'study'
-                    ? 'bg-slate-200'
+                    ? 'bg-indigo-200/60'
                     : 'bg-emerald-200/60'
                 }`}
               >
                 <div
                   className={`h-full transition-all duration-300 ${
-                    pomoPhase === 'study' ? '' : 'bg-emerald-500'
+                    pomoPhase === 'study' ? 'bg-indigo-600' : 'bg-emerald-500'
                   }`}
-                  style={{
-                    width: `${pomoStats.progressPct}%`,
-                    backgroundColor: pomoPhase === 'study' ? currentAccent.hex : undefined,
-                  }}
+                  style={{ width: `${pomoStats.progressPct}%` }}
                 />
               </div>
 
@@ -3323,11 +3569,11 @@ export default function App() {
                 <button
                   type="button"
                   onClick={handleTogglePomoRunning}
-                  className={`inline-flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-xl text-sm font-bold text-white shadow-md transition cursor-pointer ${
+                  className={`inline-flex items-center justify-center gap-1.5 px-6 py-3 sm:py-2.5 rounded-xl text-sm font-bold text-white shadow-md transition cursor-pointer ${
                     pomoRunning
                       ? 'bg-amber-500 hover:bg-amber-600'
                       : pomoPhase === 'study'
-                      ? currentAccent.primary
+                      ? 'bg-indigo-600 hover:bg-indigo-700'
                       : 'bg-emerald-600 hover:bg-emerald-700'
                   }`}
                 >
@@ -3347,7 +3593,7 @@ export default function App() {
                 <button
                   type="button"
                   onClick={handlePomoReset}
-                  className={`p-2.5 rounded-xl border transition cursor-pointer ${
+                  className={`p-3 sm:p-2.5 rounded-xl border transition cursor-pointer ${
                     isDark
                       ? 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700'
                       : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
@@ -3360,7 +3606,7 @@ export default function App() {
                 <button
                   type="button"
                   onClick={handlePomoSkipPhase}
-                  className={`p-2.5 rounded-xl border transition cursor-pointer ${
+                  className={`p-3 sm:p-2.5 rounded-xl border transition cursor-pointer ${
                     isDark
                       ? 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700'
                       : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
@@ -3382,15 +3628,15 @@ export default function App() {
               >
                 Durata (min) e Preset
               </span>
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1.5">
                 <button
                   type="button"
                   onClick={() => handlePomoPreset(25, 5, 15)}
-                  className={`px-2 py-0.5 rounded-md text-[11px] font-semibold transition cursor-pointer ${
+                  className={`px-2.5 py-1 rounded-md text-xs font-semibold transition cursor-pointer ${
                     pomoStudyMin === 25 &&
                     pomoShortBreakMin === 5 &&
                     pomoLongBreakMin === 15
-                      ? currentAccent.bgLight
+                      ? indigoPillClass
                       : isDark
                       ? 'bg-slate-800 text-slate-400 hover:bg-slate-700'
                       : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
@@ -3401,11 +3647,11 @@ export default function App() {
                 <button
                   type="button"
                   onClick={() => handlePomoPreset(50, 10, 20)}
-                  className={`px-2 py-0.5 rounded-md text-[11px] font-semibold transition cursor-pointer ${
+                  className={`px-2.5 py-1 rounded-md text-xs font-semibold transition cursor-pointer ${
                     pomoStudyMin === 50 &&
                     pomoShortBreakMin === 10 &&
                     pomoLongBreakMin === 20
-                      ? currentAccent.bgLight
+                      ? indigoPillClass
                       : isDark
                       ? 'bg-slate-800 text-slate-400 hover:bg-slate-700'
                       : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
@@ -3437,7 +3683,7 @@ export default function App() {
                       setPomoSecondsLeft(val * 60);
                     }
                   }}
-                  className={`w-full rounded-xl border px-2.5 py-1.5 text-xs font-semibold ${inputMutedSurfaceClass}`}
+                  className={`w-full rounded-xl border px-3 py-2 text-xs sm:text-sm font-semibold ${inputMutedSurfaceClass}`}
                 />
               </div>
               <div>
@@ -3460,7 +3706,7 @@ export default function App() {
                       setPomoSecondsLeft(val * 60);
                     }
                   }}
-                  className={`w-full rounded-xl border px-2.5 py-1.5 text-xs font-semibold ${inputMutedSurfaceClass}`}
+                  className={`w-full rounded-xl border px-3 py-2 text-xs sm:text-sm font-semibold ${inputMutedSurfaceClass}`}
                 />
               </div>
               <div>
@@ -3483,7 +3729,7 @@ export default function App() {
                       setPomoSecondsLeft(val * 60);
                     }
                   }}
-                  className={`w-full rounded-xl border px-2.5 py-1.5 text-xs font-semibold ${inputMutedSurfaceClass}`}
+                  className={`w-full rounded-xl border px-3 py-2 text-xs sm:text-sm font-semibold ${inputMutedSurfaceClass}`}
                 />
               </div>
             </div>
@@ -3498,7 +3744,7 @@ export default function App() {
                   type="checkbox"
                   checked={pomoAutoContinue}
                   onChange={(e) => setPomoAutoContinue(e.target.checked)}
-                  className={`rounded border-slate-300 text-indigo-600 ${currentAccent.ring}`}
+                  className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
                 />
                 Avvio automatico fase successiva
               </label>
@@ -3506,7 +3752,11 @@ export default function App() {
               <button
                 type="button"
                 onClick={handleAddManualPomoSession}
-                className={`text-[11px] font-semibold cursor-pointer ${currentAccent.text}`}
+                className={`text-xs font-semibold cursor-pointer py-1 ${
+                  isDark
+                    ? 'text-indigo-400 hover:text-indigo-300'
+                    : 'text-indigo-600 hover:text-indigo-700'
+                }`}
                 title="Registra manualmente 1 sessione completata adesso"
               >
                 +1 sessione
@@ -3520,9 +3770,11 @@ export default function App() {
             >
               <div className="flex items-center gap-1.5 min-w-0 flex-1">
                 <Bell
-                  className={`w-3.5 h-3.5 shrink-0 ${
+                  className={`w-4 h-4 shrink-0 ${
                     pomoSound
-                      ? currentAccent.text
+                      ? isDark
+                        ? 'text-indigo-400'
+                        : 'text-indigo-600'
                       : isDark
                       ? 'text-slate-500'
                       : 'text-slate-400'
@@ -3537,7 +3789,7 @@ export default function App() {
                     getUnlockedAudioContext();
                     playPomodoroSound(chosen, 'study');
                   }}
-                  className={`w-full rounded-lg border pl-2 pr-6 py-1 text-xs font-medium truncate disabled:opacity-50 ${inputMutedSurfaceClass}`}
+                  className={`w-full rounded-xl border pl-3 pr-8 py-2 text-xs font-medium truncate disabled:opacity-50 ${inputMutedSurfaceClass}`}
                   title="Scegli la suoneria di fine sessione o pausa"
                 >
                   {POMO_SOUNDS.map((s) => (
@@ -3554,7 +3806,7 @@ export default function App() {
                   getUnlockedAudioContext();
                   playPomodoroSound(pomoSoundType, 'study');
                 }}
-                className={`px-2.5 py-1 rounded-lg border text-[11px] font-semibold transition shrink-0 disabled:opacity-40 cursor-pointer ${
+                className={`px-3 py-2 rounded-xl border text-xs font-semibold transition shrink-0 disabled:opacity-40 cursor-pointer ${
                   isDark
                     ? 'bg-slate-800 border-slate-700 text-slate-200 hover:bg-slate-700'
                     : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
@@ -3573,7 +3825,7 @@ export default function App() {
           >
             <div className="grid grid-cols-2 gap-2">
               <div
-                className={`rounded-xl p-2.5 border ${
+                className={`rounded-xl p-3 border ${
                   isDark
                     ? 'bg-slate-800/60 border-slate-700/80'
                     : 'bg-slate-50 border-slate-200/70'
@@ -3592,13 +3844,15 @@ export default function App() {
                   }`}
                 >
                   {pomoStats.todayCount} pom ·{' '}
-                  <span className={currentAccent.text}>
+                  <span
+                    className={isDark ? 'text-indigo-400' : 'text-indigo-600'}
+                  >
                     {formatMinutesHuman(pomoStats.todayMinutes)}
                   </span>
                 </p>
               </div>
               <div
-                className={`rounded-xl p-2.5 border ${
+                className={`rounded-xl p-3 border ${
                   isDark
                     ? 'bg-slate-800/60 border-slate-700/80'
                     : 'bg-slate-50 border-slate-200/70'
@@ -3631,7 +3885,7 @@ export default function App() {
                 <button
                   type="button"
                   onClick={() => setShowPomoHistory((v) => !v)}
-                  className={`w-full flex items-center justify-between text-xs font-semibold py-1 cursor-pointer ${
+                  className={`w-full flex items-center justify-between text-xs font-semibold py-1.5 cursor-pointer ${
                     isDark
                       ? 'text-slate-400 hover:text-slate-200'
                       : 'text-slate-600 hover:text-slate-900'
@@ -3640,7 +3894,11 @@ export default function App() {
                   <span>
                     Registro sessioni Pomodoro ({pomoStats.sessions.length})
                   </span>
-                  <span className={`${currentAccent.text} text-[11px]`}>
+                  <span
+                    className={`${
+                      isDark ? 'text-indigo-400' : 'text-indigo-600'
+                    } text-xs`}
+                  >
                     {showPomoHistory ? 'Nascondi' : 'Mostra'}
                   </span>
                 </button>
@@ -3650,14 +3908,18 @@ export default function App() {
                     {pomoStats.sessions.map((s) => (
                       <div
                         key={s.id}
-                        className={`flex items-center justify-between text-xs rounded-lg px-2.5 py-1.5 border ${
+                        className={`flex items-center justify-between text-xs rounded-xl px-3 py-2 border ${
                           isDark
                             ? 'bg-slate-800/70 border-slate-700/80'
                             : 'bg-slate-50 border-slate-200/60'
                         }`}
                       >
-                        <div className="flex items-center gap-1.5">
-                          <Coffee className={`w-3 h-3 ${currentAccent.text}`} />
+                        <div className="flex items-center gap-2">
+                          <Coffee
+                            className={`w-3.5 h-3.5 ${
+                              isDark ? 'text-indigo-400' : 'text-indigo-500'
+                            }`}
+                          />
                           <span
                             className={`font-semibold ${
                               isDark ? 'text-slate-200' : 'text-slate-800'
@@ -3677,14 +3939,14 @@ export default function App() {
                         <button
                           type="button"
                           onClick={() => handleDeletePomoSession(s.id)}
-                          className={`p-1 rounded cursor-pointer ${
+                          className={`p-1.5 rounded-lg cursor-pointer ${
                             isDark
                               ? 'text-slate-500 hover:text-rose-400'
                               : 'text-slate-400 hover:text-rose-600'
                           }`}
                           title="Elimina sessione"
                         >
-                          <Trash2 className="w-3 h-3" />
+                          <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
                     ))}
@@ -3706,7 +3968,11 @@ export default function App() {
             }`}
           >
             <div className="flex items-center gap-2">
-              <SlidersHorizontal className={`w-4 h-4 ${currentAccent.text}`} />
+              <SlidersHorizontal
+                className={`w-4 h-4 ${
+                  isDark ? 'text-indigo-400' : 'text-indigo-600'
+                }`}
+              />
               <h3
                 className={`text-base font-bold ${
                   isDark ? 'text-slate-100' : 'text-slate-900'
@@ -3845,9 +4111,9 @@ export default function App() {
                       key={day.id}
                       type="button"
                       onClick={() => toggleRestDay(day.id)}
-                      className={`py-2 rounded-lg text-xs font-bold transition cursor-pointer ${
+                      className={`py-2.5 rounded-xl text-xs font-bold transition cursor-pointer ${
                         active
-                          ? `${currentAccent.primary} shadow-xs`
+                          ? 'bg-indigo-600 text-white shadow-sm'
                           : isDark
                           ? 'bg-slate-800 text-slate-300 hover:bg-slate-700'
                           : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
@@ -3891,7 +4157,11 @@ export default function App() {
                 <span className={isDark ? 'text-slate-400' : 'text-slate-500'}>
                   Giorni utili rimanenti:
                 </span>
-                <span className={`font-bold ${currentAccent.text}`}>
+                <span
+                  className={`font-bold ${
+                    isDark ? 'text-indigo-400' : 'text-indigo-600'
+                  }`}
+                >
                   {analytics.remainingUsefulDays} giorni
                 </span>
               </div>
@@ -3905,7 +4175,7 @@ export default function App() {
               <button
                 type="button"
                 onClick={handleResetExam}
-                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
+                className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition cursor-pointer ${
                   confirmReset
                     ? 'bg-rose-600 text-white'
                     : isDark
@@ -3913,7 +4183,7 @@ export default function App() {
                     : 'text-slate-600 hover:text-rose-600 hover:bg-rose-50'
                 }`}
               >
-                <RotateCcw className="w-3.5 h-3.5" />
+                <RotateCcw className="w-4 h-4" />
                 {confirmReset
                   ? 'Conferma azzeramento log?'
                   : 'Azzera solo log esame'}
@@ -3923,13 +4193,13 @@ export default function App() {
                 <button
                   type="button"
                   onClick={handleDeleteExam}
-                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
+                  className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition cursor-pointer ${
                     isDark
                       ? 'text-rose-400 hover:bg-rose-950/60'
                       : 'text-rose-600 hover:bg-rose-50'
                   }`}
                 >
-                  <Trash2 className="w-3.5 h-3.5" />
+                  <Trash2 className="w-4 h-4" />
                   Elimina esame
                 </button>
               )}
@@ -3970,7 +4240,9 @@ export default function App() {
           isBeingDragged ? 'opacity-45 scale-[0.99]' : ''
         } ${
           isDropTargetBefore
-            ? `ring-2 ring-offset-4 rounded-2xl`
+            ? `ring-2 ring-indigo-500 ring-offset-4 ${
+                isDark ? 'ring-offset-slate-950' : 'ring-offset-slate-50'
+              } rounded-2xl`
             : ''
         } ${
           isReorderMode
@@ -3999,25 +4271,50 @@ export default function App() {
           padding: 0 !important;
           display: block !important;
           text-align: left !important;
+          -webkit-text-size-adjust: 100%;
+        }
+        input, select, button {
+          font-size: 16px !important; /* Previene lo zoom automatico su iOS Safari */
+        }
+        @media (min-width: 640px) {
+          input, select, button {
+            font-size: inherit !important;
+          }
+        }
+        input.no-spinner::-webkit-outer-spin-button,
+        input.no-spinner::-webkit-inner-spin-button {
+          -webkit-appearance: none;
+          margin: 0;
+        }
+        input.no-spinner[type=number] {
+          -moz-appearance: textfield;
         }
       `}</style>
 
       {/* --- HEADER FULL-WIDTH --- */}
       <header
-        className={`border-b sticky top-0 z-20 w-full transition-colors duration-200 ${
+        className={`border-b sticky top-0 z-30 w-full transition-colors duration-200 ${
           isDark
-            ? 'bg-slate-900/95 border-slate-800 backdrop-blur-xs'
-            : 'bg-white border-slate-200'
+            ? 'bg-slate-900 border-slate-800 shadow-md shadow-slate-950/40'
+            : 'bg-white border-slate-200 shadow-sm'
         }`}
       >
-        <div className="w-full px-4 sm:px-6 lg:px-8 py-3 flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className={`${currentAccent.primary} p-2 rounded-xl shadow-xs shrink-0 transition-colors`}>
-              <BookOpen className="w-5 h-5" />
+        <div className="w-full px-3 sm:px-6 lg:px-8 py-3 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+            <div className="bg-indigo-600 text-white p-2 rounded-xl shadow-sm shrink-0">
+              {activeTab === 'tracker' ? (
+                <BookOpen className="w-5 h-5" />
+              ) : (
+                <GraduationCap className="w-5 h-5" />
+              )}
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-1.5">
-                <span className={`text-xs font-semibold uppercase tracking-wider ${currentAccent.text}`}>
+                <span
+                  className={`text-xs font-semibold uppercase tracking-wider ${
+                    isDark ? 'text-indigo-400' : 'text-indigo-600'
+                  }`}
+                >
                   StudyBurn
                 </span>
                 <span
@@ -4026,78 +4323,134 @@ export default function App() {
                   •
                 </span>
                 <span
-                  className={`text-xs truncate ${
+                  className={`text-xs truncate hidden sm:inline ${
                     isDark ? 'text-slate-400' : 'text-slate-500'
                   }`}
                 >
-                  Tracker Esami Universitari
+                  {activeTab === 'tracker'
+                    ? 'Tracker Esami Universitari'
+                    : 'Medicina • Anni & Calcolo Voto Blocchi'}
                 </span>
               </div>
 
-              {isRenamingHeader ? (
-                <div className="flex items-center gap-1.5 mt-0.5">
-                  <input
-                    ref={headerRenameInputRef}
-                    type="text"
-                    value={activeExam.name}
-                    onChange={(e) =>
-                      updateActiveExam({ name: e.target.value })
-                    }
-                    onBlur={() => setIsRenamingHeader(false)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === 'Escape') {
-                        setIsRenamingHeader(false);
+              {activeTab === 'tracker' ? (
+                isRenamingHeader ? (
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <input
+                      ref={headerRenameInputRef}
+                      type="text"
+                      value={activeExam.name}
+                      onChange={(e) =>
+                        updateActiveExam({ name: e.target.value })
                       }
-                    }}
-                    className={`text-base sm:text-lg font-bold border-b-2 bg-transparent focus:outline-none px-0.5 ${currentAccent.border} ${
-                      isDark ? 'text-slate-50' : 'text-slate-900'
-                    }`}
-                  />
+                      onBlur={() => setIsRenamingHeader(false)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === 'Escape') {
+                          setIsRenamingHeader(false);
+                        }
+                      }}
+                      className={`text-sm sm:text-lg font-bold border-b-2 border-indigo-600 bg-transparent focus:outline-none px-0.5 ${
+                        isDark ? 'text-slate-50' : 'text-slate-900'
+                      }`}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setIsRenamingHeader(false)}
+                      className={`p-1 rounded cursor-pointer ${
+                        isDark
+                          ? 'text-emerald-400 hover:bg-emerald-950/60'
+                          : 'text-emerald-600 hover:bg-emerald-50'
+                      }`}
+                      title="Conferma nome"
+                    >
+                      <Check className="w-4 h-4" />
+                    </button>
+                  </div>
+                ) : (
                   <button
                     type="button"
-                    onClick={() => setIsRenamingHeader(false)}
-                    className={`p-1 rounded cursor-pointer ${
-                      isDark
-                        ? 'text-emerald-400 hover:bg-emerald-950/60'
-                        : 'text-emerald-600 hover:bg-emerald-50'
-                    }`}
-                    title="Conferma nome"
+                    onClick={() => setIsRenamingHeader(true)}
+                    className="group flex items-center gap-1.5 text-left mt-0.5 cursor-pointer max-w-full"
+                    title="Clicca per rinominare l'esame"
                   >
-                    <Check className="w-4 h-4" />
+                    <h1
+                      className={`text-sm sm:text-lg font-bold truncate transition-colors ${
+                        isDark
+                          ? 'text-slate-50 group-hover:text-indigo-400'
+                          : 'text-slate-900 group-hover:text-indigo-600'
+                      }`}
+                    >
+                      {activeExam.name || 'Esame senza nome'}
+                    </h1>
+                    <Edit3
+                      className={`w-3.5 h-3.5 transition-colors shrink-0 ${
+                        isDark
+                          ? 'text-slate-500 group-hover:text-indigo-400'
+                          : 'text-slate-400 group-hover:text-indigo-600'
+                      }`}
+                    />
                   </button>
-                </div>
+                )
               ) : (
-                <button
-                  type="button"
-                  onClick={() => setIsRenamingHeader(true)}
-                  className="group flex items-center gap-1.5 text-left mt-0.5 cursor-pointer"
-                  title="Clicca per rinominare l'esame"
+                <h1
+                  className={`text-sm sm:text-lg font-bold truncate mt-0.5 ${
+                    isDark ? 'text-slate-50' : 'text-slate-900'
+                  }`}
                 >
-                  <h1
-                    className={`text-base sm:text-lg font-bold truncate group-hover:opacity-80 transition-colors ${
-                      isDark ? 'text-slate-50' : 'text-slate-900'
-                    }`}
-                  >
-                    {activeExam.name || 'Esame senza nome'}
-                  </h1>
-                  <Edit3
-                    className={`w-3.5 h-3.5 transition-colors shrink-0 ${
-                      isDark
-                        ? 'text-slate-500 group-hover:text-slate-300'
-                        : 'text-slate-400 group-hover:text-slate-700'
-                    }`}
-                  />
-                </button>
+                  Calcolatore Voto Blocchi (1° – 6° Anno)
+                </h1>
               )}
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+            {/* NAVIGAZIONE TRA LE DUE PAGINE */}
+            <div
+              className={`inline-flex rounded-xl p-1 border ${
+                isDark
+                  ? 'bg-slate-800 border-slate-700'
+                  : 'bg-slate-100 border-slate-200/80'
+              }`}
+            >
+              <button
+                type="button"
+                onClick={() => setActiveTab('tracker')}
+                className={`inline-flex items-center gap-1 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
+                  activeTab === 'tracker'
+                    ? isDark
+                      ? 'bg-slate-900 text-indigo-400 shadow-sm'
+                      : 'bg-white text-indigo-600 shadow-sm'
+                    : isDark
+                    ? 'text-slate-400 hover:text-slate-200'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <BookOpen className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Tracker Studio</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('libretto')}
+                className={`inline-flex items-center gap-1 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
+                  activeTab === 'libretto'
+                    ? isDark
+                      ? 'bg-slate-900 text-indigo-400 shadow-sm'
+                      : 'bg-white text-indigo-600 shadow-sm'
+                    : isDark
+                    ? 'text-slate-400 hover:text-slate-200'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <GraduationCap className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Voti Blocchi</span>
+              </button>
+            </div>
+
             {undoStack.length > 0 && (
               <button
                 type="button"
                 onClick={handleUndo}
-                className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border transition cursor-pointer ${
+                className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium border transition cursor-pointer ${
                   isDark
                     ? 'text-slate-300 bg-slate-800 hover:bg-slate-700 border-slate-700'
                     : 'text-slate-600 bg-slate-100 hover:bg-slate-200 border-slate-200'
@@ -4105,39 +4458,14 @@ export default function App() {
                 title="Annulla ultima modifica"
               >
                 <Undo2 className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Annulla</span>
+                <span className="hidden md:inline">Annulla</span>
               </button>
             )}
-
-            {/* SELETTORE COLORE ACCENTO TASTI */}
-            <div className="relative inline-flex items-center">
-              <select
-                aria-label="Colore accento tasti"
-                value={accentKey}
-                onChange={(e) => setAccentKey(e.target.value)}
-                className={`rounded-lg border text-xs font-semibold pl-7 pr-3 py-1.5 transition cursor-pointer appearance-none ${
-                  isDark
-                    ? 'bg-slate-800 border-slate-700 text-slate-200 hover:bg-slate-700'
-                    : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
-                }`}
-                title="Cambia il colore dei tasti e degli accenti"
-              >
-                {Object.entries(ACCENT_COLORS).map(([key, val]) => (
-                  <option key={key} value={key}>
-                    {val.label}
-                  </option>
-                ))}
-              </select>
-              <span
-                className="absolute left-2.5 w-3 h-3 rounded-full pointer-events-none"
-                style={{ backgroundColor: currentAccent.hex }}
-              />
-            </div>
 
             <button
               type="button"
               onClick={() => setShowCloudModal(true)}
-              className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold border transition cursor-pointer ${
+              className={`inline-flex items-center gap-1 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold border transition cursor-pointer ${
                 cloudSession?.access_token
                   ? cloudStatus === 'error'
                     ? isDark
@@ -4150,7 +4478,7 @@ export default function App() {
                   ? 'text-slate-300 bg-slate-800 hover:bg-slate-700 border-slate-700'
                   : 'text-slate-700 bg-white hover:bg-slate-50 border-slate-200'
               }`}
-              title="Sincronizzazione Cloud tra MacBook e iPad"
+              title="Sincronizzazione Cloud"
             >
               {cloudSession?.access_token ? (
                 cloudStatus === 'syncing' ? (
@@ -4167,99 +4495,117 @@ export default function App() {
                 {cloudSession?.access_token
                   ? cloudStatus === 'syncing'
                     ? 'Sync...'
-                    : 'Cloud Attivo'
-                  : 'Sync Cloud'}
+                    : 'Cloud'
+                  : 'Cloud'}
               </span>
             </button>
 
             <button
               type="button"
               onClick={() => setIsDark((d) => !d)}
-              className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold border transition cursor-pointer ${
+              className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold border transition cursor-pointer ${
                 isDark
                   ? 'bg-slate-800 text-amber-300 border-slate-700 hover:bg-slate-700'
                   : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
               }`}
-              title={
-                isDark ? 'Passa a modalità chiara' : 'Passa a modalità scura'
-              }
+              title="Cambia tema"
             >
               {isDark ? (
                 <Sun className="w-3.5 h-3.5" />
               ) : (
                 <Moon className="w-3.5 h-3.5" />
               )}
-              <span className="hidden md:inline">
-                {isDark ? 'Chiaro' : 'Scuro'}
-              </span>
             </button>
 
-            <button
-              type="button"
-              onClick={() => setIsReorderMode((v) => !v)}
-              className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold border transition cursor-pointer ${
-                isReorderMode
-                  ? `${currentAccent.primary} border-transparent shadow-xs`
-                  : isCustomLayout
-                  ? currentAccent.bgLight
-                  : isDark
-                  ? 'text-slate-300 bg-slate-800 hover:bg-slate-700 border-slate-700'
-                  : 'text-slate-700 bg-white hover:bg-slate-50 border-slate-200'
-              }`}
-              title="Sposta o riordina le sezioni della pagina"
-            >
-              <LayoutGrid className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">
-                {isReorderMode ? 'Fine ordine' : 'Ordina sezioni'}
-              </span>
-            </button>
+            {activeTab === 'libretto' && (
+              <button
+                type="button"
+                onClick={() => setIsBlockReorderMode((v) => !v)}
+                className={`inline-flex items-center gap-1 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold border transition cursor-pointer ${
+                  isBlockReorderMode
+                    ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
+                    : isDark
+                    ? 'text-slate-300 bg-slate-800 hover:bg-slate-700 border-slate-700'
+                    : 'text-slate-700 bg-white hover:bg-slate-50 border-slate-200'
+                }`}
+                title="Ordina blocchi"
+              >
+                <LayoutGrid className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">
+                  {isBlockReorderMode ? 'Fine' : 'Ordina blocchi'}
+                </span>
+              </button>
+            )}
 
-            <select
-              aria-label="Seleziona esame"
-              value={activeExam.id}
-              onChange={(e) => {
-                setState((prev) => ({
-                  ...prev,
-                  activeExamId: e.target.value,
-                }));
-                setIsRenamingHeader(false);
-                setConfirmReset(false);
-              }}
-              className={`rounded-lg border text-xs sm:text-sm font-medium pl-3 pr-7 py-1.5 max-w-[190px] sm:max-w-[240px] truncate ${
-                isDark
-                  ? `border-slate-700 bg-slate-800 text-slate-100 focus:outline-none focus:ring-2 ${currentAccent.ring}`
-                  : `border-slate-300 bg-slate-50 text-slate-800 focus:outline-none focus:ring-2 ${currentAccent.ring}`
-              }`}
-            >
-              {state.exams.map((ex) => (
-                <option key={ex.id} value={ex.id}>
-                  {ex.name || 'Senza nome'}
-                </option>
-              ))}
-            </select>
+            {activeTab === 'tracker' && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => setIsReorderMode((v) => !v)}
+                  className={`inline-flex items-center gap-1 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold border transition cursor-pointer ${
+                    isReorderMode
+                      ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
+                      : isCustomLayout
+                      ? indigoPillClass
+                      : isDark
+                      ? 'text-slate-300 bg-slate-800 hover:bg-slate-700 border-slate-700'
+                      : 'text-slate-700 bg-white hover:bg-slate-50 border-slate-200'
+                  }`}
+                  title="Ordina sezioni"
+                >
+                  <LayoutGrid className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">
+                    {isReorderMode ? 'Fine' : 'Ordina sezioni'}
+                  </span>
+                </button>
 
-            <button
-              type="button"
-              onClick={handleCreateExam}
-              className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold shadow-xs transition cursor-pointer ${currentAccent.primary}`}
-            >
-              <Plus className="w-4 h-4" />
-              <span>Nuovo</span>
-            </button>
+                <select
+                  aria-label="Seleziona esame"
+                  value={activeExam.id}
+                  onChange={(e) => {
+                    setState((prev) => ({
+                      ...prev,
+                      activeExamId: e.target.value,
+                    }));
+                    setIsRenamingHeader(false);
+                    setConfirmReset(false);
+                  }}
+                  className={`rounded-lg border text-xs sm:text-sm font-medium pl-2.5 pr-6 py-1.5 max-w-[140px] sm:max-w-[200px] truncate ${
+                    isDark
+                      ? 'border-slate-700 bg-slate-800 text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500'
+                      : 'border-slate-300 bg-slate-50 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500'
+                  }`}
+                >
+                  {state.exams.map((ex) => (
+                    <option key={ex.id} value={ex.id}>
+                      {ex.name || 'Senza nome'}
+                    </option>
+                  ))}
+                </select>
 
-            <button
-              type="button"
-              onClick={handleDuplicateExam}
-              className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium border transition cursor-pointer ${
-                isDark
-                  ? 'text-slate-300 bg-slate-800 hover:bg-slate-700 border-slate-700'
-                  : 'text-slate-700 bg-white hover:bg-slate-50 border-slate-200'
-              }`}
-              title="Duplica questo esame"
-            >
-              <Copy className="w-3.5 h-3.5" />
-              <span className="hidden md:inline">Duplica</span>
-            </button>
+                <button
+                  type="button"
+                  onClick={handleCreateExam}
+                  className="inline-flex items-center gap-1 px-2.5 sm:px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-semibold shadow-sm transition cursor-pointer"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span className="hidden sm:inline">Nuovo</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleDuplicateExam}
+                  className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium border transition cursor-pointer ${
+                    isDark
+                      ? 'text-slate-300 bg-slate-800 hover:bg-slate-700 border-slate-700'
+                      : 'text-slate-700 bg-white hover:bg-slate-50 border-slate-200'
+                  }`}
+                  title="Duplica esame"
+                >
+                  <Copy className="w-3.5 h-3.5" />
+                </button>
+              </>
+            )}
           </div>
         </div>
       </header>
@@ -4267,7 +4613,7 @@ export default function App() {
       {/* --- MODALE SYNC CLOUD MULTI-DISPOSITIVO --- */}
       {showCloudModal && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/65 backdrop-blur-xs"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-sm"
           onClick={() => setShowCloudModal(false)}
         >
           <div
@@ -4276,7 +4622,7 @@ export default function App() {
           >
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-center gap-2.5">
-                <div className={`p-2 rounded-xl ${currentAccent.bgLight}`}>
+                <div className={`p-2 rounded-xl ${indigoPillClass}`}>
                   <Cloud className="w-5 h-5" />
                 </div>
                 <div>
@@ -4299,7 +4645,7 @@ export default function App() {
               <button
                 type="button"
                 onClick={() => setShowCloudModal(false)}
-                className={`p-1.5 rounded-lg cursor-pointer ${
+                className={`p-2 rounded-lg cursor-pointer ${
                   isDark
                     ? 'text-slate-400 hover:bg-slate-800'
                     : 'text-slate-500 hover:bg-slate-100'
@@ -4330,7 +4676,7 @@ export default function App() {
                       setCloudConflictPayload(null);
                       setLastSyncedAt(getCurrentTimeStr());
                     }}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold text-white cursor-pointer ${currentAccent.primary}`}
+                    className="px-3 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold cursor-pointer"
                   >
                     Scarica dati dal Cloud
                   </button>
@@ -4341,7 +4687,7 @@ export default function App() {
                       setCloudConflictPayload(null);
                       await pushToCloud();
                     }}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold border cursor-pointer ${
+                    className={`px-3 py-2 rounded-xl text-xs font-bold border cursor-pointer ${
                       isDark
                         ? 'bg-slate-800 border-slate-700 text-slate-200 hover:bg-slate-700'
                         : 'bg-white border-slate-300 text-slate-800 hover:bg-slate-50'
@@ -4385,9 +4731,9 @@ export default function App() {
                       isDark ? 'text-slate-300' : 'text-slate-600'
                     }`}
                   >
-                    Ogni modifica a pagine, esami, timer e ripassi viene salvata
-                    automaticamente sul cloud e caricata quando apri
-                    l&apos;app su iPad o Mac.
+                    Ogni modifica a pagine, esami, blocchi, timer e ripassi
+                    viene salvata automaticamente sul cloud e caricata quando
+                    apri l&apos;app su iPad o Mac.
                   </p>
                 </div>
 
@@ -4396,7 +4742,7 @@ export default function App() {
                     type="button"
                     onClick={() => pullFromCloud(cloudSession, false)}
                     disabled={cloudStatus === 'syncing'}
-                    className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold text-white disabled:opacity-50 cursor-pointer ${currentAccent.primary}`}
+                    className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold disabled:opacity-50 cursor-pointer"
                   >
                     <RefreshCw
                       className={`w-3.5 h-3.5 ${
@@ -4409,7 +4755,7 @@ export default function App() {
                   <button
                     type="button"
                     onClick={handleCloudLogout}
-                    className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold border cursor-pointer ${
+                    className={`inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-semibold border cursor-pointer ${
                       isDark
                         ? 'bg-slate-800 border-slate-700 text-rose-400 hover:bg-rose-950/60'
                         : 'bg-white border-slate-200 text-rose-600 hover:bg-rose-50'
@@ -4434,9 +4780,11 @@ export default function App() {
                         setAuthMode('login');
                         setCloudMessage('');
                       }}
-                      className={`px-3 py-1 rounded-lg text-xs font-semibold cursor-pointer ${
+                      className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold cursor-pointer ${
                         authMode === 'login'
-                          ? currentAccent.bgLight
+                          ? isDark
+                            ? 'bg-slate-900 text-indigo-400'
+                            : 'bg-white text-indigo-600 shadow-sm'
                           : isDark
                           ? 'text-slate-400'
                           : 'text-slate-600'
@@ -4450,9 +4798,11 @@ export default function App() {
                         setAuthMode('signup');
                         setCloudMessage('');
                       }}
-                      className={`px-3 py-1 rounded-lg text-xs font-semibold cursor-pointer ${
+                      className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold cursor-pointer ${
                         authMode === 'signup'
-                          ? currentAccent.bgLight
+                          ? isDark
+                            ? 'bg-slate-900 text-indigo-400'
+                            : 'bg-white text-indigo-600 shadow-sm'
                           : isDark
                           ? 'text-slate-400'
                           : 'text-slate-600'
@@ -4476,7 +4826,7 @@ export default function App() {
                       value={authEmail}
                       onChange={(e) => setAuthEmail(e.target.value)}
                       required
-                      className={`w-full rounded-xl border px-3 py-2 text-xs sm:text-sm ${inputMutedSurfaceClass}`}
+                      className={`w-full rounded-xl border px-3 py-2.5 text-xs sm:text-sm ${inputMutedSurfaceClass}`}
                     />
                   </div>
 
@@ -4495,7 +4845,7 @@ export default function App() {
                       onChange={(e) => setAuthPassword(e.target.value)}
                       required
                       minLength={6}
-                      className={`w-full rounded-xl border px-3 py-2 text-xs sm:text-sm ${inputMutedSurfaceClass}`}
+                      className={`w-full rounded-xl border px-3 py-2.5 text-xs sm:text-sm ${inputMutedSurfaceClass}`}
                     />
                   </div>
                 </div>
@@ -4542,7 +4892,7 @@ export default function App() {
                         placeholder="https://xyzproject.supabase.co"
                         value={cloudUrl}
                         onChange={(e) => setCloudUrl(e.target.value)}
-                        className={`w-full rounded-xl border px-3 py-1.5 text-xs ${inputSurfaceClass}`}
+                        className={`w-full rounded-xl border px-3 py-2 text-xs ${inputSurfaceClass}`}
                       />
                     </div>
                     <div>
@@ -4558,7 +4908,7 @@ export default function App() {
                         placeholder="sb_publishable_..."
                         value={cloudAnonKey}
                         onChange={(e) => setCloudAnonKey(e.target.value)}
-                        className={`w-full rounded-xl border px-3 py-1.5 text-xs ${inputSurfaceClass}`}
+                        className={`w-full rounded-xl border px-3 py-2 text-xs ${inputSurfaceClass}`}
                       />
                     </div>
                   </div>
@@ -4567,7 +4917,7 @@ export default function App() {
                 <button
                   type="submit"
                   disabled={authLoading}
-                  className={`w-full py-2.5 rounded-xl text-xs sm:text-sm font-bold text-white disabled:opacity-50 transition cursor-pointer ${currentAccent.primary}`}
+                  className="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-bold disabled:opacity-50 transition cursor-pointer shadow-sm"
                 >
                   {authLoading
                     ? 'Connessione in corso...'
@@ -4606,7 +4956,7 @@ export default function App() {
                 <button
                   type="button"
                   onClick={handleExportBackupFile}
-                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border cursor-pointer ${
+                  className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold border cursor-pointer ${
                     isDark
                       ? 'bg-slate-800 border-slate-700 text-slate-200 hover:bg-slate-700'
                       : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
@@ -4618,7 +4968,7 @@ export default function App() {
                 <button
                   type="button"
                   onClick={() => importFileInputRef.current?.click()}
-                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border cursor-pointer ${
+                  className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold border cursor-pointer ${
                     isDark
                       ? 'bg-slate-800 border-slate-700 text-slate-200 hover:bg-slate-700'
                       : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
@@ -4640,356 +4990,1151 @@ export default function App() {
         </div>
       )}
 
-      {/* --- MAIN DASHBOARD FULL-WIDTH --- */}
-      <main className="w-full px-4 sm:px-6 lg:px-8 py-6 space-y-6">
-        {isReorderMode && (
-          <div
-            className={`rounded-2xl border p-4 flex flex-wrap items-center justify-between gap-3 ${currentAccent.bgLight}`}
+      {/* =====================================================================
+          PAGINA 1: TRACKER STUDIO
+         ===================================================================== */}
+      {activeTab === 'tracker' && (
+        <main className="w-full px-3 sm:px-6 lg:px-8 py-5 sm:py-6 space-y-6">
+          {isReorderMode && (
+            <div
+              className={`rounded-2xl border p-4 flex flex-wrap items-center justify-between gap-3 ${
+                isDark
+                  ? 'bg-indigo-950/60 border-indigo-800/80 text-indigo-100'
+                  : 'bg-indigo-50 border-indigo-200 text-indigo-950'
+              }`}
+            >
+              <div className="flex items-center gap-2.5">
+                <LayoutGrid
+                  className={`w-5 h-5 shrink-0 ${
+                    isDark ? 'text-indigo-400' : 'text-indigo-600'
+                  }`}
+                />
+                <div>
+                  <p className="text-sm font-bold">
+                    Personalizzazione ordine sezioni attiva
+                  </p>
+                  <p className="text-xs opacity-85">
+                    Usa le frecce su/giù, sposta tra colonna sinistra e destra
+                    oppure trascina la maniglia di ogni riquadro.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                {isCustomLayout && (
+                  <button
+                    type="button"
+                    onClick={handleResetLayout}
+                    className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold border transition cursor-pointer ${
+                      isDark
+                        ? 'bg-slate-900 text-slate-200 border-slate-700 hover:bg-slate-800'
+                        : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
+                    }`}
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" />
+                    Ripristina predefinito
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setIsReorderMode(false)}
+                  className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition cursor-pointer"
+                >
+                  Fatto
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* 1. BANNER DINAMICO STATO STUDIO */}
+          <section
+            className={`rounded-2xl border p-4 sm:p-5 transition-colors ${statusStyles.wrapper}`}
           >
-            <div className="flex items-center gap-2.5">
-              <LayoutGrid className={`w-5 h-5 shrink-0 ${currentAccent.text}`} />
-              <div>
-                <p className="text-sm font-bold">
-                  Personalizzazione ordine sezioni attiva
-                </p>
-                <p className="text-xs opacity-85">
-                  Usa le frecce su/giù, sposta tra colonna sinistra e destra
-                  oppure trascina la maniglia di ogni riquadro.
+            <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+              <div
+                className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 shadow-sm ${statusStyles.iconBg}`}
+              >
+                <StatusIcon className="w-6 h-6" />
+              </div>
+              <div className="space-y-1 flex-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span
+                    className={`text-[11px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full border ${statusStyles.badge}`}
+                  >
+                    {analytics.statusTitle}
+                  </span>
+                  {analytics.safeReviewDays > 0 && (
+                    <span className={`text-xs ${statusStyles.detailColor}`}>
+                      Fine prima lettura prevista entro il{' '}
+                      <strong>
+                        {formatShortDate(analytics.studyDeadline)}
+                      </strong>{' '}
+                      ({analytics.safeReviewDays} gg di ripasso finale)
+                    </span>
+                  )}
+                </div>
+                <h2
+                  className={`text-base sm:text-lg font-bold leading-snug ${statusStyles.headlineColor}`}
+                >
+                  {analytics.statusHeadline}
+                </h2>
+                <p
+                  className={`text-xs sm:text-sm leading-relaxed ${statusStyles.detailColor}`}
+                >
+                  {analytics.statusDetail}
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              {isCustomLayout && (
-                <button
-                  type="button"
-                  onClick={handleResetLayout}
-                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition cursor-pointer ${
-                    isDark
-                      ? 'bg-slate-900 text-slate-200 border-slate-700 hover:bg-slate-800'
-                      : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
+          </section>
+
+          {/* 2. RIGA 4 KPI CARDS */}
+          <section className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+            <div
+              className={`rounded-2xl border p-3.5 sm:p-4 shadow-sm flex flex-col justify-between ${cardSurfaceClass}`}
+            >
+              <div className="flex items-center justify-between">
+                <span
+                  className={`text-[11px] sm:text-xs font-semibold uppercase tracking-wide truncate ${
+                    isDark ? 'text-slate-400' : 'text-slate-500'
                   }`}
                 >
-                  <RotateCcw className="w-3.5 h-3.5" />
-                  Ripristina predefinito
-                </button>
-              )}
+                  Completamento
+                </span>
+                <div className={`p-1.5 sm:p-2 rounded-lg ${indigoPillClass}`}>
+                  <Layers className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                </div>
+              </div>
+              <div className="my-2">
+                <div
+                  className={`text-xl sm:text-3xl font-extrabold ${
+                    isDark ? 'text-slate-50' : 'text-slate-900'
+                  }`}
+                >
+                  {analytics.completionPct.toFixed(1)}%
+                </div>
+                <p
+                  className={`text-[11px] sm:text-xs mt-0.5 ${
+                    isDark ? 'text-slate-400' : 'text-slate-500'
+                  }`}
+                >
+                  <strong
+                    className={isDark ? 'text-slate-200' : 'text-slate-700'}
+                  >
+                    {analytics.completedPages}
+                  </strong>{' '}
+                  / {analytics.totalPages} pag
+                </p>
+              </div>
+              <div
+                className={`w-full h-2 rounded-full overflow-hidden ${
+                  isDark ? 'bg-slate-800' : 'bg-slate-100'
+                }`}
+              >
+                <div
+                  className="h-full bg-indigo-600 rounded-full transition-all duration-500"
+                  style={{ width: `${analytics.completionPct}%` }}
+                />
+              </div>
+            </div>
+
+            <div
+              className={`rounded-2xl border p-3.5 sm:p-4 shadow-sm flex flex-col justify-between ${cardSurfaceClass}`}
+            >
+              <div className="flex items-center justify-between">
+                <span
+                  className={`text-[11px] sm:text-xs font-semibold uppercase tracking-wide truncate ${
+                    isDark ? 'text-slate-400' : 'text-slate-500'
+                  }`}
+                >
+                  Rimanenti
+                </span>
+                <div
+                  className={`p-1.5 sm:p-2 rounded-lg ${
+                    isDark
+                      ? 'bg-sky-950/80 text-sky-400 border border-sky-800/70'
+                      : 'bg-sky-50 text-sky-600 border border-sky-200'
+                  }`}
+                >
+                  <BookOpen className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                </div>
+              </div>
+              <div className="my-2">
+                <div
+                  className={`text-xl sm:text-3xl font-extrabold ${
+                    isDark ? 'text-slate-50' : 'text-slate-900'
+                  }`}
+                >
+                  {analytics.remainingPages}
+                </div>
+                <p
+                  className={`text-[11px] sm:text-xs mt-0.5 ${
+                    isDark ? 'text-slate-400' : 'text-slate-500'
+                  }`}
+                >
+                  su {analytics.totalPages} totali
+                </p>
+              </div>
+              <div
+                className={`text-[11px] sm:text-xs font-medium truncate ${
+                  isDark ? 'text-slate-400' : 'text-slate-500'
+                }`}
+              >
+                Ritmo: {analytics.initialMinPace.toFixed(1)} pag/gg
+              </div>
+            </div>
+
+            <div
+              className={`rounded-2xl border p-3.5 sm:p-4 shadow-sm flex flex-col justify-between ${cardSurfaceClass}`}
+            >
+              <div className="flex items-center justify-between">
+                <span
+                  className={`text-[11px] sm:text-xs font-semibold uppercase tracking-wide truncate ${
+                    isDark ? 'text-slate-400' : 'text-slate-500'
+                  }`}
+                >
+                  Ritmo Richiesto
+                </span>
+                <div className={`p-1.5 sm:p-2 rounded-lg ${indigoPillClass}`}>
+                  <Target className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                </div>
+              </div>
+              <div className="my-2">
+                <div
+                  className={`text-xl sm:text-3xl font-extrabold ${
+                    isDark ? 'text-slate-50' : 'text-slate-900'
+                  }`}
+                >
+                  {analytics.newRequiredPace.toFixed(1)}
+                  <span
+                    className={`text-xs sm:text-sm font-semibold ml-1 ${
+                      isDark ? 'text-slate-400' : 'text-slate-500'
+                    }`}
+                  >
+                    pag/gg
+                  </span>
+                </div>
+                <p
+                  className={`text-[11px] sm:text-xs mt-0.5 truncate ${
+                    isDark ? 'text-slate-400' : 'text-slate-500'
+                  }`}
+                >
+                  Reale:{' '}
+                  <strong
+                    className={isDark ? 'text-slate-200' : 'text-slate-700'}
+                  >
+                    {analytics.realDailyAvg.toFixed(1)}
+                  </strong>{' '}
+                  pag/gg
+                </p>
+              </div>
+              <div
+                className={`text-[11px] sm:text-xs font-medium truncate ${
+                  isDark ? 'text-slate-400' : 'text-slate-500'
+                }`}
+              >
+                Nei prossimi {analytics.remainingUsefulDays} giorni
+              </div>
+            </div>
+
+            <div
+              className={`rounded-2xl border p-3.5 sm:p-4 shadow-sm flex flex-col justify-between ${cardSurfaceClass}`}
+            >
+              <div className="flex items-center justify-between">
+                <span
+                  className={`text-[11px] sm:text-xs font-semibold uppercase tracking-wide truncate ${
+                    isDark ? 'text-slate-400' : 'text-slate-500'
+                  }`}
+                >
+                  Countdown
+                </span>
+                <div
+                  className={`p-1.5 sm:p-2 rounded-lg ${
+                    isDark
+                      ? 'bg-amber-950/80 text-amber-400 border border-amber-800/70'
+                      : 'bg-amber-50 text-amber-600 border border-amber-200'
+                  }`}
+                >
+                  <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                </div>
+              </div>
+              <div className="my-2">
+                <div
+                  className={`text-xl sm:text-3xl font-extrabold ${
+                    isDark ? 'text-slate-50' : 'text-slate-900'
+                  }`}
+                >
+                  -{analytics.daysToExam}
+                  <span
+                    className={`text-xs sm:text-sm font-semibold ml-1 ${
+                      isDark ? 'text-slate-400' : 'text-slate-500'
+                    }`}
+                  >
+                    gg
+                  </span>
+                </div>
+                <p
+                  className={`text-[11px] sm:text-xs mt-0.5 truncate ${
+                    isDark ? 'text-slate-400' : 'text-slate-500'
+                  }`}
+                >
+                  Appello il{' '}
+                  <strong
+                    className={isDark ? 'text-slate-200' : 'text-slate-700'}
+                  >
+                    {formatShortDate(activeExam.examDate)}
+                  </strong>
+                </p>
+              </div>
+              <div
+                className={`text-[11px] sm:text-xs font-medium flex items-center gap-1 truncate ${
+                  isDark ? 'text-slate-400' : 'text-slate-500'
+                }`}
+              >
+                <Clock className="w-3.5 h-3.5 shrink-0" />
+                <span>{analytics.remainingUsefulDays} gg utili studio</span>
+              </div>
+            </div>
+          </section>
+
+          {/* 3. GRIGLIA PRINCIPALE RIORDINABILE */}
+          <div
+            className={`grid grid-cols-1 ${
+              layout.left.length > 0 && layout.right.length > 0
+                ? 'lg:grid-cols-12'
+                : ''
+            } gap-6 items-start`}
+          >
+            {layout.left.length > 0 && (
+              <div
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  handleDropSection('left', layout.left.length);
+                }}
+                className={`${
+                  layout.right.length > 0 ? 'lg:col-span-8' : ''
+                } space-y-6`}
+              >
+                {layout.left.map((secId, idx) =>
+                  renderSection(secId, 'left', idx, layout.left.length)
+                )}
+              </div>
+            )}
+
+            {layout.right.length > 0 && (
+              <div
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  handleDropSection('right', layout.right.length);
+                }}
+                className={`${
+                  layout.left.length > 0 ? 'lg:col-span-4' : ''
+                } space-y-6`}
+              >
+                {layout.right.map((secId, idx) =>
+                  renderSection(secId, 'right', idx, layout.right.length)
+                )}
+              </div>
+            )}
+          </div>
+        </main>
+      )}
+
+      {/* =====================================================================
+          PAGINA 2: VOTI BLOCCHI (1°–6° ANNO MEDICINA)
+         ===================================================================== */}
+      {activeTab === 'libretto' && (
+        <main className="w-full px-3 sm:px-6 lg:px-8 py-5 sm:py-6 space-y-6">
+          {isBlockReorderMode && (
+            <div
+              className={`rounded-2xl border p-4 flex flex-wrap items-center justify-between gap-3 ${
+                isDark
+                  ? 'bg-indigo-950/60 border-indigo-800/80 text-indigo-100'
+                  : 'bg-indigo-50 border-indigo-200 text-indigo-950'
+              }`}
+            >
+              <div className="flex items-center gap-2.5">
+                <LayoutGrid
+                  className={`w-5 h-5 shrink-0 ${
+                    isDark ? 'text-indigo-400' : 'text-indigo-600'
+                  }`}
+                />
+                <div>
+                  <p className="text-sm font-bold">
+                    Personalizzazione ordine blocchi attiva ({selectedMedYear}° Anno)
+                  </p>
+                  <p className="text-xs opacity-85">
+                    Usa le frecce su/giù oppure trascina la maniglia di ogni
+                    blocco per cambiarne la posizione.
+                  </p>
+                </div>
+              </div>
               <button
                 type="button"
-                onClick={() => setIsReorderMode(false)}
-                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold text-white transition cursor-pointer ${currentAccent.primary}`}
+                onClick={() => setIsBlockReorderMode(false)}
+                className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition cursor-pointer"
               >
                 Fatto
               </button>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* 1. BANNER DINAMICO STATO STUDIO */}
-        <section
-          className={`rounded-2xl border p-4 sm:p-5 transition-colors ${statusStyles.wrapper}`}
-        >
-          <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-            <div
-              className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 shadow-xs ${statusStyles.iconBg}`}
-            >
-              <StatusIcon className="w-6 h-6" />
-            </div>
-            <div className="space-y-1 flex-1">
-              <div className="flex flex-wrap items-center gap-2">
-                <span
-                  className={`text-[11px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full border ${statusStyles.badge}`}
+          {/* 1. SELETTORE ANNI DI MEDICINA (1° - 6° ANNO) */}
+          <section
+            className={`rounded-2xl border p-4 sm:p-6 shadow-sm space-y-4 ${cardSurfaceClass}`}
+          >
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+              <div>
+                <h2
+                  className={`text-base sm:text-lg font-bold ${
+                    isDark ? 'text-slate-100' : 'text-slate-900'
+                  }`}
                 >
-                  {analytics.statusTitle}
-                </span>
-                {analytics.safeReviewDays > 0 && (
-                  <span className="text-xs opacity-75">
-                    Fine prima lettura prevista entro il{' '}
-                    <strong>{formatShortDate(analytics.studyDeadline)}</strong>{' '}
-                    ({analytics.safeReviewDays} gg di ripasso finale)
-                  </span>
-                )}
-              </div>
-              <h2 className="text-base sm:text-lg font-bold leading-snug">
-                {analytics.statusHeadline}
-              </h2>
-              <p className="text-xs sm:text-sm opacity-90 leading-relaxed">
-                {analytics.statusDetail}
-              </p>
-            </div>
-          </div>
-        </section>
-
-        {/* 2. RIGA 4 KPI CARDS */}
-        <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div
-            className={`rounded-2xl border p-4 shadow-sm flex flex-col justify-between ${cardSurfaceClass}`}
-          >
-            <div className="flex items-center justify-between">
-              <span
-                className={`text-xs font-semibold uppercase tracking-wide ${
-                  isDark ? 'text-slate-400' : 'text-slate-500'
-                }`}
-              >
-                Completamento
-              </span>
-              <div className={`p-2 rounded-lg ${currentAccent.bgLight}`}>
-                <Layers className="w-4 h-4" />
-              </div>
-            </div>
-            <div className="my-2">
-              <div
-                className={`text-2xl sm:text-3xl font-extrabold ${
-                  isDark ? 'text-slate-50' : 'text-slate-900'
-                }`}
-              >
-                {analytics.completionPct.toFixed(1)}%
-              </div>
-              <p
-                className={`text-xs mt-0.5 ${
-                  isDark ? 'text-slate-400' : 'text-slate-500'
-                }`}
-              >
-                <strong
-                  className={isDark ? 'text-slate-200' : 'text-slate-700'}
-                >
-                  {analytics.completedPages}
-                </strong>{' '}
-                / {analytics.totalPages} pagine
-              </p>
-            </div>
-            <div
-              className={`w-full h-2 rounded-full overflow-hidden ${
-                isDark ? 'bg-slate-800' : 'bg-slate-100'
-              }`}
-            >
-              <div
-                className="h-full rounded-full transition-all duration-500"
-                style={{
-                  width: `${analytics.completionPct}%`,
-                  backgroundColor: currentAccent.hex,
-                }}
-              />
-            </div>
-          </div>
-
-          <div
-            className={`rounded-2xl border p-4 shadow-sm flex flex-col justify-between ${cardSurfaceClass}`}
-          >
-            <div className="flex items-center justify-between">
-              <span
-                className={`text-xs font-semibold uppercase tracking-wide ${
-                  isDark ? 'text-slate-400' : 'text-slate-500'
-                }`}
-              >
-                Pagine Rimanenti
-              </span>
-              <div
-                className={`p-2 rounded-lg ${
-                  isDark
-                    ? 'bg-sky-950/80 text-sky-400'
-                    : 'bg-sky-50 text-sky-600'
-                }`}
-              >
-                <BookOpen className="w-4 h-4" />
-              </div>
-            </div>
-            <div className="my-2">
-              <div
-                className={`text-2xl sm:text-3xl font-extrabold ${
-                  isDark ? 'text-slate-50' : 'text-slate-900'
-                }`}
-              >
-                {analytics.remainingPages}
-              </div>
-              <p
-                className={`text-xs mt-0.5 ${
-                  isDark ? 'text-slate-400' : 'text-slate-500'
-                }`}
-              >
-                su {analytics.totalPages} pagine totali
-              </p>
-            </div>
-            <div
-              className={`text-xs font-medium ${
-                isDark ? 'text-slate-400' : 'text-slate-500'
-              }`}
-            >
-              Ritmo iniziale:{' '}
-              <span
-                className={`font-semibold ${
-                  isDark ? 'text-slate-200' : 'text-slate-700'
-                }`}
-              >
-                {analytics.initialMinPace.toFixed(1)} pag/gg
-              </span>
-            </div>
-          </div>
-
-          <div
-            className={`rounded-2xl border p-4 shadow-sm flex flex-col justify-between ${cardSurfaceClass}`}
-          >
-            <div className="flex items-center justify-between">
-              <span
-                className={`text-xs font-semibold uppercase tracking-wide ${
-                  isDark ? 'text-slate-400' : 'text-slate-500'
-                }`}
-              >
-                Ritmo Necessario
-              </span>
-              <div className={`p-2 rounded-lg ${currentAccent.bgLight}`}>
-                <Target className="w-4 h-4" />
-              </div>
-            </div>
-            <div className="my-2">
-              <div
-                className={`text-2xl sm:text-3xl font-extrabold ${
-                  isDark ? 'text-slate-50' : 'text-slate-900'
-                }`}
-              >
-                {analytics.newRequiredPace.toFixed(1)}
-                <span
-                  className={`text-sm font-semibold ml-1 ${
+                  Seleziona Anno di Corso
+                </h2>
+                <p
+                  className={`text-xs ${
                     isDark ? 'text-slate-400' : 'text-slate-500'
                   }`}
                 >
-                  pag/gg
-                </span>
+                  Inserisci i blocchi dell&apos;anno e le relative materie per
+                  calcolare il voto ponderato di ciascun blocco
+                </p>
               </div>
-              <p
-                className={`text-xs mt-0.5 ${
-                  isDark ? 'text-slate-400' : 'text-slate-500'
-                }`}
-              >
-                Media reale attuale:{' '}
-                <strong
-                  className={isDark ? 'text-slate-200' : 'text-slate-700'}
-                >
-                  {analytics.realDailyAvg.toFixed(1)}
-                </strong>{' '}
-                pag/gg
-              </p>
-            </div>
-            <div
-              className={`text-xs font-medium ${
-                isDark ? 'text-slate-400' : 'text-slate-500'
-              }`}
-            >
-              Nei prossimi{' '}
-              <span
-                className={`font-semibold ${
-                  isDark ? 'text-slate-200' : 'text-slate-700'
-                }`}
-              >
-                {analytics.remainingUsefulDays} giorni utili
-              </span>
-            </div>
-          </div>
 
-          <div
-            className={`rounded-2xl border p-4 shadow-sm flex flex-col justify-between ${cardSurfaceClass}`}
-          >
-            <div className="flex items-center justify-between">
-              <span
-                className={`text-xs font-semibold uppercase tracking-wide ${
-                  isDark ? 'text-slate-400' : 'text-slate-500'
-                }`}
+              <form
+                onSubmit={handleAddMedBlock}
+                className="flex items-center gap-2 w-full md:w-auto"
               >
-                Countdown Appello
-              </span>
-              <div
-                className={`p-2 rounded-lg ${
-                  isDark
-                    ? 'bg-amber-950/80 text-amber-400'
-                    : 'bg-amber-50 text-amber-600'
-                }`}
-              >
-                <Calendar className="w-4 h-4" />
-              </div>
+                <input
+                  type="text"
+                  placeholder={`Nuovo blocco (${selectedMedYear}° anno)...`}
+                  value={newBlockName}
+                  onChange={(e) => setNewBlockName(e.target.value)}
+                  required
+                  className={`h-10 sm:h-9 rounded-xl border px-3 text-xs sm:text-sm flex-1 md:w-64 ${inputMutedSurfaceClass}`}
+                />
+                <button
+                  type="submit"
+                  className="h-10 sm:h-9 inline-flex items-center justify-center gap-1.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-semibold shadow-sm transition cursor-pointer shrink-0"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Aggiungi Blocco</span>
+                </button>
+              </form>
             </div>
-            <div className="my-2">
-              <div
-                className={`text-2xl sm:text-3xl font-extrabold ${
-                  isDark ? 'text-slate-50' : 'text-slate-900'
-                }`}
-              >
-                -{analytics.daysToExam}
-                <span
-                  className={`text-sm font-semibold ml-1 ${
-                    isDark ? 'text-slate-400' : 'text-slate-500'
+
+            <div className="grid grid-cols-3 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+              {[1, 2, 3, 4, 5, 6].map((yr) => {
+                const isSelected = selectedMedYear === yr;
+                const blocksCount = (medYears[yr] || []).length;
+                return (
+                  <button
+                    key={yr}
+                    type="button"
+                    onClick={() => {
+                      setSelectedMedYear(yr);
+                      setEditingBlockId(null);
+                    }}
+                    className={`rounded-xl border p-3 sm:px-3.5 sm:py-2.5 text-left transition cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 sm:gap-2 ${
+                      isSelected
+                        ? isDark
+                          ? 'bg-indigo-950/80 border-indigo-500 text-indigo-100 shadow-sm'
+                          : 'bg-indigo-50 border-indigo-500 text-indigo-950 shadow-sm'
+                        : isDark
+                        ? 'bg-slate-800/55 border-slate-700/80 text-slate-300 hover:bg-slate-800 hover:border-slate-600'
+                        : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-white hover:border-slate-300'
+                    }`}
+                  >
+                    <span className="text-xs sm:text-sm font-extrabold">{yr}° Anno</span>
+                    <span
+                      className={`text-[10px] sm:text-[11px] font-bold px-2 py-0.5 rounded-full shrink-0 w-max ${
+                        isSelected
+                          ? 'bg-indigo-600 text-white'
+                          : isDark
+                          ? 'bg-slate-700 text-slate-300'
+                          : 'bg-slate-200/80 text-slate-600'
+                      }`}
+                    >
+                      {blocksCount} {blocksCount === 1 ? 'blocco' : 'blocchi'}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+
+          {/* 2. BARRA CONTROLLO BLOCCHI DELL'ANNO */}
+          {currentYearBlocks.length > 0 && (
+            <div className="flex flex-wrap items-center justify-between gap-2 px-1">
+              <div className="flex items-center gap-2">
+                <h3
+                  className={`text-xs sm:text-sm font-bold uppercase tracking-wider ${
+                    isDark ? 'text-slate-300' : 'text-slate-700'
                   }`}
                 >
-                  giorni
-                </span>
+                  Blocchi {selectedMedYear}° Anno ({currentYearBlocks.length})
+                </h3>
               </div>
-              <p
-                className={`text-xs mt-0.5 ${
-                  isDark ? 'text-slate-400' : 'text-slate-500'
+
+              <button
+                type="button"
+                onClick={handleToggleAllCurrentBlocks}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition cursor-pointer ${
+                  isDark
+                    ? 'bg-slate-900 border-slate-800 text-slate-300 hover:bg-slate-800'
+                    : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
                 }`}
               >
-                Appello il{' '}
-                <strong
-                  className={isDark ? 'text-slate-200' : 'text-slate-700'}
-                >
-                  {formatShortDate(activeExam.examDate)}
-                </strong>
-              </p>
+                <ChevronsUpDown className="w-3.5 h-3.5 text-indigo-500" />
+                <span>
+                  {areAllCurrentBlocksExpanded
+                    ? 'Comprimi tutti'
+                    : 'Espandi tutti'}
+                </span>
+              </button>
             </div>
-            <div
-              className={`text-xs font-medium flex items-center gap-1 ${
-                isDark ? 'text-slate-400' : 'text-slate-500'
+          )}
+
+          {/* 3. ELENCO BLOCCHI A SCOMPARSA (ACCORDION) */}
+          {currentYearBlocks.length === 0 ? (
+            <section
+              className={`rounded-2xl border border-dashed p-10 text-center space-y-2 ${
+                isDark
+                  ? 'bg-slate-900/50 border-slate-800 text-slate-400'
+                  : 'bg-white border-slate-300 text-slate-500'
               }`}
             >
-              <Clock className="w-3.5 h-3.5" />
-              <span>
-                {analytics.remainingUsefulDays} giorni utili di studio
-              </span>
-            </div>
-          </div>
-        </section>
+              <GraduationCap className="w-8 h-8 mx-auto opacity-50" />
+              <p className="text-sm font-bold">
+                Nessun blocco inserito per il {selectedMedYear}° Anno
+              </p>
+              <p className="text-xs max-w-md mx-auto">
+                Usa il campo &ldquo;Aggiungi Blocco&rdquo; qui sopra per creare
+                un esame integrato e inserire le materie con CFU e voti.
+              </p>
+            </section>
+          ) : (
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 items-stretch">
+              {currentYearBlocks.map((block, blkIndex) => {
+                const isExpanded = Boolean(expandedBlocks[block.id]);
+                const isBeingDragged = draggedBlockId === block.id;
+                const isDropTarget =
+                  dragOverBlockIdx === blkIndex &&
+                  draggedBlockId &&
+                  draggedBlockId !== block.id;
 
-        {/* 3. GRIGLIA PRINCIPALE RIORDINABILE (2 COLONNE) */}
-        <div
-          className={`grid grid-cols-1 ${
-            layout.left.length > 0 && layout.right.length > 0
-              ? 'lg:grid-cols-12'
-              : ''
-          } gap-6 items-start`}
-        >
-          {layout.left.length > 0 && (
-            <div
-              onDragOver={(e) => e.preventDefault()}
-              onDrop={(e) => {
-                e.preventDefault();
-                handleDropSection('left', layout.left.length);
-              }}
-              className={`${
-                layout.right.length > 0 ? 'lg:col-span-8' : ''
-              } space-y-6`}
-            >
-              {layout.left.map((secId, idx) =>
-                renderSection(secId, 'left', idx, layout.left.length)
-              )}
+                let blkWeightedSum = 0;
+                let blkGradedCfu = 0;
+                let blkTotalCfu = 0;
+                let gradedCount = 0;
+                let allLode = true;
+
+                (block.subjects || []).forEach((s) => {
+                  const c = Number(s.cfu) || 0;
+                  blkTotalCfu += c;
+                  const g = Number(s.grade);
+                  if (g >= 18 && g <= 30 && c > 0) {
+                    blkWeightedSum += g * c;
+                    blkGradedCfu += c;
+                    gradedCount += 1;
+                    if (!(g === 30 && s.lode)) {
+                      allLode = false;
+                    }
+                  }
+                });
+
+                const blkAvg =
+                  blkGradedCfu > 0 ? blkWeightedSum / blkGradedCfu : null;
+                const blkFinalGrade =
+                  blkAvg !== null
+                    ? blkAvg === 30 && gradedCount > 0 && allLode
+                      ? '30L'
+                      : `${Math.round(blkAvg)}/30`
+                    : null;
+
+                const draft = newSubjectDrafts[block.id] || {
+                  name: '',
+                  cfu: '6',
+                  grade: '',
+                };
+
+                return (
+                  <section
+                    key={block.id}
+                    draggable={blockDragReadyId === block.id}
+                    onDragStart={(e) => {
+                      setDraggedBlockId(block.id);
+                      e.dataTransfer.effectAllowed = 'move';
+                    }}
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      if (dragOverBlockIdx !== blkIndex) {
+                        setDragOverBlockIdx(blkIndex);
+                      }
+                    }}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleDropMedBlock(blkIndex);
+                    }}
+                    onDragEnd={() => {
+                      setDraggedBlockId(null);
+                      setDragOverBlockIdx(null);
+                      setBlockDragReadyId(null);
+                    }}
+                    className={`rounded-2xl border shadow-sm flex flex-col transition-all duration-200 ${cardSurfaceClass} ${
+                      isExpanded
+                        ? isDark
+                          ? 'border-indigo-500/40'
+                          : 'border-indigo-300'
+                        : ''
+                    } ${isBeingDragged ? 'opacity-45 scale-[0.99]' : ''} ${
+                      isDropTarget
+                        ? `ring-2 ring-indigo-500 ring-offset-4 ${
+                            isDark
+                              ? 'ring-offset-slate-950'
+                              : 'ring-offset-slate-50'
+                          }`
+                        : ''
+                    } ${
+                      isBlockReorderMode
+                        ? isDark
+                          ? 'ring-2 ring-indigo-500/45'
+                          : 'ring-2 ring-indigo-300/80'
+                        : ''
+                    }`}
+                  >
+                    {/* Header Blocco */}
+                    <div
+                      onClick={() => {
+                        if (editingBlockId !== block.id) {
+                          toggleBlockExpanded(block.id);
+                        }
+                      }}
+                      className={`p-3.5 sm:p-4 flex items-center justify-between gap-2.5 cursor-pointer select-none rounded-2xl transition-colors ${
+                        isExpanded
+                          ? `rounded-b-none border-b ${
+                              isDark
+                                ? 'border-slate-800 bg-slate-900'
+                                : 'border-slate-100 bg-white'
+                            }`
+                          : isDark
+                          ? 'hover:bg-slate-800/45'
+                          : 'hover:bg-slate-50/80'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                        <span
+                          className={`h-7 w-7 rounded-lg inline-flex items-center justify-center shrink-0 transition-colors ${
+                            isExpanded
+                              ? 'bg-indigo-600 text-white'
+                              : isDark
+                              ? 'bg-slate-800 text-slate-400'
+                              : 'bg-slate-100 text-slate-600'
+                          }`}
+                        >
+                          {isExpanded ? (
+                            <ChevronDown className="w-4 h-4" />
+                          ) : (
+                            <ChevronRight className="w-4 h-4" />
+                          )}
+                        </span>
+
+                        <div className="min-w-0 flex-1">
+                          {editingBlockId === block.id ? (
+                            <div
+                              className="flex items-center gap-1.5"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <input
+                                type="text"
+                                value={editingBlockTitle}
+                                onChange={(e) =>
+                                  setEditingBlockTitle(e.target.value)
+                                }
+                                onBlur={() =>
+                                  handleRenameMedBlock(
+                                    selectedMedYear,
+                                    block.id
+                                  )
+                                }
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') {
+                                    handleRenameMedBlock(
+                                      selectedMedYear,
+                                      block.id
+                                    );
+                                  }
+                                  if (e.key === 'Escape') {
+                                    setEditingBlockId(null);
+                                  }
+                                }}
+                                autoFocus
+                                className={`w-full text-sm font-bold border-b-2 border-indigo-600 bg-transparent focus:outline-none ${
+                                  isDark ? 'text-slate-50' : 'text-slate-900'
+                                }`}
+                              />
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  handleRenameMedBlock(
+                                    selectedMedYear,
+                                    block.id
+                                  )
+                                }
+                                className="p-1 text-emerald-500 cursor-pointer shrink-0"
+                              >
+                                <Check className="w-4 h-4" />
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-1.5 min-w-0">
+                              <h3
+                                title={block.name}
+                                className={`text-xs sm:text-sm font-bold truncate ${
+                                  isDark ? 'text-slate-100' : 'text-slate-900'
+                                }`}
+                              >
+                                {block.name}
+                              </h3>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setEditingBlockId(block.id);
+                                  setEditingBlockTitle(block.name);
+                                }}
+                                className={`p-1 rounded-md opacity-60 hover:opacity-100 transition cursor-pointer shrink-0 ${
+                                  isDark
+                                    ? 'text-slate-400 hover:bg-slate-800 hover:text-indigo-400'
+                                    : 'text-slate-500 hover:bg-slate-100 hover:text-indigo-600'
+                                }`}
+                                title="Rinomina blocco"
+                              >
+                                <Edit3 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          )}
+
+                          <p
+                            className={`text-[11px] truncate mt-0.5 ${
+                              isDark ? 'text-slate-400' : 'text-slate-500'
+                            }`}
+                          >
+                            {(block.subjects || []).length}{' '}
+                            {(block.subjects || []).length === 1
+                              ? 'materia'
+                              : 'materie'}{' '}
+                            · {blkGradedCfu}/{blkTotalCfu} CFU
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Voto Ponderato Blocco e comandi */}
+                      <div
+                        className="flex items-center gap-1.5 shrink-0"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <div
+                          onClick={() => toggleBlockExpanded(block.id)}
+                          className={`rounded-xl px-2.5 py-1.5 border cursor-pointer ${
+                            blkAvg !== null
+                              ? isDark
+                                ? 'bg-indigo-950/75 border-indigo-700/80 text-indigo-100'
+                                : 'bg-indigo-50 border-indigo-200 text-indigo-950'
+                              : isDark
+                              ? 'bg-slate-800/80 border-slate-700 text-slate-400'
+                              : 'bg-slate-50 border-slate-200 text-slate-500'
+                          }`}
+                        >
+                          <div className="text-[9px] font-bold uppercase tracking-wider opacity-75">
+                            Media
+                          </div>
+                          {blkAvg !== null ? (
+                            <div className="flex items-center gap-1 mt-0.5">
+                              <span className="text-xs sm:text-sm font-black tabular-nums leading-none">
+                                {blkAvg.toFixed(2)}
+                              </span>
+                              <span
+                                className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-indigo-600 text-white leading-none"
+                                title="Voto finale arrotondato"
+                              >
+                                → {blkFinalGrade}
+                              </span>
+                            </div>
+                          ) : (
+                            <div className="text-xs font-semibold mt-0.5 leading-none">
+                              —
+                            </div>
+                          )}
+                        </div>
+
+                        <div
+                          className={`inline-flex items-center gap-0.5 rounded-lg p-0.5 border transition shrink-0 ${
+                            isBlockReorderMode
+                              ? isDark
+                                ? 'bg-indigo-950/70 border-indigo-700 text-indigo-300 shadow-sm'
+                                : 'bg-indigo-50 border-indigo-300 text-indigo-700 shadow-sm'
+                              : isDark
+                              ? 'bg-slate-800 border-slate-700 text-slate-400 hover:text-slate-200'
+                              : 'bg-slate-50 border-slate-200/80 text-slate-500 hover:text-slate-800'
+                          }`}
+                        >
+                          <button
+                            type="button"
+                            onClick={() => moveBlockUp(blkIndex)}
+                            disabled={blkIndex === 0}
+                            className={`p-1.5 rounded disabled:opacity-30 disabled:pointer-events-none transition ${
+                              isDark ? 'hover:bg-slate-700' : 'hover:bg-white'
+                            }`}
+                            title="Sposta blocco prima"
+                          >
+                            <ArrowUp className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => moveBlockDown(blkIndex)}
+                            disabled={blkIndex === currentYearBlocks.length - 1}
+                            className={`p-1.5 rounded disabled:opacity-30 disabled:pointer-events-none transition ${
+                              isDark ? 'hover:bg-slate-700' : 'hover:bg-white'
+                            }`}
+                            title="Sposta blocco dopo"
+                          >
+                            <ArrowDown className="w-3.5 h-3.5" />
+                          </button>
+                          <span
+                            onMouseDown={() => setBlockDragReadyId(block.id)}
+                            onMouseUp={() => setBlockDragReadyId(null)}
+                            className={`p-1.5 rounded cursor-grab active:cursor-grabbing transition ${
+                              isDark ? 'hover:bg-slate-700' : 'hover:bg-white'
+                            }`}
+                            title="Trascina blocco"
+                          >
+                            <GripVertical className="w-3.5 h-3.5" />
+                          </span>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() =>
+                            handleDeleteMedBlock(selectedMedYear, block.id)
+                          }
+                          className={`h-8 w-8 inline-flex items-center justify-center rounded-xl border transition cursor-pointer shrink-0 ${
+                            isDark
+                              ? 'border-slate-800 text-slate-500 hover:text-rose-400 hover:bg-rose-950/60'
+                              : 'border-slate-200 text-slate-400 hover:text-rose-600 hover:bg-rose-50'
+                          }`}
+                          title="Elimina blocco"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Contenuto a scomparsa del Blocco */}
+                    {isExpanded && (
+                      <div className="p-3.5 sm:p-4 pt-2 flex-1 flex flex-col justify-between gap-3">
+                        {(block.subjects || []).length > 0 ? (
+                          <div className="overflow-x-auto">
+                            <table className="w-full text-left border-collapse text-xs sm:text-sm min-w-[320px]">
+                              <thead>
+                                <tr
+                                  className={`border-b text-[10px] sm:text-[11px] uppercase tracking-wider ${
+                                    isDark
+                                      ? 'border-slate-800 text-slate-400'
+                                      : 'border-slate-200 text-slate-500'
+                                  }`}
+                                >
+                                  <th className="py-2 font-semibold">
+                                    Materia
+                                  </th>
+                                  <th className="py-2 font-semibold w-14 text-center">
+                                    CFU
+                                  </th>
+                                  <th className="py-2 font-semibold w-24 text-center">
+                                    Voto
+                                  </th>
+                                  <th className="py-2 font-semibold w-12 text-right">
+                                    Peso
+                                  </th>
+                                  <th className="py-2 font-semibold w-8 text-right" />
+                                </tr>
+                              </thead>
+                              <tbody
+                                className={`divide-y ${
+                                  isDark
+                                    ? 'divide-slate-800/80'
+                                    : 'divide-slate-100'
+                                }`}
+                              >
+                                {(block.subjects || []).map((sub) => {
+                                  const subSelectVal =
+                                    sub.grade === 30 && sub.lode
+                                      ? '30L'
+                                      : sub.grade
+                                      ? String(sub.grade)
+                                      : '';
+                                  const weightPoints =
+                                    sub.grade >= 18 && sub.grade <= 30
+                                      ? (
+                                          Number(sub.grade) *
+                                          Number(sub.cfu || 0)
+                                        ).toFixed(0)
+                                      : '—';
+
+                                  return (
+                                    <tr
+                                      key={sub.id}
+                                      className={
+                                        isDark
+                                          ? 'hover:bg-slate-800/40'
+                                          : 'hover:bg-slate-50/70'
+                                      }
+                                    >
+                                      <td className="py-2.5 pr-2 min-w-[120px]">
+                                        <input
+                                          type="text"
+                                          value={sub.name}
+                                          onChange={(e) =>
+                                            handleUpdateMedSubject(
+                                              selectedMedYear,
+                                              block.id,
+                                              sub.id,
+                                              { name: e.target.value }
+                                            )
+                                          }
+                                          className={`w-full bg-transparent font-medium truncate focus:outline-none focus:underline ${
+                                            isDark
+                                              ? 'text-slate-100'
+                                              : 'text-slate-800'
+                                          }`}
+                                        />
+                                      </td>
+                                      <td className="py-2.5 px-1 text-center">
+                                        <input
+                                          type="number"
+                                          min="0.5"
+                                          max="30"
+                                          step="0.5"
+                                          value={sub.cfu}
+                                          onChange={(e) =>
+                                            handleUpdateMedSubject(
+                                              selectedMedYear,
+                                              block.id,
+                                              sub.id,
+                                              {
+                                                cfu: Math.max(
+                                                  0.5,
+                                                  Number(e.target.value) || 0.5
+                                                ),
+                                              }
+                                            )
+                                          }
+                                          className={`no-spinner h-8 w-12 text-center rounded-lg border px-1 text-xs font-bold tabular-nums ${inputMutedSurfaceClass}`}
+                                        />
+                                      </td>
+                                      <td className="py-2.5 px-1 text-center">
+                                        <div className="relative inline-block w-22 sm:w-24">
+                                          <select
+                                            value={subSelectVal}
+                                            onChange={(e) => {
+                                              const v = e.target.value;
+                                              if (v === '') {
+                                                handleUpdateMedSubject(
+                                                  selectedMedYear,
+                                                  block.id,
+                                                  sub.id,
+                                                  { grade: null, lode: false }
+                                                );
+                                              } else if (v === '30L') {
+                                                handleUpdateMedSubject(
+                                                  selectedMedYear,
+                                                  block.id,
+                                                  sub.id,
+                                                  { grade: 30, lode: true }
+                                                );
+                                              } else {
+                                                handleUpdateMedSubject(
+                                                  selectedMedYear,
+                                                  block.id,
+                                                  sub.id,
+                                                  {
+                                                    grade: Number(v),
+                                                    lode: false,
+                                                  }
+                                                );
+                                              }
+                                            }}
+                                            className={`appearance-none h-8 w-full rounded-lg border pl-2 pr-6 text-xs font-bold cursor-pointer ${
+                                              subSelectVal
+                                                ? isDark
+                                                  ? 'bg-indigo-950/80 border-indigo-700 text-indigo-200'
+                                                  : 'bg-indigo-50 border-indigo-200 text-indigo-800'
+                                                : inputMutedSurfaceClass
+                                            }`}
+                                          >
+                                            <option value="">Da dare</option>
+                                            <option value="30L">
+                                              30 e Lode
+                                            </option>
+                                            {[
+                                              30, 29, 28, 27, 26, 25, 24, 23,
+                                              22, 21, 20, 19, 18,
+                                            ].map((g) => (
+                                              <option key={g} value={String(g)}>
+                                                {g}
+                                              </option>
+                                            ))}
+                                          </select>
+                                          <ChevronDown
+                                            className={`w-3.5 h-3.5 pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2 ${
+                                              subSelectVal
+                                                ? isDark
+                                                  ? 'text-indigo-300'
+                                                  : 'text-indigo-700'
+                                                : isDark
+                                                ? 'text-slate-400'
+                                                : 'text-slate-500'
+                                            }`}
+                                          />
+                                        </div>
+                                      </td>
+                                      <td
+                                        className={`py-2.5 text-right text-xs font-semibold tabular-nums ${
+                                          isDark
+                                            ? 'text-slate-400'
+                                            : 'text-slate-500'
+                                        }`}
+                                      >
+                                        {weightPoints}
+                                      </td>
+                                      <td className="py-2.5 text-right">
+                                        <button
+                                          type="button"
+                                          onClick={() =>
+                                            handleDeleteMedSubject(
+                                              selectedMedYear,
+                                              block.id,
+                                              sub.id
+                                            )
+                                          }
+                                          className={`h-8 w-8 inline-flex items-center justify-center rounded-lg transition cursor-pointer ${
+                                            isDark
+                                              ? 'text-slate-500 hover:text-rose-400 hover:bg-rose-950/60'
+                                              : 'text-slate-400 hover:text-rose-600 hover:bg-rose-50'
+                                          }`}
+                                          title="Rimuovi materia"
+                                        >
+                                          <Trash2 className="w-3.5 h-3.5" />
+                                        </button>
+                                      </td>
+                                    </tr>
+                                  );
+                                })}
+                              </tbody>
+                            </table>
+                          </div>
+                        ) : (
+                          <div
+                            className={`rounded-xl border border-dashed py-3 px-3 text-center text-xs ${
+                              isDark
+                                ? 'border-slate-800 text-slate-400'
+                                : 'border-slate-200 text-slate-500'
+                            }`}
+                          >
+                            Nessuna materia inserita in questo blocco.
+                          </div>
+                        )}
+
+                        {/* Form rapido aggiunta materia */}
+                        <form
+                          onSubmit={(e) =>
+                            handleAddMedSubject(e, selectedMedYear, block.id)
+                          }
+                          className={`mt-auto pt-3 border-t flex flex-col sm:flex-row items-stretch sm:items-center gap-2 ${
+                            isDark ? 'border-slate-800' : 'border-slate-100'
+                          }`}
+                        >
+                          <input
+                            type="text"
+                            placeholder="Nuova materia..."
+                            value={draft.name}
+                            onChange={(e) =>
+                              setNewSubjectDrafts((prev) => ({
+                                ...prev,
+                                [block.id]: { ...draft, name: e.target.value },
+                              }))
+                            }
+                            required
+                            className={`h-10 sm:h-9 flex-1 rounded-xl border px-3 text-xs ${inputMutedSurfaceClass}`}
+                          />
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="number"
+                              min="0.5"
+                              max="30"
+                              step="0.5"
+                              placeholder="CFU"
+                              value={draft.cfu}
+                              onChange={(e) =>
+                                setNewSubjectDrafts((prev) => ({
+                                  ...prev,
+                                  [block.id]: { ...draft, cfu: e.target.value },
+                                }))
+                              }
+                              required
+                              className={`no-spinner h-10 sm:h-9 w-16 rounded-xl border px-2 text-xs text-center font-bold tabular-nums shrink-0 ${inputMutedSurfaceClass}`}
+                            />
+                            <div className="relative flex-1 sm:w-24 shrink-0">
+                              <select
+                                value={draft.grade}
+                                onChange={(e) =>
+                                  setNewSubjectDrafts((prev) => ({
+                                    ...prev,
+                                    [block.id]: {
+                                      ...draft,
+                                      grade: e.target.value,
+                                    },
+                                  }))
+                                }
+                                className={`appearance-none h-10 sm:h-9 w-full rounded-xl border pl-2.5 pr-6 text-xs font-semibold cursor-pointer ${inputMutedSurfaceClass}`}
+                              >
+                                <option value="">Da dare</option>
+                                <option value="30L">30L</option>
+                                {[
+                                  30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20,
+                                  19, 18,
+                                ].map((g) => (
+                                  <option key={g} value={String(g)}>
+                                    {g}
+                                  </option>
+                                ))}
+                              </select>
+                              <ChevronDown
+                                className={`w-3.5 h-3.5 pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 ${
+                                  isDark ? 'text-slate-400' : 'text-slate-500'
+                                }`}
+                              />
+                            </div>
+                            <button
+                              type="submit"
+                              className="h-10 sm:h-9 px-4 inline-flex items-center justify-center gap-1 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shadow-sm transition cursor-pointer shrink-0"
+                            >
+                              <Plus className="w-3.5 h-3.5" />
+                              <span>Aggiungi</span>
+                            </button>
+                          </div>
+                        </form>
+                      </div>
+                    )}
+                  </section>
+                );
+              })}
             </div>
           )}
-
-          {layout.right.length > 0 && (
-            <div
-              onDragOver={(e) => e.preventDefault()}
-              onDrop={(e) => {
-                e.preventDefault();
-                handleDropSection('right', layout.right.length);
-              }}
-              className={`${
-                layout.left.length > 0 ? 'lg:col-span-4' : ''
-              } space-y-6`}
-            >
-              {layout.right.map((secId, idx) =>
-                renderSection(secId, 'right', idx, layout.right.length)
-              )}
-            </div>
-          )}
-        </div>
-      </main>
+        </main>
+      )}
     </div>
   );
 }
