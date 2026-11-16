@@ -475,7 +475,7 @@ export default function App() {
   const [newSubjectDrafts, setNewSubjectDrafts] = useState({});
   const [expandedBlocks, setExpandedBlocks] = useState({});
 
-  // Stato riordinamento blocchi (identico al riordinamento sezioni Tracker)
+  // Stato riordinamento blocchi
   const [isBlockReorderMode, setIsBlockReorderMode] = useState(false);
   const [blockDragReadyId, setBlockDragReadyId] = useState(null);
   const [draggedBlockId, setDraggedBlockId] = useState(null);
@@ -2266,28 +2266,28 @@ export default function App() {
         type="button"
         onClick={() => moveSectionUp(col, index)}
         disabled={index === 0}
-        className={`p-1 rounded disabled:opacity-30 disabled:pointer-events-none transition ${
+        className={`p-1.5 rounded disabled:opacity-30 disabled:pointer-events-none transition ${
           isDark ? 'hover:bg-slate-700' : 'hover:bg-white'
         }`}
         title="Sposta sezione in alto"
       >
-        <ArrowUp className="w-3.5 h-3.5" />
+        <ArrowUp className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
       </button>
       <button
         type="button"
         onClick={() => moveSectionDown(col, index)}
         disabled={index === totalInCol - 1}
-        className={`p-1 rounded disabled:opacity-30 disabled:pointer-events-none transition ${
+        className={`p-1.5 rounded disabled:opacity-30 disabled:pointer-events-none transition ${
           isDark ? 'hover:bg-slate-700' : 'hover:bg-white'
         }`}
         title="Sposta sezione in basso"
       >
-        <ArrowDown className="w-3.5 h-3.5" />
+        <ArrowDown className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
       </button>
       <button
         type="button"
         onClick={() => moveSectionAcross(col, index)}
-        className={`p-1 rounded transition ${
+        className={`p-1.5 rounded transition ${
           isDark ? 'hover:bg-slate-700' : 'hover:bg-white'
         }`}
         title={
@@ -2296,17 +2296,17 @@ export default function App() {
             : 'Sposta nella colonna principale'
         }
       >
-        <ArrowLeftRight className="w-3.5 h-3.5" />
+        <ArrowLeftRight className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
       </button>
       <span
         onMouseDown={() => setDragReadyId(sectionId)}
         onMouseUp={() => setDragReadyId(null)}
-        className={`p-1 rounded cursor-grab active:cursor-grabbing transition ${
+        className={`p-1.5 rounded cursor-grab active:cursor-grabbing transition ${
           isDark ? 'hover:bg-slate-700' : 'hover:bg-white'
         }`}
         title="Trascina per riordinare"
       >
-        <GripVertical className="w-3.5 h-3.5" />
+        <GripVertical className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
       </span>
     </div>
   );
@@ -2779,7 +2779,7 @@ export default function App() {
                       : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
-                  Da ripassare oggi ({srAnalytics.dueTotalCount})
+                  Oggi ({srAnalytics.dueTotalCount})
                 </button>
                 <button
                   type="button"
@@ -2971,7 +2971,7 @@ export default function App() {
                         <button
                           type="button"
                           onClick={() => handleReviewSrTopic(topic.id, 'hard')}
-                          className={`px-2 py-1 rounded-lg text-[11px] font-semibold border transition cursor-pointer ${
+                          className={`px-2.5 py-1.5 rounded-lg text-[11px] font-semibold border transition cursor-pointer ${
                             isDark
                               ? 'bg-rose-950/70 hover:bg-rose-900/80 text-rose-200 border-rose-800/70'
                               : 'bg-rose-50 hover:bg-rose-100 text-rose-700 border-rose-200'
@@ -2983,7 +2983,7 @@ export default function App() {
                         <button
                           type="button"
                           onClick={() => handleReviewSrTopic(topic.id, 'good')}
-                          className={`px-2 py-1 rounded-lg text-[11px] font-semibold border transition cursor-pointer ${
+                          className={`px-2.5 py-1.5 rounded-lg text-[11px] font-semibold border transition cursor-pointer ${
                             isDark
                               ? 'bg-emerald-950/70 hover:bg-emerald-900/80 text-emerald-200 border-emerald-800/70'
                               : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border-emerald-200'
@@ -2995,7 +2995,7 @@ export default function App() {
                         <button
                           type="button"
                           onClick={() => handleReviewSrTopic(topic.id, 'easy')}
-                          className={`px-2 py-1 rounded-lg text-[11px] font-semibold transition cursor-pointer ${
+                          className={`px-2.5 py-1.5 rounded-lg text-[11px] font-semibold border transition cursor-pointer ${
                             isDark
                               ? 'bg-indigo-950/70 hover:bg-indigo-900/80 text-indigo-200 border border-indigo-800/70'
                               : 'bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200'
@@ -3007,14 +3007,14 @@ export default function App() {
                         <button
                           type="button"
                           onClick={() => handleDeleteSrTopic(topic.id)}
-                          className={`p-1.5 rounded-lg transition cursor-pointer ${
+                          className={`p-2 rounded-lg transition cursor-pointer ${
                             isDark
                               ? 'text-slate-500 hover:text-rose-400 hover:bg-rose-950/60'
                               : 'text-slate-400 hover:text-rose-600 hover:bg-rose-50'
                           }`}
                           title="Elimina argomento"
                         >
-                          <Trash2 className="w-3.5 h-3.5" />
+                          <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
                     </div>
@@ -3187,7 +3187,7 @@ export default function App() {
               </div>
             ) : (
               <div className="overflow-x-auto max-h-64 overflow-y-auto pr-1">
-                <table className="w-full text-left border-collapse text-sm">
+                <table className="w-full text-left border-collapse text-sm min-w-[340px]">
                   <thead>
                     <tr
                       className={`border-b text-xs ${
@@ -3217,7 +3217,7 @@ export default function App() {
                         }`}
                       >
                         <td
-                          className={`py-2.5 font-medium ${
+                          className={`py-2.5 font-medium whitespace-nowrap ${
                             isDark ? 'text-slate-200' : 'text-slate-800'
                           }`}
                         >
@@ -3241,7 +3241,7 @@ export default function App() {
                             </span>
                           )}
                         </td>
-                        <td className="py-2.5">
+                        <td className="py-2.5 whitespace-nowrap">
                           {editingLogDate === row.date ? (
                             <input
                               type="number"
@@ -3271,20 +3271,20 @@ export default function App() {
                           )}
                         </td>
                         <td
-                          className={`py-2.5 text-xs ${
+                          className={`py-2.5 text-xs whitespace-nowrap ${
                             isDark ? 'text-slate-400' : 'text-slate-600'
                           }`}
                         >
                           {row.cumulative} / {analytics.totalPages} pag
                         </td>
-                        <td className="py-2.5 text-right">
+                        <td className="py-2.5 text-right whitespace-nowrap">
                           <div className="inline-flex items-center gap-1">
                             {editingLogDate === row.date ? (
                               <>
                                 <button
                                   type="button"
                                   onClick={() => handleSaveEditedLog(row.date)}
-                                  className={`p-1.5 rounded-lg cursor-pointer ${
+                                  className={`p-2 rounded-lg cursor-pointer ${
                                     isDark
                                       ? 'text-emerald-400 hover:bg-emerald-950/70'
                                       : 'text-emerald-600 hover:bg-emerald-50'
@@ -3296,7 +3296,7 @@ export default function App() {
                                 <button
                                   type="button"
                                   onClick={() => setEditingLogDate(null)}
-                                  className={`p-1.5 rounded-lg cursor-pointer ${
+                                  className={`p-2 rounded-lg cursor-pointer ${
                                     isDark
                                       ? 'text-slate-400 hover:bg-slate-800'
                                       : 'text-slate-500 hover:bg-slate-100'
@@ -3314,26 +3314,26 @@ export default function App() {
                                     setEditingLogDate(row.date);
                                     setEditingLogPages(String(row.pages));
                                   }}
-                                  className={`p-1.5 rounded-lg cursor-pointer ${
+                                  className={`p-2 rounded-lg cursor-pointer ${
                                     isDark
                                       ? 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
                                       : 'text-slate-400 hover:text-slate-700 hover:bg-slate-100'
                                   }`}
                                   title="Modifica pagine"
                                 >
-                                  <Edit3 className="w-3.5 h-3.5" />
+                                  <Edit3 className="w-4 h-4" />
                                 </button>
                                 <button
                                   type="button"
                                   onClick={() => handleDeleteLog(row.date)}
-                                  className={`p-1.5 rounded-lg cursor-pointer ${
+                                  className={`p-2 rounded-lg cursor-pointer ${
                                     isDark
                                       ? 'text-slate-400 hover:text-rose-400 hover:bg-rose-950/60'
                                       : 'text-slate-400 hover:text-rose-600 hover:bg-rose-50'
                                   }`}
                                   title="Elimina riga"
                                 >
-                                  <Trash2 className="w-3.5 h-3.5" />
+                                  <Trash2 className="w-4 h-4" />
                                 </button>
                               </>
                             )}
@@ -3393,7 +3393,7 @@ export default function App() {
                   setPomoSound(next);
                   if (next) playPomodoroSound(pomoSoundType, 'study');
                 }}
-                className={`p-1.5 rounded-lg text-xs transition cursor-pointer ${
+                className={`p-2 rounded-lg text-xs transition cursor-pointer ${
                   pomoSound
                     ? indigoPillClass
                     : isDark
@@ -3403,9 +3403,9 @@ export default function App() {
                 title={pomoSound ? 'Suono attivo' : 'Suono disattivato'}
               >
                 {pomoSound ? (
-                  <Volume2 className="w-3.5 h-3.5" />
+                  <Volume2 className="w-4 h-4" />
                 ) : (
-                  <VolumeX className="w-3.5 h-3.5" />
+                  <VolumeX className="w-4 h-4" />
                 )}
               </button>
               {orderControls}
@@ -3420,7 +3420,7 @@ export default function App() {
             <button
               type="button"
               onClick={() => handlePomoSwitchPhase('study')}
-              className={`py-1.5 px-2 rounded-lg text-xs font-semibold transition cursor-pointer ${
+              className={`py-2 px-2 rounded-lg text-xs font-semibold transition cursor-pointer ${
                 pomoPhase === 'study'
                   ? isDark
                     ? 'bg-slate-900 text-indigo-400 shadow-sm'
@@ -3435,7 +3435,7 @@ export default function App() {
             <button
               type="button"
               onClick={() => handlePomoSwitchPhase('short_break')}
-              className={`py-1.5 px-2 rounded-lg text-xs font-semibold transition cursor-pointer ${
+              className={`py-2 px-2 rounded-lg text-xs font-semibold transition cursor-pointer ${
                 pomoPhase === 'short_break'
                   ? isDark
                     ? 'bg-slate-900 text-emerald-400 shadow-sm'
@@ -3450,7 +3450,7 @@ export default function App() {
             <button
               type="button"
               onClick={() => handlePomoSwitchPhase('long_break')}
-              className={`py-1.5 px-2 rounded-lg text-xs font-semibold transition cursor-pointer ${
+              className={`py-2 px-2 rounded-lg text-xs font-semibold transition cursor-pointer ${
                 pomoPhase === 'long_break'
                   ? isDark
                     ? 'bg-slate-900 text-teal-400 shadow-sm'
@@ -3490,7 +3490,7 @@ export default function App() {
                 {[1, 2, 3, 4].map((dot) => (
                   <span
                     key={dot}
-                    className={`h-2 w-6 rounded-full transition-all ${
+                    className={`h-2.5 w-7 sm:w-6 rounded-full transition-all ${
                       dot <= pomoCycleCount
                         ? pomoPhase === 'study'
                           ? 'bg-indigo-500 shadow-sm'
@@ -3539,7 +3539,7 @@ export default function App() {
               </p>
 
               <div
-                className={`mb-4 px-3 py-2 rounded-xl text-[11px] italic font-medium border transition-all ${
+                className={`mb-4 px-3 py-2.5 rounded-xl text-xs italic font-medium border transition-all ${
                   isDark
                     ? 'bg-slate-950/40 border-slate-800/80 text-slate-300'
                     : 'bg-white/80 border-slate-200/80 text-slate-600'
@@ -3549,7 +3549,7 @@ export default function App() {
               </div>
 
               <div
-                className={`w-full h-2 rounded-full overflow-hidden mb-4 ${
+                className={`w-full h-2.5 rounded-full overflow-hidden mb-4 ${
                   isDark
                     ? 'bg-slate-800/90'
                     : pomoPhase === 'study'
@@ -3569,7 +3569,7 @@ export default function App() {
                 <button
                   type="button"
                   onClick={handleTogglePomoRunning}
-                  className={`inline-flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-xl text-sm font-bold text-white shadow-md transition cursor-pointer ${
+                  className={`inline-flex items-center justify-center gap-1.5 px-6 py-3 sm:py-2.5 rounded-xl text-sm font-bold text-white shadow-md transition cursor-pointer ${
                     pomoRunning
                       ? 'bg-amber-500 hover:bg-amber-600'
                       : pomoPhase === 'study'
@@ -3593,7 +3593,7 @@ export default function App() {
                 <button
                   type="button"
                   onClick={handlePomoReset}
-                  className={`p-2.5 rounded-xl border transition cursor-pointer ${
+                  className={`p-3 sm:p-2.5 rounded-xl border transition cursor-pointer ${
                     isDark
                       ? 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700'
                       : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
@@ -3606,7 +3606,7 @@ export default function App() {
                 <button
                   type="button"
                   onClick={handlePomoSkipPhase}
-                  className={`p-2.5 rounded-xl border transition cursor-pointer ${
+                  className={`p-3 sm:p-2.5 rounded-xl border transition cursor-pointer ${
                     isDark
                       ? 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700'
                       : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
@@ -3628,11 +3628,11 @@ export default function App() {
               >
                 Durata (min) e Preset
               </span>
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1.5">
                 <button
                   type="button"
                   onClick={() => handlePomoPreset(25, 5, 15)}
-                  className={`px-2 py-0.5 rounded-md text-[11px] font-semibold transition cursor-pointer ${
+                  className={`px-2.5 py-1 rounded-md text-xs font-semibold transition cursor-pointer ${
                     pomoStudyMin === 25 &&
                     pomoShortBreakMin === 5 &&
                     pomoLongBreakMin === 15
@@ -3647,7 +3647,7 @@ export default function App() {
                 <button
                   type="button"
                   onClick={() => handlePomoPreset(50, 10, 20)}
-                  className={`px-2 py-0.5 rounded-md text-[11px] font-semibold transition cursor-pointer ${
+                  className={`px-2.5 py-1 rounded-md text-xs font-semibold transition cursor-pointer ${
                     pomoStudyMin === 50 &&
                     pomoShortBreakMin === 10 &&
                     pomoLongBreakMin === 20
@@ -3683,7 +3683,7 @@ export default function App() {
                       setPomoSecondsLeft(val * 60);
                     }
                   }}
-                  className={`w-full rounded-xl border px-2.5 py-1.5 text-xs font-semibold ${inputMutedSurfaceClass}`}
+                  className={`w-full rounded-xl border px-3 py-2 text-xs sm:text-sm font-semibold ${inputMutedSurfaceClass}`}
                 />
               </div>
               <div>
@@ -3706,7 +3706,7 @@ export default function App() {
                       setPomoSecondsLeft(val * 60);
                     }
                   }}
-                  className={`w-full rounded-xl border px-2.5 py-1.5 text-xs font-semibold ${inputMutedSurfaceClass}`}
+                  className={`w-full rounded-xl border px-3 py-2 text-xs sm:text-sm font-semibold ${inputMutedSurfaceClass}`}
                 />
               </div>
               <div>
@@ -3729,7 +3729,7 @@ export default function App() {
                       setPomoSecondsLeft(val * 60);
                     }
                   }}
-                  className={`w-full rounded-xl border px-2.5 py-1.5 text-xs font-semibold ${inputMutedSurfaceClass}`}
+                  className={`w-full rounded-xl border px-3 py-2 text-xs sm:text-sm font-semibold ${inputMutedSurfaceClass}`}
                 />
               </div>
             </div>
@@ -3744,7 +3744,7 @@ export default function App() {
                   type="checkbox"
                   checked={pomoAutoContinue}
                   onChange={(e) => setPomoAutoContinue(e.target.checked)}
-                  className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                  className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
                 />
                 Avvio automatico fase successiva
               </label>
@@ -3752,7 +3752,7 @@ export default function App() {
               <button
                 type="button"
                 onClick={handleAddManualPomoSession}
-                className={`text-[11px] font-semibold cursor-pointer ${
+                className={`text-xs font-semibold cursor-pointer py-1 ${
                   isDark
                     ? 'text-indigo-400 hover:text-indigo-300'
                     : 'text-indigo-600 hover:text-indigo-700'
@@ -3770,7 +3770,7 @@ export default function App() {
             >
               <div className="flex items-center gap-1.5 min-w-0 flex-1">
                 <Bell
-                  className={`w-3.5 h-3.5 shrink-0 ${
+                  className={`w-4 h-4 shrink-0 ${
                     pomoSound
                       ? isDark
                         ? 'text-indigo-400'
@@ -3789,7 +3789,7 @@ export default function App() {
                     getUnlockedAudioContext();
                     playPomodoroSound(chosen, 'study');
                   }}
-                  className={`w-full rounded-lg border pl-2 pr-6 py-1 text-xs font-medium truncate disabled:opacity-50 ${inputMutedSurfaceClass}`}
+                  className={`w-full rounded-xl border pl-3 pr-8 py-2 text-xs font-medium truncate disabled:opacity-50 ${inputMutedSurfaceClass}`}
                   title="Scegli la suoneria di fine sessione o pausa"
                 >
                   {POMO_SOUNDS.map((s) => (
@@ -3806,7 +3806,7 @@ export default function App() {
                   getUnlockedAudioContext();
                   playPomodoroSound(pomoSoundType, 'study');
                 }}
-                className={`px-2.5 py-1 rounded-lg border text-[11px] font-semibold transition shrink-0 disabled:opacity-40 cursor-pointer ${
+                className={`px-3 py-2 rounded-xl border text-xs font-semibold transition shrink-0 disabled:opacity-40 cursor-pointer ${
                   isDark
                     ? 'bg-slate-800 border-slate-700 text-slate-200 hover:bg-slate-700'
                     : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
@@ -3825,7 +3825,7 @@ export default function App() {
           >
             <div className="grid grid-cols-2 gap-2">
               <div
-                className={`rounded-xl p-2.5 border ${
+                className={`rounded-xl p-3 border ${
                   isDark
                     ? 'bg-slate-800/60 border-slate-700/80'
                     : 'bg-slate-50 border-slate-200/70'
@@ -3852,7 +3852,7 @@ export default function App() {
                 </p>
               </div>
               <div
-                className={`rounded-xl p-2.5 border ${
+                className={`rounded-xl p-3 border ${
                   isDark
                     ? 'bg-slate-800/60 border-slate-700/80'
                     : 'bg-slate-50 border-slate-200/70'
@@ -3885,7 +3885,7 @@ export default function App() {
                 <button
                   type="button"
                   onClick={() => setShowPomoHistory((v) => !v)}
-                  className={`w-full flex items-center justify-between text-xs font-semibold py-1 cursor-pointer ${
+                  className={`w-full flex items-center justify-between text-xs font-semibold py-1.5 cursor-pointer ${
                     isDark
                       ? 'text-slate-400 hover:text-slate-200'
                       : 'text-slate-600 hover:text-slate-900'
@@ -3897,7 +3897,7 @@ export default function App() {
                   <span
                     className={`${
                       isDark ? 'text-indigo-400' : 'text-indigo-600'
-                    } text-[11px]`}
+                    } text-xs`}
                   >
                     {showPomoHistory ? 'Nascondi' : 'Mostra'}
                   </span>
@@ -3908,15 +3908,15 @@ export default function App() {
                     {pomoStats.sessions.map((s) => (
                       <div
                         key={s.id}
-                        className={`flex items-center justify-between text-xs rounded-lg px-2.5 py-1.5 border ${
+                        className={`flex items-center justify-between text-xs rounded-xl px-3 py-2 border ${
                           isDark
                             ? 'bg-slate-800/70 border-slate-700/80'
                             : 'bg-slate-50 border-slate-200/60'
                         }`}
                       >
-                        <div className="flex items-center gap-1.5">
+                        <div className="flex items-center gap-2">
                           <Coffee
-                            className={`w-3 h-3 ${
+                            className={`w-3.5 h-3.5 ${
                               isDark ? 'text-indigo-400' : 'text-indigo-500'
                             }`}
                           />
@@ -3939,14 +3939,14 @@ export default function App() {
                         <button
                           type="button"
                           onClick={() => handleDeletePomoSession(s.id)}
-                          className={`p-1 rounded cursor-pointer ${
+                          className={`p-1.5 rounded-lg cursor-pointer ${
                             isDark
                               ? 'text-slate-500 hover:text-rose-400'
                               : 'text-slate-400 hover:text-rose-600'
                           }`}
                           title="Elimina sessione"
                         >
-                          <Trash2 className="w-3 h-3" />
+                          <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
                     ))}
@@ -4111,7 +4111,7 @@ export default function App() {
                       key={day.id}
                       type="button"
                       onClick={() => toggleRestDay(day.id)}
-                      className={`py-2 rounded-lg text-xs font-bold transition cursor-pointer ${
+                      className={`py-2.5 rounded-xl text-xs font-bold transition cursor-pointer ${
                         active
                           ? 'bg-indigo-600 text-white shadow-sm'
                           : isDark
@@ -4175,7 +4175,7 @@ export default function App() {
               <button
                 type="button"
                 onClick={handleResetExam}
-                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
+                className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition cursor-pointer ${
                   confirmReset
                     ? 'bg-rose-600 text-white'
                     : isDark
@@ -4183,7 +4183,7 @@ export default function App() {
                     : 'text-slate-600 hover:text-rose-600 hover:bg-rose-50'
                 }`}
               >
-                <RotateCcw className="w-3.5 h-3.5" />
+                <RotateCcw className="w-4 h-4" />
                 {confirmReset
                   ? 'Conferma azzeramento log?'
                   : 'Azzera solo log esame'}
@@ -4193,13 +4193,13 @@ export default function App() {
                 <button
                   type="button"
                   onClick={handleDeleteExam}
-                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
+                  className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition cursor-pointer ${
                     isDark
                       ? 'text-rose-400 hover:bg-rose-950/60'
                       : 'text-rose-600 hover:bg-rose-50'
                   }`}
                 >
-                  <Trash2 className="w-3.5 h-3.5" />
+                  <Trash2 className="w-4 h-4" />
                   Elimina esame
                 </button>
               )}
@@ -4271,6 +4271,15 @@ export default function App() {
           padding: 0 !important;
           display: block !important;
           text-align: left !important;
+          -webkit-text-size-adjust: 100%;
+        }
+        input, select, button {
+          font-size: 16px !important; /* Previene lo zoom automatico su iOS Safari */
+        }
+        @media (min-width: 640px) {
+          input, select, button {
+            font-size: inherit !important;
+          }
         }
         input.no-spinner::-webkit-outer-spin-button,
         input.no-spinner::-webkit-inner-spin-button {
@@ -4282,7 +4291,7 @@ export default function App() {
         }
       `}</style>
 
-      {/* --- HEADER FULL-WIDTH (OPACO, ZERO TRASPARENZA IN SCROLL) --- */}
+      {/* --- HEADER FULL-WIDTH --- */}
       <header
         className={`border-b sticky top-0 z-30 w-full transition-colors duration-200 ${
           isDark
@@ -4290,8 +4299,8 @@ export default function App() {
             : 'bg-white border-slate-200 shadow-sm'
         }`}
       >
-        <div className="w-full px-4 sm:px-6 lg:px-8 py-3 flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-3 min-w-0">
+        <div className="w-full px-3 sm:px-6 lg:px-8 py-3 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
             <div className="bg-indigo-600 text-white p-2 rounded-xl shadow-sm shrink-0">
               {activeTab === 'tracker' ? (
                 <BookOpen className="w-5 h-5" />
@@ -4314,7 +4323,7 @@ export default function App() {
                   •
                 </span>
                 <span
-                  className={`text-xs truncate ${
+                  className={`text-xs truncate hidden sm:inline ${
                     isDark ? 'text-slate-400' : 'text-slate-500'
                   }`}
                 >
@@ -4340,7 +4349,7 @@ export default function App() {
                           setIsRenamingHeader(false);
                         }
                       }}
-                      className={`text-base sm:text-lg font-bold border-b-2 border-indigo-600 bg-transparent focus:outline-none px-0.5 ${
+                      className={`text-sm sm:text-lg font-bold border-b-2 border-indigo-600 bg-transparent focus:outline-none px-0.5 ${
                         isDark ? 'text-slate-50' : 'text-slate-900'
                       }`}
                     />
@@ -4365,7 +4374,7 @@ export default function App() {
                     title="Clicca per rinominare l'esame"
                   >
                     <h1
-                      className={`text-base sm:text-lg font-bold truncate transition-colors ${
+                      className={`text-sm sm:text-lg font-bold truncate transition-colors ${
                         isDark
                           ? 'text-slate-50 group-hover:text-indigo-400'
                           : 'text-slate-900 group-hover:text-indigo-600'
@@ -4384,7 +4393,7 @@ export default function App() {
                 )
               ) : (
                 <h1
-                  className={`text-base sm:text-lg font-bold truncate mt-0.5 ${
+                  className={`text-sm sm:text-lg font-bold truncate mt-0.5 ${
                     isDark ? 'text-slate-50' : 'text-slate-900'
                   }`}
                 >
@@ -4394,7 +4403,7 @@ export default function App() {
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
             {/* NAVIGAZIONE TRA LE DUE PAGINE */}
             <div
               className={`inline-flex rounded-xl p-1 border ${
@@ -4406,7 +4415,7 @@ export default function App() {
               <button
                 type="button"
                 onClick={() => setActiveTab('tracker')}
-                className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition cursor-pointer ${
+                className={`inline-flex items-center gap-1 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
                   activeTab === 'tracker'
                     ? isDark
                       ? 'bg-slate-900 text-indigo-400 shadow-sm'
@@ -4417,12 +4426,12 @@ export default function App() {
                 }`}
               >
                 <BookOpen className="w-3.5 h-3.5" />
-                <span>Tracker Studio</span>
+                <span className="hidden sm:inline">Tracker Studio</span>
               </button>
               <button
                 type="button"
                 onClick={() => setActiveTab('libretto')}
-                className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition cursor-pointer ${
+                className={`inline-flex items-center gap-1 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
                   activeTab === 'libretto'
                     ? isDark
                       ? 'bg-slate-900 text-indigo-400 shadow-sm'
@@ -4433,7 +4442,7 @@ export default function App() {
                 }`}
               >
                 <GraduationCap className="w-3.5 h-3.5" />
-                <span>Voti Blocchi</span>
+                <span className="hidden sm:inline">Voti Blocchi</span>
               </button>
             </div>
 
@@ -4441,7 +4450,7 @@ export default function App() {
               <button
                 type="button"
                 onClick={handleUndo}
-                className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border transition cursor-pointer ${
+                className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium border transition cursor-pointer ${
                   isDark
                     ? 'text-slate-300 bg-slate-800 hover:bg-slate-700 border-slate-700'
                     : 'text-slate-600 bg-slate-100 hover:bg-slate-200 border-slate-200'
@@ -4449,14 +4458,14 @@ export default function App() {
                 title="Annulla ultima modifica"
               >
                 <Undo2 className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Annulla</span>
+                <span className="hidden md:inline">Annulla</span>
               </button>
             )}
 
             <button
               type="button"
               onClick={() => setShowCloudModal(true)}
-              className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold border transition cursor-pointer ${
+              className={`inline-flex items-center gap-1 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold border transition cursor-pointer ${
                 cloudSession?.access_token
                   ? cloudStatus === 'error'
                     ? isDark
@@ -4469,7 +4478,7 @@ export default function App() {
                   ? 'text-slate-300 bg-slate-800 hover:bg-slate-700 border-slate-700'
                   : 'text-slate-700 bg-white hover:bg-slate-50 border-slate-200'
               }`}
-              title="Sincronizzazione Cloud tra MacBook e iPad"
+              title="Sincronizzazione Cloud"
             >
               {cloudSession?.access_token ? (
                 cloudStatus === 'syncing' ? (
@@ -4486,49 +4495,44 @@ export default function App() {
                 {cloudSession?.access_token
                   ? cloudStatus === 'syncing'
                     ? 'Sync...'
-                    : 'Cloud Attivo'
-                  : 'Sync Cloud'}
+                    : 'Cloud'
+                  : 'Cloud'}
               </span>
             </button>
 
             <button
               type="button"
               onClick={() => setIsDark((d) => !d)}
-              className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold border transition cursor-pointer ${
+              className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold border transition cursor-pointer ${
                 isDark
                   ? 'bg-slate-800 text-amber-300 border-slate-700 hover:bg-slate-700'
                   : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
               }`}
-              title={
-                isDark ? 'Passa a modalità chiara' : 'Passa a modalità scura'
-              }
+              title="Cambia tema"
             >
               {isDark ? (
                 <Sun className="w-3.5 h-3.5" />
               ) : (
                 <Moon className="w-3.5 h-3.5" />
               )}
-              <span className="hidden md:inline">
-                {isDark ? 'Chiaro' : 'Scuro'}
-              </span>
             </button>
 
             {activeTab === 'libretto' && (
               <button
                 type="button"
                 onClick={() => setIsBlockReorderMode((v) => !v)}
-                className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold border transition cursor-pointer ${
+                className={`inline-flex items-center gap-1 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold border transition cursor-pointer ${
                   isBlockReorderMode
                     ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
                     : isDark
                     ? 'text-slate-300 bg-slate-800 hover:bg-slate-700 border-slate-700'
                     : 'text-slate-700 bg-white hover:bg-slate-50 border-slate-200'
                 }`}
-                title="Sposta o riordina i blocchi dell'anno"
+                title="Ordina blocchi"
               >
                 <LayoutGrid className="w-3.5 h-3.5" />
                 <span className="hidden sm:inline">
-                  {isBlockReorderMode ? 'Fine ordine' : 'Ordina blocchi'}
+                  {isBlockReorderMode ? 'Fine' : 'Ordina blocchi'}
                 </span>
               </button>
             )}
@@ -4538,7 +4542,7 @@ export default function App() {
                 <button
                   type="button"
                   onClick={() => setIsReorderMode((v) => !v)}
-                  className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold border transition cursor-pointer ${
+                  className={`inline-flex items-center gap-1 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold border transition cursor-pointer ${
                     isReorderMode
                       ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
                       : isCustomLayout
@@ -4547,11 +4551,11 @@ export default function App() {
                       ? 'text-slate-300 bg-slate-800 hover:bg-slate-700 border-slate-700'
                       : 'text-slate-700 bg-white hover:bg-slate-50 border-slate-200'
                   }`}
-                  title="Sposta o riordina le sezioni della pagina"
+                  title="Ordina sezioni"
                 >
                   <LayoutGrid className="w-3.5 h-3.5" />
                   <span className="hidden sm:inline">
-                    {isReorderMode ? 'Fine ordine' : 'Ordina sezioni'}
+                    {isReorderMode ? 'Fine' : 'Ordina sezioni'}
                   </span>
                 </button>
 
@@ -4566,7 +4570,7 @@ export default function App() {
                     setIsRenamingHeader(false);
                     setConfirmReset(false);
                   }}
-                  className={`rounded-lg border text-xs sm:text-sm font-medium pl-3 pr-7 py-1.5 max-w-[190px] sm:max-w-[240px] truncate ${
+                  className={`rounded-lg border text-xs sm:text-sm font-medium pl-2.5 pr-6 py-1.5 max-w-[140px] sm:max-w-[200px] truncate ${
                     isDark
                       ? 'border-slate-700 bg-slate-800 text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500'
                       : 'border-slate-300 bg-slate-50 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500'
@@ -4582,10 +4586,10 @@ export default function App() {
                 <button
                   type="button"
                   onClick={handleCreateExam}
-                  className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-semibold shadow-sm transition cursor-pointer"
+                  className="inline-flex items-center gap-1 px-2.5 sm:px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-semibold shadow-sm transition cursor-pointer"
                 >
                   <Plus className="w-4 h-4" />
-                  <span>Nuovo</span>
+                  <span className="hidden sm:inline">Nuovo</span>
                 </button>
 
                 <button
@@ -4596,10 +4600,9 @@ export default function App() {
                       ? 'text-slate-300 bg-slate-800 hover:bg-slate-700 border-slate-700'
                       : 'text-slate-700 bg-white hover:bg-slate-50 border-slate-200'
                   }`}
-                  title="Duplica questo esame"
+                  title="Duplica esame"
                 >
                   <Copy className="w-3.5 h-3.5" />
-                  <span className="hidden md:inline">Duplica</span>
                 </button>
               </>
             )}
@@ -4642,7 +4645,7 @@ export default function App() {
               <button
                 type="button"
                 onClick={() => setShowCloudModal(false)}
-                className={`p-1.5 rounded-lg cursor-pointer ${
+                className={`p-2 rounded-lg cursor-pointer ${
                   isDark
                     ? 'text-slate-400 hover:bg-slate-800'
                     : 'text-slate-500 hover:bg-slate-100'
@@ -4673,7 +4676,7 @@ export default function App() {
                       setCloudConflictPayload(null);
                       setLastSyncedAt(getCurrentTimeStr());
                     }}
-                    className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold cursor-pointer"
+                    className="px-3 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold cursor-pointer"
                   >
                     Scarica dati dal Cloud
                   </button>
@@ -4684,7 +4687,7 @@ export default function App() {
                       setCloudConflictPayload(null);
                       await pushToCloud();
                     }}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold border cursor-pointer ${
+                    className={`px-3 py-2 rounded-xl text-xs font-bold border cursor-pointer ${
                       isDark
                         ? 'bg-slate-800 border-slate-700 text-slate-200 hover:bg-slate-700'
                         : 'bg-white border-slate-300 text-slate-800 hover:bg-slate-50'
@@ -4739,7 +4742,7 @@ export default function App() {
                     type="button"
                     onClick={() => pullFromCloud(cloudSession, false)}
                     disabled={cloudStatus === 'syncing'}
-                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold disabled:opacity-50 cursor-pointer"
+                    className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold disabled:opacity-50 cursor-pointer"
                   >
                     <RefreshCw
                       className={`w-3.5 h-3.5 ${
@@ -4752,7 +4755,7 @@ export default function App() {
                   <button
                     type="button"
                     onClick={handleCloudLogout}
-                    className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold border cursor-pointer ${
+                    className={`inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-semibold border cursor-pointer ${
                       isDark
                         ? 'bg-slate-800 border-slate-700 text-rose-400 hover:bg-rose-950/60'
                         : 'bg-white border-slate-200 text-rose-600 hover:bg-rose-50'
@@ -4777,7 +4780,7 @@ export default function App() {
                         setAuthMode('login');
                         setCloudMessage('');
                       }}
-                      className={`px-3 py-1 rounded-lg text-xs font-semibold cursor-pointer ${
+                      className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold cursor-pointer ${
                         authMode === 'login'
                           ? isDark
                             ? 'bg-slate-900 text-indigo-400'
@@ -4795,7 +4798,7 @@ export default function App() {
                         setAuthMode('signup');
                         setCloudMessage('');
                       }}
-                      className={`px-3 py-1 rounded-lg text-xs font-semibold cursor-pointer ${
+                      className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold cursor-pointer ${
                         authMode === 'signup'
                           ? isDark
                             ? 'bg-slate-900 text-indigo-400'
@@ -4823,7 +4826,7 @@ export default function App() {
                       value={authEmail}
                       onChange={(e) => setAuthEmail(e.target.value)}
                       required
-                      className={`w-full rounded-xl border px-3 py-2 text-xs sm:text-sm ${inputMutedSurfaceClass}`}
+                      className={`w-full rounded-xl border px-3 py-2.5 text-xs sm:text-sm ${inputMutedSurfaceClass}`}
                     />
                   </div>
 
@@ -4842,7 +4845,7 @@ export default function App() {
                       onChange={(e) => setAuthPassword(e.target.value)}
                       required
                       minLength={6}
-                      className={`w-full rounded-xl border px-3 py-2 text-xs sm:text-sm ${inputMutedSurfaceClass}`}
+                      className={`w-full rounded-xl border px-3 py-2.5 text-xs sm:text-sm ${inputMutedSurfaceClass}`}
                     />
                   </div>
                 </div>
@@ -4889,7 +4892,7 @@ export default function App() {
                         placeholder="https://xyzproject.supabase.co"
                         value={cloudUrl}
                         onChange={(e) => setCloudUrl(e.target.value)}
-                        className={`w-full rounded-xl border px-3 py-1.5 text-xs ${inputSurfaceClass}`}
+                        className={`w-full rounded-xl border px-3 py-2 text-xs ${inputSurfaceClass}`}
                       />
                     </div>
                     <div>
@@ -4905,7 +4908,7 @@ export default function App() {
                         placeholder="sb_publishable_..."
                         value={cloudAnonKey}
                         onChange={(e) => setCloudAnonKey(e.target.value)}
-                        className={`w-full rounded-xl border px-3 py-1.5 text-xs ${inputSurfaceClass}`}
+                        className={`w-full rounded-xl border px-3 py-2 text-xs ${inputSurfaceClass}`}
                       />
                     </div>
                   </div>
@@ -4914,7 +4917,7 @@ export default function App() {
                 <button
                   type="submit"
                   disabled={authLoading}
-                  className="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-bold disabled:opacity-50 transition cursor-pointer"
+                  className="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-bold disabled:opacity-50 transition cursor-pointer shadow-sm"
                 >
                   {authLoading
                     ? 'Connessione in corso...'
@@ -4953,7 +4956,7 @@ export default function App() {
                 <button
                   type="button"
                   onClick={handleExportBackupFile}
-                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border cursor-pointer ${
+                  className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold border cursor-pointer ${
                     isDark
                       ? 'bg-slate-800 border-slate-700 text-slate-200 hover:bg-slate-700'
                       : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
@@ -4965,7 +4968,7 @@ export default function App() {
                 <button
                   type="button"
                   onClick={() => importFileInputRef.current?.click()}
-                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border cursor-pointer ${
+                  className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold border cursor-pointer ${
                     isDark
                       ? 'bg-slate-800 border-slate-700 text-slate-200 hover:bg-slate-700'
                       : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
@@ -4988,10 +4991,10 @@ export default function App() {
       )}
 
       {/* =====================================================================
-          PAGINA 1: TRACKER STUDIO (BURN-DOWN, SPACED REPETITION, POMODORO)
+          PAGINA 1: TRACKER STUDIO
          ===================================================================== */}
       {activeTab === 'tracker' && (
-        <main className="w-full px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+        <main className="w-full px-3 sm:px-6 lg:px-8 py-5 sm:py-6 space-y-6">
           {isReorderMode && (
             <div
               className={`rounded-2xl border p-4 flex flex-wrap items-center justify-between gap-3 ${
@@ -5021,7 +5024,7 @@ export default function App() {
                   <button
                     type="button"
                     onClick={handleResetLayout}
-                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition cursor-pointer ${
+                    className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold border transition cursor-pointer ${
                       isDark
                         ? 'bg-slate-900 text-slate-200 border-slate-700 hover:bg-slate-800'
                         : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
@@ -5034,7 +5037,7 @@ export default function App() {
                 <button
                   type="button"
                   onClick={() => setIsReorderMode(false)}
-                  className="px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition cursor-pointer"
+                  className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition cursor-pointer"
                 >
                   Fatto
                 </button>
@@ -5084,32 +5087,32 @@ export default function App() {
           </section>
 
           {/* 2. RIGA 4 KPI CARDS */}
-          <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <section className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
             <div
-              className={`rounded-2xl border p-4 shadow-sm flex flex-col justify-between ${cardSurfaceClass}`}
+              className={`rounded-2xl border p-3.5 sm:p-4 shadow-sm flex flex-col justify-between ${cardSurfaceClass}`}
             >
               <div className="flex items-center justify-between">
                 <span
-                  className={`text-xs font-semibold uppercase tracking-wide ${
+                  className={`text-[11px] sm:text-xs font-semibold uppercase tracking-wide truncate ${
                     isDark ? 'text-slate-400' : 'text-slate-500'
                   }`}
                 >
                   Completamento
                 </span>
-                <div className={`p-2 rounded-lg ${indigoPillClass}`}>
-                  <Layers className="w-4 h-4" />
+                <div className={`p-1.5 sm:p-2 rounded-lg ${indigoPillClass}`}>
+                  <Layers className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 </div>
               </div>
               <div className="my-2">
                 <div
-                  className={`text-2xl sm:text-3xl font-extrabold ${
+                  className={`text-xl sm:text-3xl font-extrabold ${
                     isDark ? 'text-slate-50' : 'text-slate-900'
                   }`}
                 >
                   {analytics.completionPct.toFixed(1)}%
                 </div>
                 <p
-                  className={`text-xs mt-0.5 ${
+                  className={`text-[11px] sm:text-xs mt-0.5 ${
                     isDark ? 'text-slate-400' : 'text-slate-500'
                   }`}
                 >
@@ -5118,7 +5121,7 @@ export default function App() {
                   >
                     {analytics.completedPages}
                   </strong>{' '}
-                  / {analytics.totalPages} pagine
+                  / {analytics.totalPages} pag
                 </p>
               </div>
               <div
@@ -5134,82 +5137,75 @@ export default function App() {
             </div>
 
             <div
-              className={`rounded-2xl border p-4 shadow-sm flex flex-col justify-between ${cardSurfaceClass}`}
+              className={`rounded-2xl border p-3.5 sm:p-4 shadow-sm flex flex-col justify-between ${cardSurfaceClass}`}
             >
               <div className="flex items-center justify-between">
                 <span
-                  className={`text-xs font-semibold uppercase tracking-wide ${
+                  className={`text-[11px] sm:text-xs font-semibold uppercase tracking-wide truncate ${
                     isDark ? 'text-slate-400' : 'text-slate-500'
                   }`}
                 >
-                  Pagine Rimanenti
+                  Rimanenti
                 </span>
                 <div
-                  className={`p-2 rounded-lg ${
+                  className={`p-1.5 sm:p-2 rounded-lg ${
                     isDark
                       ? 'bg-sky-950/80 text-sky-400 border border-sky-800/70'
                       : 'bg-sky-50 text-sky-600 border border-sky-200'
                   }`}
                 >
-                  <BookOpen className="w-4 h-4" />
+                  <BookOpen className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 </div>
               </div>
               <div className="my-2">
                 <div
-                  className={`text-2xl sm:text-3xl font-extrabold ${
+                  className={`text-xl sm:text-3xl font-extrabold ${
                     isDark ? 'text-slate-50' : 'text-slate-900'
                   }`}
                 >
                   {analytics.remainingPages}
                 </div>
                 <p
-                  className={`text-xs mt-0.5 ${
+                  className={`text-[11px] sm:text-xs mt-0.5 ${
                     isDark ? 'text-slate-400' : 'text-slate-500'
                   }`}
                 >
-                  su {analytics.totalPages} pagine totali
+                  su {analytics.totalPages} totali
                 </p>
               </div>
               <div
-                className={`text-xs font-medium ${
+                className={`text-[11px] sm:text-xs font-medium truncate ${
                   isDark ? 'text-slate-400' : 'text-slate-500'
                 }`}
               >
-                Ritmo iniziale:{' '}
-                <span
-                  className={`font-semibold ${
-                    isDark ? 'text-slate-200' : 'text-slate-700'
-                  }`}
-                >
-                  {analytics.initialMinPace.toFixed(1)} pag/gg
-                </span>
+                Ritmo: {analytics.initialMinPace.toFixed(1)} pag/gg
               </div>
             </div>
 
             <div
-              className={`rounded-2xl border p-4 shadow-sm flex flex-col justify-between ${cardSurfaceClass}`}
+              className={`rounded-2xl border p-3.5 sm:p-4 shadow-sm flex flex-col justify-between ${cardSurfaceClass}`}
             >
               <div className="flex items-center justify-between">
                 <span
-                  className={`text-xs font-semibold uppercase tracking-wide ${
+                  className={`text-[11px] sm:text-xs font-semibold uppercase tracking-wide truncate ${
                     isDark ? 'text-slate-400' : 'text-slate-500'
                   }`}
                 >
-                  Ritmo Necessario
+                  Ritmo Richiesto
                 </span>
-                <div className={`p-2 rounded-lg ${indigoPillClass}`}>
-                  <Target className="w-4 h-4" />
+                <div className={`p-1.5 sm:p-2 rounded-lg ${indigoPillClass}`}>
+                  <Target className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 </div>
               </div>
               <div className="my-2">
                 <div
-                  className={`text-2xl sm:text-3xl font-extrabold ${
+                  className={`text-xl sm:text-3xl font-extrabold ${
                     isDark ? 'text-slate-50' : 'text-slate-900'
                   }`}
                 >
                   {analytics.newRequiredPace.toFixed(1)}
                   <span
-                    className={`text-sm font-semibold ml-1 ${
+                    className={`text-xs sm:text-sm font-semibold ml-1 ${
                       isDark ? 'text-slate-400' : 'text-slate-500'
                     }`}
                   >
@@ -5217,11 +5213,11 @@ export default function App() {
                   </span>
                 </div>
                 <p
-                  className={`text-xs mt-0.5 ${
+                  className={`text-[11px] sm:text-xs mt-0.5 truncate ${
                     isDark ? 'text-slate-400' : 'text-slate-500'
                   }`}
                 >
-                  Media reale attuale:{' '}
+                  Reale:{' '}
                   <strong
                     className={isDark ? 'text-slate-200' : 'text-slate-700'}
                   >
@@ -5231,84 +5227,70 @@ export default function App() {
                 </p>
               </div>
               <div
-                className={`text-xs font-medium ${
+                className={`text-[11px] sm:text-xs font-medium truncate ${
                   isDark ? 'text-slate-400' : 'text-slate-500'
                 }`}
               >
-                Nei prossimi{' '}
-                <span
-                  className={`font-semibold ${
-                    isDark ? 'text-slate-200' : 'text-slate-700'
-                  }`}
-                >
-                  {analytics.remainingUsefulDays} giorni utili
-                </span>
+                Nei prossimi {analytics.remainingUsefulDays} giorni
               </div>
             </div>
 
             <div
-              className={`rounded-2xl border p-4 shadow-sm flex flex-col justify-between ${cardSurfaceClass}`}
+              className={`rounded-2xl border p-3.5 sm:p-4 shadow-sm flex flex-col justify-between ${cardSurfaceClass}`}
             >
               <div className="flex items-center justify-between">
                 <span
-                  className={`text-xs font-semibold uppercase tracking-wide ${
+                  className={`text-[11px] sm:text-xs font-semibold uppercase tracking-wide truncate ${
                     isDark ? 'text-slate-400' : 'text-slate-500'
                   }`}
                 >
-                  Countdown Appello
+                  Countdown
                 </span>
                 <div
-                  className={`p-2 rounded-lg ${
+                  className={`p-1.5 sm:p-2 rounded-lg ${
                     isDark
                       ? 'bg-amber-950/80 text-amber-400 border border-amber-800/70'
                       : 'bg-amber-50 text-amber-600 border border-amber-200'
                   }`}
                 >
-                  <Calendar className="w-4 h-4" />
+                  <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 </div>
               </div>
               <div className="my-2">
                 <div
-                  className={`text-2xl sm:text-3xl font-extrabold ${
+                  className={`text-xl sm:text-3xl font-extrabold ${
                     isDark ? 'text-slate-50' : 'text-slate-900'
                   }`}
                 >
                   -{analytics.daysToExam}
                   <span
-                    className={`text-sm font-semibold ml-1 ${
+                    className={`text-xs sm:text-sm font-semibold ml-1 ${
                       isDark ? 'text-slate-400' : 'text-slate-500'
                     }`}
                   >
-                    giorni
+                    gg
                   </span>
                 </div>
                 <p
-                  className={`text-xs mt-0.5 ${
+                  className={`text-[11px] sm:text-xs mt-0.5 truncate ${
                     isDark ? 'text-slate-400' : 'text-slate-500'
                   }`}
                 >
-                  Appello il{' '}
-                  <strong
-                    className={isDark ? 'text-slate-200' : 'text-slate-700'}
-                  >
-                    {formatShortDate(activeExam.examDate)}
-                  </strong>
+                  Appello il{' <strong class="text-slate-200">' + formatShortDate(activeExam.examDate)}</strong>
                 </p>
               </div>
               <div
-                className={`text-xs font-medium flex items-center gap-1 ${
+                className={`text-[11px] sm:text-xs font-medium flex items-center gap-1 truncate ${
                   isDark ? 'text-slate-400' : 'text-slate-500'
                 }`}
               >
-                <Clock className="w-3.5 h-3.5" />
-                <span>
-                  {analytics.remainingUsefulDays} giorni utili di studio
-                </span>
+                <Clock className="w-3.5 h-3.5 shrink-0" />
+                <span>{analytics.remainingUsefulDays} gg utili studio</span>
               </div>
             </div>
           </section>
 
-          {/* 3. GRIGLIA PRINCIPALE RIORDINABILE (2 COLONNE) */}
+          {/* 3. GRIGLIA PRINCIPALE RIORDINABILE */}
           <div
             className={`grid grid-cols-1 ${
               layout.left.length > 0 && layout.right.length > 0
@@ -5354,10 +5336,10 @@ export default function App() {
       )}
 
       {/* =====================================================================
-          PAGINA 2: CALCOLATORE MEDIA PONDERATA BLOCCHI (1°–6° ANNO MEDICINA)
+          PAGINA 2: VOTI BLOCCHI (1°–6° ANNO MEDICINA)
          ===================================================================== */}
       {activeTab === 'libretto' && (
-        <main className="w-full px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+        <main className="w-full px-3 sm:px-6 lg:px-8 py-5 sm:py-6 space-y-6">
           {isBlockReorderMode && (
             <div
               className={`rounded-2xl border p-4 flex flex-wrap items-center justify-between gap-3 ${
@@ -5385,7 +5367,7 @@ export default function App() {
               <button
                 type="button"
                 onClick={() => setIsBlockReorderMode(false)}
-                className="px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition cursor-pointer"
+                className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition cursor-pointer"
               >
                 Fatto
               </button>
@@ -5425,11 +5407,11 @@ export default function App() {
                   value={newBlockName}
                   onChange={(e) => setNewBlockName(e.target.value)}
                   required
-                  className={`h-9 rounded-xl border px-3 text-xs sm:text-sm flex-1 md:w-64 ${inputMutedSurfaceClass}`}
+                  className={`h-10 sm:h-9 rounded-xl border px-3 text-xs sm:text-sm flex-1 md:w-64 ${inputMutedSurfaceClass}`}
                 />
                 <button
                   type="submit"
-                  className="h-9 inline-flex items-center justify-center gap-1.5 px-3.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-semibold shadow-sm transition cursor-pointer shrink-0"
+                  className="h-10 sm:h-9 inline-flex items-center justify-center gap-1.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-semibold shadow-sm transition cursor-pointer shrink-0"
                 >
                   <Plus className="w-4 h-4" />
                   <span>Aggiungi Blocco</span>
@@ -5437,7 +5419,7 @@ export default function App() {
               </form>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
+            <div className="grid grid-cols-3 sm:grid-cols-3 lg:grid-cols-6 gap-2">
               {[1, 2, 3, 4, 5, 6].map((yr) => {
                 const isSelected = selectedMedYear === yr;
                 const blocksCount = (medYears[yr] || []).length;
@@ -5449,7 +5431,7 @@ export default function App() {
                       setSelectedMedYear(yr);
                       setEditingBlockId(null);
                     }}
-                    className={`rounded-xl border px-3.5 py-2.5 text-left transition cursor-pointer flex items-center justify-between gap-2 ${
+                    className={`rounded-xl border p-3 sm:px-3.5 sm:py-2.5 text-left transition cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 sm:gap-2 ${
                       isSelected
                         ? isDark
                           ? 'bg-indigo-950/80 border-indigo-500 text-indigo-100 shadow-sm'
@@ -5459,9 +5441,9 @@ export default function App() {
                         : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-white hover:border-slate-300'
                     }`}
                   >
-                    <span className="text-sm font-extrabold">{yr}° Anno</span>
+                    <span className="text-xs sm:text-sm font-extrabold">{yr}° Anno</span>
                     <span
-                      className={`text-[11px] font-bold px-2 py-0.5 rounded-full shrink-0 ${
+                      className={`text-[10px] sm:text-[11px] font-bold px-2 py-0.5 rounded-full shrink-0 w-max ${
                         isSelected
                           ? 'bg-indigo-600 text-white'
                           : isDark
@@ -5477,7 +5459,7 @@ export default function App() {
             </div>
           </section>
 
-          {/* 2. BARRA CONTROLLO BLOCCHI DELL'ANNO (ESPANDI / COMPRIMI TUTTI) */}
+          {/* 2. BARRA CONTROLLO BLOCCHI DELL'ANNO */}
           {currentYearBlocks.length > 0 && (
             <div className="flex flex-wrap items-center justify-between gap-2 px-1">
               <div className="flex items-center gap-2">
@@ -5488,13 +5470,6 @@ export default function App() {
                 >
                   Blocchi {selectedMedYear}° Anno ({currentYearBlocks.length})
                 </h3>
-                <span
-                  className={`text-xs ${
-                    isDark ? 'text-slate-500' : 'text-slate-400'
-                  }`}
-                >
-                  • Clicca su un blocco per gestire materie e voti
-                </span>
               </div>
 
               <button
@@ -5516,7 +5491,7 @@ export default function App() {
             </div>
           )}
 
-          {/* 3. ELENCO BLOCCHI A SCOMPARSA (ACCORDION) RIORDINABILI */}
+          {/* 3. ELENCO BLOCCHI A SCOMPARSA (ACCORDION) */}
           {currentYearBlocks.length === 0 ? (
             <section
               className={`rounded-2xl border border-dashed p-10 text-center space-y-2 ${
@@ -5531,8 +5506,7 @@ export default function App() {
               </p>
               <p className="text-xs max-w-md mx-auto">
                 Usa il campo &ldquo;Aggiungi Blocco&rdquo; qui sopra per creare
-                un esame integrato e inserire le materie con CFU e voti per
-                vedere quanto ti uscirà al blocco.
+                un esame integrato e inserire le materie con CFU e voti.
               </p>
             </section>
           ) : (
@@ -5545,7 +5519,6 @@ export default function App() {
                   draggedBlockId &&
                   draggedBlockId !== block.id;
 
-                // Calcolo media ponderata del singolo blocco
                 let blkWeightedSum = 0;
                 let blkGradedCfu = 0;
                 let blkTotalCfu = 0;
@@ -5627,14 +5600,14 @@ export default function App() {
                         : ''
                     }`}
                   >
-                    {/* Header Blocco (Menu a scomparsa uniforme - altezza costante) */}
+                    {/* Header Blocco */}
                     <div
                       onClick={() => {
                         if (editingBlockId !== block.id) {
                           toggleBlockExpanded(block.id);
                         }
                       }}
-                      className={`p-4 sm:px-5 sm:py-4 flex items-center justify-between gap-3 cursor-pointer select-none rounded-2xl transition-colors ${
+                      className={`p-3.5 sm:p-4 flex items-center justify-between gap-2.5 cursor-pointer select-none rounded-2xl transition-colors ${
                         isExpanded
                           ? `rounded-b-none border-b ${
                               isDark
@@ -5693,7 +5666,7 @@ export default function App() {
                                   }
                                 }}
                                 autoFocus
-                                className={`w-full text-sm sm:text-base font-bold border-b-2 border-indigo-600 bg-transparent focus:outline-none ${
+                                className={`w-full text-sm font-bold border-b-2 border-indigo-600 bg-transparent focus:outline-none ${
                                   isDark ? 'text-slate-50' : 'text-slate-900'
                                 }`}
                               />
@@ -5714,7 +5687,7 @@ export default function App() {
                             <div className="flex items-center gap-1.5 min-w-0">
                               <h3
                                 title={block.name}
-                                className={`text-sm sm:text-base font-bold truncate ${
+                                className={`text-xs sm:text-sm font-bold truncate ${
                                   isDark ? 'text-slate-100' : 'text-slate-900'
                                 }`}
                               >
@@ -5727,7 +5700,7 @@ export default function App() {
                                   setEditingBlockId(block.id);
                                   setEditingBlockTitle(block.name);
                                 }}
-                                className={`p-1 rounded-md opacity-50 hover:opacity-100 transition cursor-pointer shrink-0 ${
+                                className={`p-1 rounded-md opacity-60 hover:opacity-100 transition cursor-pointer shrink-0 ${
                                   isDark
                                     ? 'text-slate-400 hover:bg-slate-800 hover:text-indigo-400'
                                     : 'text-slate-500 hover:bg-slate-100 hover:text-indigo-600'
@@ -5740,7 +5713,7 @@ export default function App() {
                           )}
 
                           <p
-                            className={`text-xs truncate mt-0.5 ${
+                            className={`text-[11px] truncate mt-0.5 ${
                               isDark ? 'text-slate-400' : 'text-slate-500'
                             }`}
                           >
@@ -5748,19 +5721,19 @@ export default function App() {
                             {(block.subjects || []).length === 1
                               ? 'materia'
                               : 'materie'}{' '}
-                            · {blkGradedCfu}/{blkTotalCfu} CFU valutati
+                            · {blkGradedCfu}/{blkTotalCfu} CFU
                           </p>
                         </div>
                       </div>
 
-                      {/* Riquadro Voto Ponderato Blocco + Controlli Ordine + Cestino */}
+                      {/* Voto Ponderato Blocco e comandi */}
                       <div
-                        className="flex items-center gap-2 shrink-0"
+                        className="flex items-center gap-1.5 shrink-0"
                         onClick={(e) => e.stopPropagation()}
                       >
                         <div
                           onClick={() => toggleBlockExpanded(block.id)}
-                          className={`rounded-xl px-3 py-1.5 border cursor-pointer ${
+                          className={`rounded-xl px-2.5 py-1.5 border cursor-pointer ${
                             blkAvg !== null
                               ? isDark
                                 ? 'bg-indigo-950/75 border-indigo-700/80 text-indigo-100'
@@ -5770,24 +5743,24 @@ export default function App() {
                               : 'bg-slate-50 border-slate-200 text-slate-500'
                           }`}
                         >
-                          <div className="text-[10px] font-bold uppercase tracking-wider opacity-75">
-                            Media Blocco
+                          <div className="text-[9px] font-bold uppercase tracking-wider opacity-75">
+                            Media
                           </div>
                           {blkAvg !== null ? (
-                            <div className="flex items-center gap-1.5 mt-0.5">
-                              <span className="text-sm sm:text-base font-black tabular-nums leading-none">
+                            <div className="flex items-center gap-1 mt-0.5">
+                              <span className="text-xs sm:text-sm font-black tabular-nums leading-none">
                                 {blkAvg.toFixed(2)}
                               </span>
                               <span
-                                className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-indigo-600 text-white leading-none"
-                                title="Voto finale arrotondato del blocco"
+                                className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-indigo-600 text-white leading-none"
+                                title="Voto finale arrotondato"
                               >
                                 → {blkFinalGrade}
                               </span>
                             </div>
                           ) : (
                             <div className="text-xs font-semibold mt-0.5 leading-none">
-                              — / 30
+                              —
                             </div>
                           )}
                         </div>
@@ -5807,7 +5780,7 @@ export default function App() {
                             type="button"
                             onClick={() => moveBlockUp(blkIndex)}
                             disabled={blkIndex === 0}
-                            className={`p-1 rounded disabled:opacity-30 disabled:pointer-events-none transition ${
+                            className={`p-1.5 rounded disabled:opacity-30 disabled:pointer-events-none transition ${
                               isDark ? 'hover:bg-slate-700' : 'hover:bg-white'
                             }`}
                             title="Sposta blocco prima"
@@ -5818,7 +5791,7 @@ export default function App() {
                             type="button"
                             onClick={() => moveBlockDown(blkIndex)}
                             disabled={blkIndex === currentYearBlocks.length - 1}
-                            className={`p-1 rounded disabled:opacity-30 disabled:pointer-events-none transition ${
+                            className={`p-1.5 rounded disabled:opacity-30 disabled:pointer-events-none transition ${
                               isDark ? 'hover:bg-slate-700' : 'hover:bg-white'
                             }`}
                             title="Sposta blocco dopo"
@@ -5828,10 +5801,10 @@ export default function App() {
                           <span
                             onMouseDown={() => setBlockDragReadyId(block.id)}
                             onMouseUp={() => setBlockDragReadyId(null)}
-                            className={`p-1 rounded cursor-grab active:cursor-grabbing transition ${
+                            className={`p-1.5 rounded cursor-grab active:cursor-grabbing transition ${
                               isDark ? 'hover:bg-slate-700' : 'hover:bg-white'
                             }`}
-                            title="Trascina per riordinare il blocco"
+                            title="Trascina blocco"
                           >
                             <GripVertical className="w-3.5 h-3.5" />
                           </span>
@@ -5842,27 +5815,27 @@ export default function App() {
                           onClick={() =>
                             handleDeleteMedBlock(selectedMedYear, block.id)
                           }
-                          className={`h-9 w-9 inline-flex items-center justify-center rounded-xl border transition cursor-pointer shrink-0 ${
+                          className={`h-8 w-8 inline-flex items-center justify-center rounded-xl border transition cursor-pointer shrink-0 ${
                             isDark
                               ? 'border-slate-800 text-slate-500 hover:text-rose-400 hover:bg-rose-950/60'
                               : 'border-slate-200 text-slate-400 hover:text-rose-600 hover:bg-rose-50'
                           }`}
-                          title="Elimina intero blocco"
+                          title="Elimina blocco"
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       </div>
                     </div>
 
                     {/* Contenuto a scomparsa del Blocco */}
                     {isExpanded && (
-                      <div className="p-4 sm:px-5 sm:pb-5 pt-3 flex-1 flex flex-col justify-between gap-4">
+                      <div className="p-3.5 sm:p-4 pt-2 flex-1 flex flex-col justify-between gap-3">
                         {(block.subjects || []).length > 0 ? (
                           <div className="overflow-x-auto">
-                            <table className="w-full text-left border-collapse text-xs sm:text-sm">
+                            <table className="w-full text-left border-collapse text-xs sm:text-sm min-w-[320px]">
                               <thead>
                                 <tr
-                                  className={`border-b text-[11px] uppercase tracking-wider ${
+                                  className={`border-b text-[10px] sm:text-[11px] uppercase tracking-wider ${
                                     isDark
                                       ? 'border-slate-800 text-slate-400'
                                       : 'border-slate-200 text-slate-500'
@@ -5871,16 +5844,16 @@ export default function App() {
                                   <th className="py-2 font-semibold">
                                     Materia
                                   </th>
-                                  <th className="py-2 font-semibold w-16 text-center">
+                                  <th className="py-2 font-semibold w-14 text-center">
                                     CFU
                                   </th>
-                                  <th className="py-2 font-semibold w-28 text-center">
+                                  <th className="py-2 font-semibold w-24 text-center">
                                     Voto
                                   </th>
-                                  <th className="py-2 font-semibold w-14 text-right">
+                                  <th className="py-2 font-semibold w-12 text-right">
                                     Peso
                                   </th>
-                                  <th className="py-2 font-semibold w-9 text-right" />
+                                  <th className="py-2 font-semibold w-8 text-right" />
                                 </tr>
                               </thead>
                               <tbody
@@ -5914,7 +5887,7 @@ export default function App() {
                                           : 'hover:bg-slate-50/70'
                                       }
                                     >
-                                      <td className="py-2 pr-2 min-w-[140px]">
+                                      <td className="py-2.5 pr-2 min-w-[120px]">
                                         <input
                                           type="text"
                                           value={sub.name}
@@ -5933,7 +5906,7 @@ export default function App() {
                                           }`}
                                         />
                                       </td>
-                                      <td className="py-2 px-1 text-center">
+                                      <td className="py-2.5 px-1 text-center">
                                         <input
                                           type="number"
                                           min="0.5"
@@ -5953,11 +5926,11 @@ export default function App() {
                                               }
                                             )
                                           }
-                                          className={`no-spinner h-8 w-14 text-center rounded-lg border px-1.5 text-xs font-bold tabular-nums ${inputMutedSurfaceClass}`}
+                                          className={`no-spinner h-8 w-12 text-center rounded-lg border px-1 text-xs font-bold tabular-nums ${inputMutedSurfaceClass}`}
                                         />
                                       </td>
-                                      <td className="py-2 px-1 text-center">
-                                        <div className="relative inline-block w-24">
+                                      <td className="py-2.5 px-1 text-center">
+                                        <div className="relative inline-block w-22 sm:w-24">
                                           <select
                                             value={subSelectVal}
                                             onChange={(e) => {
@@ -5988,11 +5961,11 @@ export default function App() {
                                                 );
                                               }
                                             }}
-                                            className={`appearance-none h-8 w-full rounded-lg border pl-2.5 pr-6 text-xs font-bold cursor-pointer ${
+                                            className={`appearance-none h-8 w-full rounded-lg border pl-2 pr-6 text-xs font-bold cursor-pointer ${
                                               subSelectVal
                                                 ? isDark
-                                                  ? 'bg-indigo-950/80 border-indigo-700 text-indigo-200 focus:outline-none focus:ring-2 focus:ring-indigo-500'
-                                                  : 'bg-indigo-50 border-indigo-200 text-indigo-800 focus:outline-none focus:ring-2 focus:ring-indigo-500'
+                                                  ? 'bg-indigo-950/80 border-indigo-700 text-indigo-200'
+                                                  : 'bg-indigo-50 border-indigo-200 text-indigo-800'
                                                 : inputMutedSurfaceClass
                                             }`}
                                           >
@@ -6010,7 +5983,7 @@ export default function App() {
                                             ))}
                                           </select>
                                           <ChevronDown
-                                            className={`w-3.5 h-3.5 pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 ${
+                                            className={`w-3.5 h-3.5 pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2 ${
                                               subSelectVal
                                                 ? isDark
                                                   ? 'text-indigo-300'
@@ -6023,7 +5996,7 @@ export default function App() {
                                         </div>
                                       </td>
                                       <td
-                                        className={`py-2 text-right text-xs font-semibold tabular-nums ${
+                                        className={`py-2.5 text-right text-xs font-semibold tabular-nums ${
                                           isDark
                                             ? 'text-slate-400'
                                             : 'text-slate-500'
@@ -6031,7 +6004,7 @@ export default function App() {
                                       >
                                         {weightPoints}
                                       </td>
-                                      <td className="py-2 text-right">
+                                      <td className="py-2.5 text-right">
                                         <button
                                           type="button"
                                           onClick={() =>
@@ -6059,28 +6032,28 @@ export default function App() {
                           </div>
                         ) : (
                           <div
-                            className={`rounded-xl border border-dashed py-4 px-3 text-center text-xs ${
+                            className={`rounded-xl border border-dashed py-3 px-3 text-center text-xs ${
                               isDark
                                 ? 'border-slate-800 text-slate-400'
                                 : 'border-slate-200 text-slate-500'
                             }`}
                           >
-                            Nessuna materia ancora inserita in questo blocco.
+                            Nessuna materia inserita in questo blocco.
                           </div>
                         )}
 
-                        {/* Form rapido aggiunta materia al blocco (sempre allineato in basso) */}
+                        {/* Form rapido aggiunta materia */}
                         <form
                           onSubmit={(e) =>
                             handleAddMedSubject(e, selectedMedYear, block.id)
                           }
-                          className={`mt-auto pt-3 border-t flex flex-wrap sm:flex-nowrap items-center gap-2 ${
+                          className={`mt-auto pt-3 border-t flex flex-col sm:flex-row items-stretch sm:items-center gap-2 ${
                             isDark ? 'border-slate-800' : 'border-slate-100'
                           }`}
                         >
                           <input
                             type="text"
-                            placeholder="Nuova materia del blocco..."
+                            placeholder="Nuova materia..."
                             value={draft.name}
                             onChange={(e) =>
                               setNewSubjectDrafts((prev) => ({
@@ -6089,16 +6062,15 @@ export default function App() {
                               }))
                             }
                             required
-                            className={`h-9 flex-1 min-w-[140px] rounded-xl border px-3 text-xs ${inputMutedSurfaceClass}`}
+                            className={`h-10 sm:h-9 flex-1 rounded-xl border px-3 text-xs ${inputMutedSurfaceClass}`}
                           />
-                          <div className="flex items-center gap-2 w-full sm:w-auto">
+                          <div className="flex items-center gap-2">
                             <input
                               type="number"
                               min="0.5"
                               max="30"
                               step="0.5"
                               placeholder="CFU"
-                              title="Crediti Formativi (CFU)"
                               value={draft.cfu}
                               onChange={(e) =>
                                 setNewSubjectDrafts((prev) => ({
@@ -6107,9 +6079,9 @@ export default function App() {
                                 }))
                               }
                               required
-                              className={`no-spinner h-9 w-16 rounded-xl border px-2 text-xs text-center font-bold tabular-nums shrink-0 ${inputMutedSurfaceClass}`}
+                              className={`no-spinner h-10 sm:h-9 w-16 rounded-xl border px-2 text-xs text-center font-bold tabular-nums shrink-0 ${inputMutedSurfaceClass}`}
                             />
-                            <div className="relative w-24 shrink-0">
+                            <div className="relative flex-1 sm:w-24 shrink-0">
                               <select
                                 value={draft.grade}
                                 onChange={(e) =>
@@ -6121,7 +6093,7 @@ export default function App() {
                                     },
                                   }))
                                 }
-                                className={`appearance-none h-9 w-full rounded-xl border pl-2.5 pr-6 text-xs font-semibold cursor-pointer ${inputMutedSurfaceClass}`}
+                                className={`appearance-none h-10 sm:h-9 w-full rounded-xl border pl-2.5 pr-6 text-xs font-semibold cursor-pointer ${inputMutedSurfaceClass}`}
                               >
                                 <option value="">Da dare</option>
                                 <option value="30L">30L</option>
@@ -6142,10 +6114,10 @@ export default function App() {
                             </div>
                             <button
                               type="submit"
-                              className="h-9 flex-1 sm:flex-initial inline-flex items-center justify-center gap-1 px-3.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shadow-sm transition cursor-pointer shrink-0"
+                              className="h-10 sm:h-9 px-4 inline-flex items-center justify-center gap-1 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shadow-sm transition cursor-pointer shrink-0"
                             >
                               <Plus className="w-3.5 h-3.5" />
-                              <span>Materia</span>
+                              <span>Aggiungi</span>
                             </button>
                           </div>
                         </form>
