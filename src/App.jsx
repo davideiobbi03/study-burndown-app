@@ -475,6 +475,12 @@ export default function App() {
   const [newSubjectDrafts, setNewSubjectDrafts] = useState({});
   const [expandedBlocks, setExpandedBlocks] = useState({});
 
+  // Stato riordinamento blocchi (identico al riordinamento sezioni Tracker)
+  const [isBlockReorderMode, setIsBlockReorderMode] = useState(false);
+  const [blockDragReadyId, setBlockDragReadyId] = useState(null);
+  const [draggedBlockId, setDraggedBlockId] = useState(null);
+  const [dragOverBlockIdx, setDragOverBlockIdx] = useState(null);
+
   const medYears = useMemo(
     () => normalizeMedYears(state.medYears),
     [state.medYears]
@@ -521,6 +527,40 @@ export default function App() {
         medYears: nextYears,
       };
     });
+  };
+
+  const moveBlockUp = (index) => {
+    if (index <= 0) return;
+    updateMedYears((yrs) => {
+      const list = [...(yrs[selectedMedYear] || [])];
+      [list[index - 1], list[index]] = [list[index], list[index - 1]];
+      return { ...yrs, [selectedMedYear]: list };
+    });
+  };
+
+  const moveBlockDown = (index) => {
+    if (index >= currentYearBlocks.length - 1) return;
+    updateMedYears((yrs) => {
+      const list = [...(yrs[selectedMedYear] || [])];
+      [list[index], list[index + 1]] = [list[index + 1], list[index]];
+      return { ...yrs, [selectedMedYear]: list };
+    });
+  };
+
+  const handleDropMedBlock = (targetIndex) => {
+    if (!draggedBlockId) return;
+    updateMedYears((yrs) => {
+      const list = [...(yrs[selectedMedYear] || [])];
+      const sourceIndex = list.findIndex((b) => b.id === draggedBlockId);
+      if (sourceIndex === -1 || sourceIndex === targetIndex) return yrs;
+      const [moved] = list.splice(sourceIndex, 1);
+      const safeIdx = Math.max(0, Math.min(list.length, targetIndex));
+      list.splice(safeIdx, 0, moved);
+      return { ...yrs, [selectedMedYear]: list };
+    });
+    setDraggedBlockId(null);
+    setDragOverBlockIdx(null);
+    setBlockDragReadyId(null);
   };
 
   const handleAddMedBlock = (e) => {
@@ -4473,6 +4513,26 @@ export default function App() {
               </span>
             </button>
 
+            {activeTab === 'libretto' && (
+              <button
+                type="button"
+                onClick={() => setIsBlockReorderMode((v) => !v)}
+                className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold border transition cursor-pointer ${
+                  isBlockReorderMode
+                    ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
+                    : isDark
+                    ? 'text-slate-300 bg-slate-800 hover:bg-slate-700 border-slate-700'
+                    : 'text-slate-700 bg-white hover:bg-slate-50 border-slate-200'
+                }`}
+                title="Sposta o riordina i blocchi dell'anno"
+              >
+                <LayoutGrid className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">
+                  {isBlockReorderMode ? 'Fine ordine' : 'Ordina blocchi'}
+                </span>
+              </button>
+            )}
+
             {activeTab === 'tracker' && (
               <>
                 <button
@@ -5298,6 +5358,40 @@ export default function App() {
          ===================================================================== */}
       {activeTab === 'libretto' && (
         <main className="w-full px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+          {isBlockReorderMode && (
+            <div
+              className={`rounded-2xl border p-4 flex flex-wrap items-center justify-between gap-3 ${
+                isDark
+                  ? 'bg-indigo-950/60 border-indigo-800/80 text-indigo-100'
+                  : 'bg-indigo-50 border-indigo-200 text-indigo-950'
+              }`}
+            >
+              <div className="flex items-center gap-2.5">
+                <LayoutGrid
+                  className={`w-5 h-5 shrink-0 ${
+                    isDark ? 'text-indigo-400' : 'text-indigo-600'
+                  }`}
+                />
+                <div>
+                  <p className="text-sm font-bold">
+                    Personalizzazione ordine blocchi attiva ({selectedMedYear}° Anno)
+                  </p>
+                  <p className="text-xs opacity-85">
+                    Usa le frecce su/giù oppure trascina la maniglia di ogni
+                    blocco per cambiarne la posizione.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsBlockReorderMode(false)}
+                className="px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition cursor-pointer"
+              >
+                Fatto
+              </button>
+            </div>
+          )}
+
           {/* 1. SELETTORE ANNI DI MEDICINA (1° - 6° ANNO) */}
           <section
             className={`rounded-2xl border p-4 sm:p-6 shadow-sm space-y-4 ${cardSurfaceClass}`}
@@ -5422,7 +5516,7 @@ export default function App() {
             </div>
           )}
 
-          {/* 3. ELENCO BLOCCHI A SCOMPARSA (ACCORDION) */}
+          {/* 3. ELENCO BLOCCHI A SCOMPARSA (ACCORDION) RIORDINABILI */}
           {currentYearBlocks.length === 0 ? (
             <section
               className={`rounded-2xl border border-dashed p-10 text-center space-y-2 ${
@@ -5443,8 +5537,13 @@ export default function App() {
             </section>
           ) : (
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 items-stretch">
-              {currentYearBlocks.map((block) => {
+              {currentYearBlocks.map((block, blkIndex) => {
                 const isExpanded = Boolean(expandedBlocks[block.id]);
+                const isBeingDragged = draggedBlockId === block.id;
+                const isDropTarget =
+                  dragOverBlockIdx === blkIndex &&
+                  draggedBlockId &&
+                  draggedBlockId !== block.id;
 
                 // Calcolo media ponderata del singolo blocco
                 let blkWeightedSum = 0;
@@ -5485,11 +5584,46 @@ export default function App() {
                 return (
                   <section
                     key={block.id}
-                    className={`rounded-2xl border shadow-sm flex flex-col transition-colors ${cardSurfaceClass} ${
+                    draggable={blockDragReadyId === block.id}
+                    onDragStart={(e) => {
+                      setDraggedBlockId(block.id);
+                      e.dataTransfer.effectAllowed = 'move';
+                    }}
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      if (dragOverBlockIdx !== blkIndex) {
+                        setDragOverBlockIdx(blkIndex);
+                      }
+                    }}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleDropMedBlock(blkIndex);
+                    }}
+                    onDragEnd={() => {
+                      setDraggedBlockId(null);
+                      setDragOverBlockIdx(null);
+                      setBlockDragReadyId(null);
+                    }}
+                    className={`rounded-2xl border shadow-sm flex flex-col transition-all duration-200 ${cardSurfaceClass} ${
                       isExpanded
                         ? isDark
                           ? 'border-indigo-500/40'
                           : 'border-indigo-300'
+                        : ''
+                    } ${isBeingDragged ? 'opacity-45 scale-[0.99]' : ''} ${
+                      isDropTarget
+                        ? `ring-2 ring-indigo-500 ring-offset-4 ${
+                            isDark
+                              ? 'ring-offset-slate-950'
+                              : 'ring-offset-slate-50'
+                          }`
+                        : ''
+                    } ${
+                      isBlockReorderMode
+                        ? isDark
+                          ? 'ring-2 ring-indigo-500/45'
+                          : 'ring-2 ring-indigo-300/80'
                         : ''
                     }`}
                   >
@@ -5619,7 +5753,7 @@ export default function App() {
                         </div>
                       </div>
 
-                      {/* Riquadro Voto Ponderato Blocco + Cestino */}
+                      {/* Riquadro Voto Ponderato Blocco + Controlli Ordine + Cestino */}
                       <div
                         className="flex items-center gap-2 shrink-0"
                         onClick={(e) => e.stopPropagation()}
@@ -5656,6 +5790,51 @@ export default function App() {
                               — / 30
                             </div>
                           )}
+                        </div>
+
+                        <div
+                          className={`inline-flex items-center gap-0.5 rounded-lg p-0.5 border transition shrink-0 ${
+                            isBlockReorderMode
+                              ? isDark
+                                ? 'bg-indigo-950/70 border-indigo-700 text-indigo-300 shadow-sm'
+                                : 'bg-indigo-50 border-indigo-300 text-indigo-700 shadow-sm'
+                              : isDark
+                              ? 'bg-slate-800 border-slate-700 text-slate-400 hover:text-slate-200'
+                              : 'bg-slate-50 border-slate-200/80 text-slate-500 hover:text-slate-800'
+                          }`}
+                        >
+                          <button
+                            type="button"
+                            onClick={() => moveBlockUp(blkIndex)}
+                            disabled={blkIndex === 0}
+                            className={`p-1 rounded disabled:opacity-30 disabled:pointer-events-none transition ${
+                              isDark ? 'hover:bg-slate-700' : 'hover:bg-white'
+                            }`}
+                            title="Sposta blocco prima"
+                          >
+                            <ArrowUp className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => moveBlockDown(blkIndex)}
+                            disabled={blkIndex === currentYearBlocks.length - 1}
+                            className={`p-1 rounded disabled:opacity-30 disabled:pointer-events-none transition ${
+                              isDark ? 'hover:bg-slate-700' : 'hover:bg-white'
+                            }`}
+                            title="Sposta blocco dopo"
+                          >
+                            <ArrowDown className="w-3.5 h-3.5" />
+                          </button>
+                          <span
+                            onMouseDown={() => setBlockDragReadyId(block.id)}
+                            onMouseUp={() => setBlockDragReadyId(null)}
+                            className={`p-1 rounded cursor-grab active:cursor-grabbing transition ${
+                              isDark ? 'hover:bg-slate-700' : 'hover:bg-white'
+                            }`}
+                            title="Trascina per riordinare il blocco"
+                          >
+                            <GripVertical className="w-3.5 h-3.5" />
+                          </span>
                         </div>
 
                         <button
