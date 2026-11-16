@@ -51,6 +51,7 @@ import {
   Download,
   Upload,
   GraduationCap,
+  ChevronDown,
 } from 'lucide-react';
 
 // ============================================================================
@@ -464,7 +465,7 @@ export default function App() {
     };
   });
 
-  // --- STATO PAGINA LIBRETTO & MEDIE (1° - 6° ANNO MEDICINA) ---
+  // --- STATO PAGINA VOTI BLOCCHI (1° - 6° ANNO MEDICINA) ---
   const [selectedMedYear, setSelectedMedYear] = useState(1);
   const [newBlockName, setNewBlockName] = useState('');
   const [editingBlockId, setEditingBlockId] = useState(null);
@@ -2181,8 +2182,8 @@ export default function App() {
       className={`inline-flex items-center gap-0.5 rounded-lg p-0.5 border transition shrink-0 ${
         isReorderMode
           ? isDark
-            ? 'bg-indigo-950/70 border-indigo-700 text-indigo-300 shadow-xs'
-            : 'bg-indigo-50 border-indigo-300 text-indigo-700 shadow-xs'
+            ? 'bg-indigo-950/70 border-indigo-700 text-indigo-300 shadow-sm'
+            : 'bg-indigo-50 border-indigo-300 text-indigo-700 shadow-sm'
           : isDark
           ? 'bg-slate-800 border-slate-700 text-slate-400 hover:text-slate-200'
           : 'bg-slate-50 border-slate-200/80 text-slate-500 hover:text-slate-800'
@@ -2673,7 +2674,7 @@ export default function App() {
             <div className="sm:col-span-2">
               <button
                 type="submit"
-                className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-semibold shadow-xs transition cursor-pointer"
+                className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-semibold shadow-sm transition cursor-pointer"
               >
                 <Plus className="w-4 h-4" />
                 Aggiungi
@@ -2695,11 +2696,11 @@ export default function App() {
                     srFilter === 'due'
                       ? srAnalytics.dueTotalCount > 0
                         ? isDark
-                          ? 'bg-slate-900 text-amber-400 shadow-xs'
-                          : 'bg-white text-amber-700 shadow-xs'
+                          ? 'bg-slate-900 text-amber-400 shadow-sm'
+                          : 'bg-white text-amber-700 shadow-sm'
                         : isDark
-                        ? 'bg-slate-900 text-emerald-400 shadow-xs'
-                        : 'bg-white text-emerald-700 shadow-xs'
+                        ? 'bg-slate-900 text-emerald-400 shadow-sm'
+                        : 'bg-white text-emerald-700 shadow-sm'
                       : isDark
                       ? 'text-slate-400 hover:text-slate-200'
                       : 'text-slate-600 hover:text-slate-900'
@@ -2713,8 +2714,8 @@ export default function App() {
                   className={`px-3 py-1 rounded-lg text-xs font-semibold transition cursor-pointer ${
                     srFilter === 'upcoming'
                       ? isDark
-                        ? 'bg-slate-900 text-indigo-400 shadow-xs'
-                        : 'bg-white text-indigo-600 shadow-xs'
+                        ? 'bg-slate-900 text-indigo-400 shadow-sm'
+                        : 'bg-white text-indigo-600 shadow-sm'
                       : isDark
                       ? 'text-slate-400 hover:text-slate-200'
                       : 'text-slate-600 hover:text-slate-900'
@@ -2729,8 +2730,8 @@ export default function App() {
                   className={`px-3 py-1 rounded-lg text-xs font-semibold transition cursor-pointer ${
                     srFilter === 'all'
                       ? isDark
-                        ? 'bg-slate-900 text-slate-100 shadow-xs'
-                        : 'bg-white text-slate-900 shadow-xs'
+                        ? 'bg-slate-900 text-slate-100 shadow-sm'
+                        : 'bg-white text-slate-900 shadow-sm'
                       : isDark
                       ? 'text-slate-400 hover:text-slate-200'
                       : 'text-slate-600 hover:text-slate-900'
@@ -2986,8 +2987,8 @@ export default function App() {
                   className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
                     logMode === 'daily'
                       ? isDark
-                        ? 'bg-slate-900 text-indigo-400 shadow-xs'
-                        : 'bg-white text-indigo-600 shadow-xs'
+                        ? 'bg-slate-900 text-indigo-400 shadow-sm'
+                        : 'bg-white text-indigo-600 shadow-sm'
                       : isDark
                       ? 'text-slate-400 hover:text-slate-200'
                       : 'text-slate-600 hover:text-slate-900'
@@ -3001,8 +3002,8 @@ export default function App() {
                   className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
                     logMode === 'cumulative'
                       ? isDark
-                        ? 'bg-slate-900 text-indigo-400 shadow-xs'
-                        : 'bg-white text-indigo-600 shadow-xs'
+                        ? 'bg-slate-900 text-indigo-400 shadow-sm'
+                        : 'bg-white text-indigo-600 shadow-sm'
                       : isDark
                       ? 'text-slate-400 hover:text-slate-200'
                       : 'text-slate-600 hover:text-slate-900'
@@ -3068,7 +3069,7 @@ export default function App() {
             <div className="sm:col-span-3">
               <button
                 type="submit"
-                className="w-full inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold shadow-xs transition cursor-pointer"
+                className="w-full inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold shadow-sm transition cursor-pointer"
               >
                 <Plus className="w-4 h-4" />
                 Registra
@@ -3349,8 +3350,8 @@ export default function App() {
               className={`py-1.5 px-2 rounded-lg text-xs font-semibold transition cursor-pointer ${
                 pomoPhase === 'study'
                   ? isDark
-                    ? 'bg-slate-900 text-indigo-400 shadow-xs'
-                    : 'bg-white text-indigo-600 shadow-xs'
+                    ? 'bg-slate-900 text-indigo-400 shadow-sm'
+                    : 'bg-white text-indigo-600 shadow-sm'
                   : isDark
                   ? 'text-slate-400 hover:text-slate-200'
                   : 'text-slate-600 hover:text-slate-900'
@@ -3364,8 +3365,8 @@ export default function App() {
               className={`py-1.5 px-2 rounded-lg text-xs font-semibold transition cursor-pointer ${
                 pomoPhase === 'short_break'
                   ? isDark
-                    ? 'bg-slate-900 text-emerald-400 shadow-xs'
-                    : 'bg-white text-emerald-600 shadow-xs'
+                    ? 'bg-slate-900 text-emerald-400 shadow-sm'
+                    : 'bg-white text-emerald-600 shadow-sm'
                   : isDark
                   ? 'text-slate-400 hover:text-slate-200'
                   : 'text-slate-600 hover:text-slate-900'
@@ -3379,8 +3380,8 @@ export default function App() {
               className={`py-1.5 px-2 rounded-lg text-xs font-semibold transition cursor-pointer ${
                 pomoPhase === 'long_break'
                   ? isDark
-                    ? 'bg-slate-900 text-teal-400 shadow-xs'
-                    : 'bg-white text-teal-700 shadow-xs'
+                    ? 'bg-slate-900 text-teal-400 shadow-sm'
+                    : 'bg-white text-teal-700 shadow-sm'
                   : isDark
                   ? 'text-slate-400 hover:text-slate-200'
                   : 'text-slate-600 hover:text-slate-900'
@@ -3419,8 +3420,8 @@ export default function App() {
                     className={`h-2 w-6 rounded-full transition-all ${
                       dot <= pomoCycleCount
                         ? pomoPhase === 'study'
-                          ? 'bg-indigo-500 shadow-xs'
-                          : 'bg-emerald-500 shadow-xs'
+                          ? 'bg-indigo-500 shadow-sm'
+                          : 'bg-emerald-500 shadow-sm'
                         : isDark
                         ? 'bg-slate-800'
                         : 'bg-slate-200'
@@ -4039,7 +4040,7 @@ export default function App() {
                       onClick={() => toggleRestDay(day.id)}
                       className={`py-2 rounded-lg text-xs font-bold transition cursor-pointer ${
                         active
-                          ? 'bg-indigo-600 text-white shadow-xs'
+                          ? 'bg-indigo-600 text-white shadow-sm'
                           : isDark
                           ? 'bg-slate-800 text-slate-300 hover:bg-slate-700'
                           : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
@@ -4198,19 +4199,27 @@ export default function App() {
           display: block !important;
           text-align: left !important;
         }
+        input.no-spinner::-webkit-outer-spin-button,
+        input.no-spinner::-webkit-inner-spin-button {
+          -webkit-appearance: none;
+          margin: 0;
+        }
+        input.no-spinner[type=number] {
+          -moz-appearance: textfield;
+        }
       `}</style>
 
-      {/* --- HEADER FULL-WIDTH --- */}
+      {/* --- HEADER FULL-WIDTH (OPACO, ZERO TRASPARENZA IN SCROLL) --- */}
       <header
-        className={`border-b sticky top-0 z-20 w-full transition-colors duration-200 ${
+        className={`border-b sticky top-0 z-30 w-full transition-colors duration-200 ${
           isDark
-            ? 'bg-slate-900/95 border-slate-800 backdrop-blur-xs'
-            : 'bg-white border-slate-200'
+            ? 'bg-slate-900 border-slate-800 shadow-md shadow-slate-950/40'
+            : 'bg-white border-slate-200 shadow-sm'
         }`}
       >
         <div className="w-full px-4 sm:px-6 lg:px-8 py-3 flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="bg-indigo-600 text-white p-2 rounded-xl shadow-xs shrink-0">
+            <div className="bg-indigo-600 text-white p-2 rounded-xl shadow-sm shrink-0">
               {activeTab === 'tracker' ? (
                 <BookOpen className="w-5 h-5" />
               ) : (
@@ -4279,7 +4288,7 @@ export default function App() {
                   <button
                     type="button"
                     onClick={() => setIsRenamingHeader(true)}
-                    className="group flex items-center gap-1.5 text-left mt-0.5 cursor-pointer"
+                    className="group flex items-center gap-1.5 text-left mt-0.5 cursor-pointer max-w-full"
                     title="Clicca per rinominare l'esame"
                   >
                     <h1
@@ -4317,7 +4326,7 @@ export default function App() {
             <div
               className={`inline-flex rounded-xl p-1 border ${
                 isDark
-                  ? 'bg-slate-800/90 border-slate-700'
+                  ? 'bg-slate-800 border-slate-700'
                   : 'bg-slate-100 border-slate-200/80'
               }`}
             >
@@ -4327,8 +4336,8 @@ export default function App() {
                 className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition cursor-pointer ${
                   activeTab === 'tracker'
                     ? isDark
-                      ? 'bg-slate-900 text-indigo-400 shadow-xs'
-                      : 'bg-white text-indigo-600 shadow-xs'
+                      ? 'bg-slate-900 text-indigo-400 shadow-sm'
+                      : 'bg-white text-indigo-600 shadow-sm'
                     : isDark
                     ? 'text-slate-400 hover:text-slate-200'
                     : 'text-slate-600 hover:text-slate-900'
@@ -4343,8 +4352,8 @@ export default function App() {
                 className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition cursor-pointer ${
                   activeTab === 'libretto'
                     ? isDark
-                      ? 'bg-slate-900 text-indigo-400 shadow-xs'
-                      : 'bg-white text-indigo-600 shadow-xs'
+                      ? 'bg-slate-900 text-indigo-400 shadow-sm'
+                      : 'bg-white text-indigo-600 shadow-sm'
                     : isDark
                     ? 'text-slate-400 hover:text-slate-200'
                     : 'text-slate-600 hover:text-slate-900'
@@ -4438,7 +4447,7 @@ export default function App() {
                   onClick={() => setIsReorderMode((v) => !v)}
                   className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold border transition cursor-pointer ${
                     isReorderMode
-                      ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs'
+                      ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
                       : isCustomLayout
                       ? indigoPillClass
                       : isDark
@@ -4480,7 +4489,7 @@ export default function App() {
                 <button
                   type="button"
                   onClick={handleCreateExam}
-                  className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-semibold shadow-xs transition cursor-pointer"
+                  className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-semibold shadow-sm transition cursor-pointer"
                 >
                   <Plus className="w-4 h-4" />
                   <span>Nuovo</span>
@@ -4508,7 +4517,7 @@ export default function App() {
       {/* --- MODALE SYNC CLOUD MULTI-DISPOSITIVO --- */}
       {showCloudModal && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/65 backdrop-blur-xs"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-sm"
           onClick={() => setShowCloudModal(false)}
         >
           <div
@@ -4679,7 +4688,7 @@ export default function App() {
                         authMode === 'login'
                           ? isDark
                             ? 'bg-slate-900 text-indigo-400'
-                            : 'bg-white text-indigo-600 shadow-xs'
+                            : 'bg-white text-indigo-600 shadow-sm'
                           : isDark
                           ? 'text-slate-400'
                           : 'text-slate-600'
@@ -4697,7 +4706,7 @@ export default function App() {
                         authMode === 'signup'
                           ? isDark
                             ? 'bg-slate-900 text-indigo-400'
-                            : 'bg-white text-indigo-600 shadow-xs'
+                            : 'bg-white text-indigo-600 shadow-sm'
                           : isDark
                           ? 'text-slate-400'
                           : 'text-slate-600'
@@ -4946,7 +4955,7 @@ export default function App() {
           >
             <div className="flex flex-col sm:flex-row sm:items-center gap-4">
               <div
-                className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 shadow-xs ${statusStyles.iconBg}`}
+                className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 shadow-sm ${statusStyles.iconBg}`}
               >
                 <StatusIcon className="w-6 h-6" />
               </div>
@@ -5258,9 +5267,9 @@ export default function App() {
         <main className="w-full px-4 sm:px-6 lg:px-8 py-6 space-y-6">
           {/* 1. SELETTORE ANNI DI MEDICINA (1° - 6° ANNO) */}
           <section
-            className={`rounded-2xl border p-4 sm:p-5 shadow-sm space-y-4 ${cardSurfaceClass}`}
+            className={`rounded-2xl border p-4 sm:p-6 shadow-sm space-y-4 ${cardSurfaceClass}`}
           >
-            <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
               <div>
                 <h2
                   className={`text-base sm:text-lg font-bold ${
@@ -5281,19 +5290,19 @@ export default function App() {
 
               <form
                 onSubmit={handleAddMedBlock}
-                className="flex flex-wrap items-center gap-2 w-full sm:w-auto"
+                className="flex items-center gap-2 w-full md:w-auto"
               >
                 <input
                   type="text"
-                  placeholder={`Nome nuovo blocco (${selectedMedYear}° anno)...`}
+                  placeholder={`Nuovo blocco (${selectedMedYear}° anno)...`}
                   value={newBlockName}
                   onChange={(e) => setNewBlockName(e.target.value)}
                   required
-                  className={`rounded-xl border px-3 py-2 text-xs sm:text-sm flex-1 sm:w-64 ${inputMutedSurfaceClass}`}
+                  className={`h-9 rounded-xl border px-3 text-xs sm:text-sm flex-1 md:w-64 ${inputMutedSurfaceClass}`}
                 />
                 <button
                   type="submit"
-                  className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-semibold shadow-xs transition cursor-pointer shrink-0"
+                  className="h-9 inline-flex items-center justify-center gap-1.5 px-3.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-semibold shadow-sm transition cursor-pointer shrink-0"
                 >
                   <Plus className="w-4 h-4" />
                   <span>Aggiungi Blocco</span>
@@ -5313,19 +5322,19 @@ export default function App() {
                       setSelectedMedYear(yr);
                       setEditingBlockId(null);
                     }}
-                    className={`rounded-xl border p-3 text-left transition cursor-pointer flex items-center justify-between gap-2 ${
+                    className={`rounded-xl border px-3.5 py-2.5 text-left transition cursor-pointer flex items-center justify-between gap-2 ${
                       isSelected
                         ? isDark
-                          ? 'bg-indigo-950/75 border-indigo-600 text-indigo-100 shadow-xs'
-                          : 'bg-indigo-50 border-indigo-500 text-indigo-950 shadow-xs'
+                          ? 'bg-indigo-950/80 border-indigo-500 text-indigo-100 shadow-sm'
+                          : 'bg-indigo-50 border-indigo-500 text-indigo-950 shadow-sm'
                         : isDark
-                        ? 'bg-slate-800/55 border-slate-700/80 text-slate-300 hover:bg-slate-800'
-                        : 'bg-slate-50/80 border-slate-200 text-slate-700 hover:bg-white'
+                        ? 'bg-slate-800/55 border-slate-700/80 text-slate-300 hover:bg-slate-800 hover:border-slate-600'
+                        : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-white hover:border-slate-300'
                     }`}
                   >
                     <span className="text-sm font-extrabold">{yr}° Anno</span>
                     <span
-                      className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                      className={`text-[11px] font-bold px-2 py-0.5 rounded-full shrink-0 ${
                         isSelected
                           ? 'bg-indigo-600 text-white'
                           : isDark
@@ -5354,7 +5363,7 @@ export default function App() {
               <p className="text-sm font-bold">
                 Nessun blocco inserito per il {selectedMedYear}° Anno
               </p>
-              <p className="text-xs">
+              <p className="text-xs max-w-md mx-auto">
                 Usa il campo &ldquo;Aggiungi Blocco&rdquo; qui sopra per creare
                 un esame integrato e inserire le materie con CFU e voti per
                 vedere quanto ti uscirà al blocco.
@@ -5389,7 +5398,7 @@ export default function App() {
                 const blkFinalGrade =
                   blkAvg !== null
                     ? blkAvg === 30 && gradedCount > 0 && allLode
-                      ? '30 e Lode'
+                      ? '30L'
                       : `${Math.round(blkAvg)}/30`
                     : null;
 
@@ -5404,9 +5413,9 @@ export default function App() {
                     key={block.id}
                     className={`rounded-2xl border p-4 sm:p-6 shadow-sm space-y-4 ${cardSurfaceClass}`}
                   >
-                    {/* Header del Blocco + Risultato Media Ponderata Blocco */}
+                    {/* Header del Blocco + Risultato Media Ponderata (ZERO SOVRAPPOSIZIONI) */}
                     <div
-                      className={`flex flex-wrap items-start justify-between gap-3 pb-3.5 border-b ${
+                      className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3.5 border-b ${
                         isDark ? 'border-slate-800' : 'border-slate-100'
                       }`}
                     >
@@ -5434,7 +5443,7 @@ export default function App() {
                                 }
                               }}
                               autoFocus
-                              className={`text-base font-bold border-b-2 border-indigo-600 bg-transparent focus:outline-none ${
+                              className={`w-full text-base font-bold border-b-2 border-indigo-600 bg-transparent focus:outline-none ${
                                 isDark ? 'text-slate-50' : 'text-slate-900'
                               }`}
                             />
@@ -5443,34 +5452,32 @@ export default function App() {
                               onClick={() =>
                                 handleRenameMedBlock(selectedMedYear, block.id)
                               }
-                              className="p-1 text-emerald-500 cursor-pointer"
+                              className="p-1 text-emerald-500 cursor-pointer shrink-0"
                             >
                               <Check className="w-4 h-4" />
                             </button>
                           </div>
                         ) : (
-                          <div className="flex items-center gap-2">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setEditingBlockId(block.id);
-                                setEditingBlockTitle(block.name);
-                              }}
-                              className="group flex items-center gap-1.5 text-left cursor-pointer"
-                              title="Clicca per rinominare il blocco"
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setEditingBlockId(block.id);
+                              setEditingBlockTitle(block.name);
+                            }}
+                            className="group flex items-start gap-1.5 text-left cursor-pointer min-w-0 max-w-full"
+                            title="Clicca per rinominare il blocco"
+                          >
+                            <h3
+                              className={`text-base font-bold leading-snug break-words line-clamp-2 ${
+                                isDark
+                                  ? 'text-slate-100 group-hover:text-indigo-400'
+                                  : 'text-slate-900 group-hover:text-indigo-600'
+                              }`}
                             >
-                              <h3
-                                className={`text-base sm:text-lg font-bold truncate ${
-                                  isDark
-                                    ? 'text-slate-100 group-hover:text-indigo-400'
-                                    : 'text-slate-900 group-hover:text-indigo-600'
-                                }`}
-                              >
-                                {block.name}
-                              </h3>
-                              <Edit3 className="w-3.5 h-3.5 opacity-40 group-hover:opacity-100 shrink-0" />
-                            </button>
-                          </div>
+                              {block.name}
+                            </h3>
+                            <Edit3 className="w-3.5 h-3.5 mt-1 opacity-40 group-hover:opacity-100 shrink-0" />
+                          </button>
                         )}
 
                         <p
@@ -5486,37 +5493,37 @@ export default function App() {
                         </p>
                       </div>
 
-                      {/* Badge Media Ponderata del Blocco */}
-                      <div className="flex items-center gap-2 shrink-0">
+                      {/* Riquadro Voto Ponderato Blocco + Cestino */}
+                      <div className="flex items-center justify-between sm:justify-end gap-2 shrink-0">
                         <div
-                          className={`rounded-xl px-3.5 py-1.5 border text-right ${
+                          className={`rounded-xl px-3 py-1.5 border ${
                             blkAvg !== null
                               ? isDark
                                 ? 'bg-indigo-950/75 border-indigo-700/80 text-indigo-100'
                                 : 'bg-indigo-50 border-indigo-200 text-indigo-950'
                               : isDark
-                              ? 'bg-slate-800 border-slate-700 text-slate-400'
+                              ? 'bg-slate-800/80 border-slate-700 text-slate-400'
                               : 'bg-slate-50 border-slate-200 text-slate-500'
                           }`}
                         >
-                          <div className="text-[10px] font-bold uppercase tracking-wider opacity-80">
-                            Voto Blocco (Media Ponderata)
+                          <div className="text-[10px] font-bold uppercase tracking-wider opacity-75">
+                            Media Blocco
                           </div>
                           {blkAvg !== null ? (
-                            <div className="flex items-baseline justify-end gap-1.5">
-                              <span className="text-base sm:text-lg font-black tabular-nums">
+                            <div className="flex items-center gap-1.5 mt-0.5">
+                              <span className="text-base sm:text-lg font-black tabular-nums leading-none">
                                 {blkAvg.toFixed(2)}
                               </span>
                               <span
-                                className="text-xs font-bold px-2 py-0.5 rounded bg-indigo-600 text-white"
+                                className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-indigo-600 text-white leading-none"
                                 title="Voto finale arrotondato del blocco"
                               >
                                 → {blkFinalGrade}
                               </span>
                             </div>
                           ) : (
-                            <div className="text-xs font-semibold">
-                              Inserisci almeno un voto
+                            <div className="text-xs font-semibold mt-0.5">
+                              — / 30
                             </div>
                           )}
                         </div>
@@ -5526,7 +5533,7 @@ export default function App() {
                           onClick={() =>
                             handleDeleteMedBlock(selectedMedYear, block.id)
                           }
-                          className={`p-2 rounded-xl border transition cursor-pointer ${
+                          className={`h-9 w-9 inline-flex items-center justify-center rounded-xl border transition cursor-pointer shrink-0 ${
                             isDark
                               ? 'border-slate-800 text-slate-500 hover:text-rose-400 hover:bg-rose-950/60'
                               : 'border-slate-200 text-slate-400 hover:text-rose-600 hover:bg-rose-50'
@@ -5538,7 +5545,7 @@ export default function App() {
                       </div>
                     </div>
 
-                    {/* Tabella Materie del Blocco */}
+                    {/* Tabella Materie del Blocco con colonne allineate */}
                     {(block.subjects || []).length > 0 && (
                       <div className="overflow-x-auto">
                         <table className="w-full text-left border-collapse text-xs sm:text-sm">
@@ -5551,16 +5558,16 @@ export default function App() {
                               }`}
                             >
                               <th className="py-2 font-semibold">Materia</th>
-                              <th className="py-2 font-semibold w-20 text-center">
+                              <th className="py-2 font-semibold w-16 text-center">
                                 CFU
                               </th>
                               <th className="py-2 font-semibold w-28 text-center">
                                 Voto
                               </th>
-                              <th className="py-2 font-semibold w-20 text-right">
+                              <th className="py-2 font-semibold w-14 text-right">
                                 Peso
                               </th>
-                              <th className="py-2 font-semibold w-10 text-right" />
+                              <th className="py-2 font-semibold w-9 text-right" />
                             </tr>
                           </thead>
                           <tbody
@@ -5593,7 +5600,7 @@ export default function App() {
                                       : 'hover:bg-slate-50/70'
                                   }
                                 >
-                                  <td className="py-2 pr-2">
+                                  <td className="py-2 pr-2 min-w-[140px]">
                                     <input
                                       type="text"
                                       value={sub.name}
@@ -5605,7 +5612,7 @@ export default function App() {
                                           { name: e.target.value }
                                         )
                                       }
-                                      className={`w-full bg-transparent font-medium focus:outline-none focus:underline ${
+                                      className={`w-full bg-transparent font-medium truncate focus:outline-none focus:underline ${
                                         isDark
                                           ? 'text-slate-100'
                                           : 'text-slate-800'
@@ -5632,59 +5639,72 @@ export default function App() {
                                           }
                                         )
                                       }
-                                      className={`w-16 text-center rounded-lg border px-1.5 py-1 text-xs font-bold ${inputMutedSurfaceClass}`}
+                                      className={`no-spinner h-8 w-14 text-center rounded-lg border px-1.5 text-xs font-bold tabular-nums ${inputMutedSurfaceClass}`}
                                     />
                                   </td>
                                   <td className="py-2 px-1 text-center">
-                                    <select
-                                      value={subSelectVal}
-                                      onChange={(e) => {
-                                        const v = e.target.value;
-                                        if (v === '') {
-                                          handleUpdateMedSubject(
-                                            selectedMedYear,
-                                            block.id,
-                                            sub.id,
-                                            { grade: null, lode: false }
-                                          );
-                                        } else if (v === '30L') {
-                                          handleUpdateMedSubject(
-                                            selectedMedYear,
-                                            block.id,
-                                            sub.id,
-                                            { grade: 30, lode: true }
-                                          );
-                                        } else {
-                                          handleUpdateMedSubject(
-                                            selectedMedYear,
-                                            block.id,
-                                            sub.id,
-                                            {
-                                              grade: Number(v),
-                                              lode: false,
-                                            }
-                                          );
-                                        }
-                                      }}
-                                      className={`w-24 rounded-lg border px-2 py-1 text-xs font-bold cursor-pointer ${
-                                        subSelectVal
-                                          ? isDark
-                                            ? 'bg-indigo-950/80 border-indigo-700 text-indigo-200'
-                                            : 'bg-indigo-50 border-indigo-200 text-indigo-800'
-                                          : inputMutedSurfaceClass
-                                      }`}
-                                    >
-                                      <option value="">Da dare</option>
-                                      <option value="30L">30 e Lode</option>
-                                      {[
-                                        30, 29, 28, 27, 26, 25, 24, 23, 22, 21,
-                                        20, 19, 18,
-                                      ].map((g) => (
-                                        <option key={g} value={String(g)}>
-                                          {g}
-                                        </option>
-                                      ))}
-                                    </select>
+                                    <div className="relative inline-block w-24">
+                                      <select
+                                        value={subSelectVal}
+                                        onChange={(e) => {
+                                          const v = e.target.value;
+                                          if (v === '') {
+                                            handleUpdateMedSubject(
+                                              selectedMedYear,
+                                              block.id,
+                                              sub.id,
+                                              { grade: null, lode: false }
+                                            );
+                                          } else if (v === '30L') {
+                                            handleUpdateMedSubject(
+                                              selectedMedYear,
+                                              block.id,
+                                              sub.id,
+                                              { grade: 30, lode: true }
+                                            );
+                                          } else {
+                                            handleUpdateMedSubject(
+                                              selectedMedYear,
+                                              block.id,
+                                              sub.id,
+                                              {
+                                                grade: Number(v),
+                                                lode: false,
+                                              }
+                                            );
+                                          }
+                                        }}
+                                        className={`appearance-none h-8 w-full rounded-lg border pl-2.5 pr-6 text-xs font-bold cursor-pointer ${
+                                          subSelectVal
+                                            ? isDark
+                                              ? 'bg-indigo-950/80 border-indigo-700 text-indigo-200 focus:outline-none focus:ring-2 focus:ring-indigo-500'
+                                              : 'bg-indigo-50 border-indigo-200 text-indigo-800 focus:outline-none focus:ring-2 focus:ring-indigo-500'
+                                            : inputMutedSurfaceClass
+                                        }`}
+                                      >
+                                        <option value="">Da dare</option>
+                                        <option value="30L">30 e Lode</option>
+                                        {[
+                                          30, 29, 28, 27, 26, 25, 24, 23, 22,
+                                          21, 20, 19, 18,
+                                        ].map((g) => (
+                                          <option key={g} value={String(g)}>
+                                            {g}
+                                          </option>
+                                        ))}
+                                      </select>
+                                      <ChevronDown
+                                        className={`w-3.5 h-3.5 pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 ${
+                                          subSelectVal
+                                            ? isDark
+                                              ? 'text-indigo-300'
+                                              : 'text-indigo-700'
+                                            : isDark
+                                            ? 'text-slate-400'
+                                            : 'text-slate-500'
+                                        }`}
+                                      />
+                                    </div>
                                   </td>
                                   <td
                                     className={`py-2 text-right text-xs font-semibold tabular-nums ${
@@ -5705,7 +5725,7 @@ export default function App() {
                                           sub.id
                                         )
                                       }
-                                      className={`p-1 rounded-lg transition cursor-pointer ${
+                                      className={`h-8 w-8 inline-flex items-center justify-center rounded-lg transition cursor-pointer ${
                                         isDark
                                           ? 'text-slate-500 hover:text-rose-400 hover:bg-rose-950/60'
                                           : 'text-slate-400 hover:text-rose-600 hover:bg-rose-50'
@@ -5723,31 +5743,29 @@ export default function App() {
                       </div>
                     )}
 
-                    {/* Form rapido aggiunta materia al blocco */}
+                    {/* Form rapido aggiunta materia al blocco (altezze h-9 identiche) */}
                     <form
                       onSubmit={(e) =>
                         handleAddMedSubject(e, selectedMedYear, block.id)
                       }
-                      className={`pt-3 border-t grid grid-cols-1 sm:grid-cols-12 gap-2 items-center ${
+                      className={`pt-3 border-t flex flex-wrap sm:flex-nowrap items-center gap-2 ${
                         isDark ? 'border-slate-800' : 'border-slate-100'
                       }`}
                     >
-                      <div className="sm:col-span-6">
-                        <input
-                          type="text"
-                          placeholder="Nuova materia del blocco..."
-                          value={draft.name}
-                          onChange={(e) =>
-                            setNewSubjectDrafts((prev) => ({
-                              ...prev,
-                              [block.id]: { ...draft, name: e.target.value },
-                            }))
-                          }
-                          required
-                          className={`w-full rounded-xl border px-3 py-1.5 text-xs ${inputMutedSurfaceClass}`}
-                        />
-                      </div>
-                      <div className="sm:col-span-2">
+                      <input
+                        type="text"
+                        placeholder="Nuova materia del blocco..."
+                        value={draft.name}
+                        onChange={(e) =>
+                          setNewSubjectDrafts((prev) => ({
+                            ...prev,
+                            [block.id]: { ...draft, name: e.target.value },
+                          }))
+                        }
+                        required
+                        className={`h-9 flex-1 min-w-[140px] rounded-xl border px-3 text-xs ${inputMutedSurfaceClass}`}
+                      />
+                      <div className="flex items-center gap-2 w-full sm:w-auto">
                         <input
                           type="number"
                           min="0.5"
@@ -5763,35 +5781,39 @@ export default function App() {
                             }))
                           }
                           required
-                          className={`w-full rounded-xl border px-2.5 py-1.5 text-xs text-center font-semibold ${inputMutedSurfaceClass}`}
+                          className={`no-spinner h-9 w-16 rounded-xl border px-2 text-xs text-center font-bold tabular-nums shrink-0 ${inputMutedSurfaceClass}`}
                         />
-                      </div>
-                      <div className="sm:col-span-2">
-                        <select
-                          value={draft.grade}
-                          onChange={(e) =>
-                            setNewSubjectDrafts((prev) => ({
-                              ...prev,
-                              [block.id]: { ...draft, grade: e.target.value },
-                            }))
-                          }
-                          className={`w-full rounded-xl border px-2 py-1.5 text-xs font-semibold ${inputMutedSurfaceClass}`}
-                        >
-                          <option value="">Da dare</option>
-                          <option value="30L">30L</option>
-                          {[
-                            30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18,
-                          ].map((g) => (
-                            <option key={g} value={String(g)}>
-                              {g}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                      <div className="sm:col-span-2">
+                        <div className="relative w-24 shrink-0">
+                          <select
+                            value={draft.grade}
+                            onChange={(e) =>
+                              setNewSubjectDrafts((prev) => ({
+                                ...prev,
+                                [block.id]: { ...draft, grade: e.target.value },
+                              }))
+                            }
+                            className={`appearance-none h-9 w-full rounded-xl border pl-2.5 pr-6 text-xs font-semibold cursor-pointer ${inputMutedSurfaceClass}`}
+                          >
+                            <option value="">Da dare</option>
+                            <option value="30L">30L</option>
+                            {[
+                              30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19,
+                              18,
+                            ].map((g) => (
+                              <option key={g} value={String(g)}>
+                                {g}
+                              </option>
+                            ))}
+                          </select>
+                          <ChevronDown
+                            className={`w-3.5 h-3.5 pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 ${
+                              isDark ? 'text-slate-400' : 'text-slate-500'
+                            }`}
+                          />
+                        </div>
                         <button
                           type="submit"
-                          className="w-full inline-flex items-center justify-center gap-1 px-2.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shadow-xs transition cursor-pointer"
+                          className="h-9 flex-1 sm:flex-initial inline-flex items-center justify-center gap-1 px-3.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shadow-sm transition cursor-pointer shrink-0"
                         >
                           <Plus className="w-3.5 h-3.5" />
                           <span>Materia</span>
