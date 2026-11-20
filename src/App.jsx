@@ -56,6 +56,7 @@ import {
   ChevronsUpDown,
   Maximize2,
   Minimize2,
+  Sparkles,
 } from 'lucide-react';
 
 // ============================================================================
@@ -478,7 +479,6 @@ export default function App() {
   const [newSubjectDrafts, setNewSubjectDrafts] = useState({});
   const [expandedBlocks, setExpandedBlocks] = useState({});
 
-  // Stato riordinamento blocchi
   const [isBlockReorderMode, setIsBlockReorderMode] = useState(false);
   const [blockDragReadyId, setBlockDragReadyId] = useState(null);
   const [draggedBlockId, setDraggedBlockId] = useState(null);
@@ -868,6 +868,7 @@ export default function App() {
     initialTimerSnapshot.updatedAt
   );
   const [isPomoFullscreen, setIsPomoFullscreen] = useState(false);
+  const [zenGoal, setZenGoal] = useState('');
 
   const [pomoAutoContinue, setPomoAutoContinue] = useState(
     Boolean(initialPomoPrefs.autoContinue)
@@ -911,17 +912,48 @@ export default function App() {
     pomoTimerUpdatedAt,
   ]);
 
-  // Chiudi modalità focus full-screen con tasto ESC
+  // Apri / chiudi la vista Zen dedicata a schermo intero (con Fullscreen API opzionale)
+  const enterZenFullscreen = useCallback(async () => {
+    setIsPomoFullscreen(true);
+    try {
+      if (
+        document.documentElement.requestFullscreen &&
+        !document.fullscreenElement
+      ) {
+        await document.documentElement.requestFullscreen();
+      }
+    } catch (_) {
+      // Fallback fluido su viewport fullscreen se il browser blocca requestFullscreen
+    }
+  }, []);
+
+  const exitZenFullscreen = useCallback(async () => {
+    setIsPomoFullscreen(false);
+    try {
+      if (document.fullscreenElement && document.exitFullscreen) {
+        await document.exitFullscreen();
+      }
+    } catch (_) {
+      // Ignora errori di uscita fullscreen
+    }
+  }, []);
+
   useEffect(() => {
     if (!isPomoFullscreen) return;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
     const onKeyDown = (e) => {
       if (e.key === 'Escape') {
-        setIsPomoFullscreen(false);
+        exitZenFullscreen();
       }
     };
     window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
-  }, [isPomoFullscreen]);
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      window.removeEventListener('keydown', onKeyDown);
+    };
+  }, [isPomoFullscreen, exitZenFullscreen]);
 
   useEffect(() => {
     try {
@@ -1624,7 +1656,8 @@ export default function App() {
       setPomoTimerUpdatedAt(nowTs);
       setCurrentQuoteIndex((prev) => (prev + 1) % POMO_QUOTES.length);
     } else {
-      const nextCycle = pomoPhase === 'long_break' || pomoCycleCount >= 4 ? 0 : pomoCycleCount;
+      const nextCycle =
+        pomoPhase === 'long_break' || pomoCycleCount >= 4 ? 0 : pomoCycleCount;
       const nextSecs = getPhaseMinutes('study') * 60;
       setPomoCycleCount(nextCycle);
       setPomoPhase('study');
@@ -3659,16 +3692,16 @@ export default function App() {
             <div className="flex items-center gap-1.5">
               <button
                 type="button"
-                onClick={() => setIsPomoFullscreen(true)}
+                onClick={enterZenFullscreen}
                 className={`inline-flex items-center gap-1 px-2.5 py-2 rounded-lg text-xs font-semibold border transition cursor-pointer ${
                   isDark
-                    ? 'bg-slate-800 border-slate-700 text-slate-200 hover:bg-slate-700'
-                    : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
+                    ? 'bg-slate-800 border-slate-700 text-emerald-300 hover:bg-slate-700'
+                    : 'bg-emerald-50 border-emerald-200 text-emerald-800 hover:bg-emerald-100'
                 }`}
-                title="Attiva modalità Focus a tutto schermo"
+                title="Apri sezione Focus Zen isolata a schermo intero"
               >
-                <Maximize2 className="w-3.5 h-3.5 text-indigo-500" />
-                <span className="hidden sm:inline">Focus</span>
+                <Sparkles className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Sezione Zen</span>
               </button>
 
               <button
@@ -3904,13 +3937,13 @@ export default function App() {
 
                 <button
                   type="button"
-                  onClick={() => setIsPomoFullscreen(true)}
+                  onClick={enterZenFullscreen}
                   className={`p-3 sm:p-2.5 rounded-xl border transition cursor-pointer ${
                     isDark
-                      ? 'bg-slate-800 border-slate-700 text-indigo-300 hover:bg-slate-700'
-                      : 'bg-white border-slate-200 text-indigo-600 hover:bg-slate-50'
+                      ? 'bg-slate-800 border-slate-700 text-emerald-300 hover:bg-slate-700'
+                      : 'bg-white border-slate-200 text-emerald-700 hover:bg-slate-50'
                   }`}
-                  title="Modalità Focus a tutto schermo"
+                  title="Apri sezione Focus Zen a tutto schermo"
                 >
                   <Maximize2 className="w-4 h-4" />
                 </button>
@@ -4576,7 +4609,7 @@ export default function App() {
           -webkit-text-size-adjust: 100%;
         }
         input, select, button {
-          font-size: 16px !important; /* Previene lo zoom automatico su iOS Safari */
+          font-size: 16px !important;
         }
         @media (min-width: 640px) {
           input, select, button {
@@ -4591,44 +4624,104 @@ export default function App() {
         input.no-spinner[type=number] {
           -moz-appearance: textfield;
         }
+        @keyframes zenBreathSlow {
+          0%, 100% {
+            transform: scale(0.92);
+            opacity: 0.45;
+          }
+          50% {
+            transform: scale(1.08);
+            opacity: 0.9;
+          }
+        }
+        @keyframes zenDriftSlow {
+          0% {
+            transform: translate(-54%, -52%) scale(0.95);
+          }
+          100% {
+            transform: translate(-46%, -48%) scale(1.08);
+          }
+        }
+        @keyframes zenRipple {
+          0% {
+            transform: scale(0.85);
+            opacity: 0.45;
+          }
+          100% {
+            transform: scale(1.45);
+            opacity: 0;
+          }
+        }
       `}</style>
 
-      {/* --- MODALITÀ FOCUS POMODORO A TUTTO SCHERMO --- */}
+      {/* =====================================================================
+          SEZIONE DEDICATA: FOCUS ZEN A SCHERMO INTERO (ISOLAMENTO TOTALE)
+         ===================================================================== */}
       {isPomoFullscreen && (
-        <div
-          className={`fixed inset-0 z-50 flex flex-col justify-between p-4 sm:p-8 select-none transition-colors ${
+        <section
+          aria-label="Sezione Focus Zen"
+          className={`fixed inset-0 z-50 flex flex-col justify-between p-5 sm:p-10 select-none overflow-hidden transition-colors duration-700 ${
             pomoPhase === 'study'
               ? isDark
-                ? 'bg-gradient-to-b from-slate-950 via-indigo-950/35 to-slate-950 text-slate-100'
-                : 'bg-gradient-to-b from-indigo-50 via-white to-indigo-50/60 text-slate-900'
+                ? 'bg-[#0b1312] text-[#e7efec]'
+                : 'bg-[#eef4f1] text-[#152420]'
               : isDark
-              ? 'bg-gradient-to-b from-slate-950 via-emerald-950/30 to-slate-950 text-slate-100'
-              : 'bg-gradient-to-b from-emerald-50 via-white to-emerald-50/60 text-slate-900'
+              ? 'bg-[#0b1514] text-[#e6f2ef]'
+              : 'bg-[#ebf5f2] text-[#122622]'
           }`}
         >
-          {/* Barra superiore focus */}
-          <div className="flex items-center justify-between gap-3 max-w-4xl w-full mx-auto">
-            <div className="flex items-center gap-2.5 min-w-0">
-              <span
-                className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border ${
+          {/* Grafiche zen ambientali morbide */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none fixed inset-0 overflow-hidden"
+          >
+            <div
+              className="absolute top-1/2 left-1/2 w-[75vmax] h-[75vmax] rounded-full blur-3xl"
+              style={{
+                background:
                   pomoPhase === 'study'
                     ? isDark
-                      ? 'bg-indigo-950/80 text-indigo-300 border-indigo-800'
-                      : 'bg-indigo-100 text-indigo-800 border-indigo-200'
+                      ? 'radial-gradient(circle, rgba(94, 156, 138, 0.16) 0%, rgba(94, 156, 138, 0) 70%)'
+                      : 'radial-gradient(circle, rgba(67, 130, 112, 0.14) 0%, rgba(67, 130, 112, 0) 70%)'
                     : isDark
-                    ? 'bg-emerald-950/80 text-emerald-300 border-emerald-800'
-                    : 'bg-emerald-100 text-emerald-800 border-emerald-200'
+                    ? 'radial-gradient(circle, rgba(52, 211, 153, 0.16) 0%, rgba(52, 211, 153, 0) 70%)'
+                    : 'radial-gradient(circle, rgba(16, 185, 129, 0.14) 0%, rgba(16, 185, 129, 0) 70%)',
+                animation: 'zenDriftSlow 16s ease-in-out infinite alternate',
+              }}
+            />
+
+            {/* Cerchi concentrici contemplativi */}
+            <div
+              className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[340px] h-[340px] sm:w-[460px] sm:h-[460px] rounded-full border ${
+                isDark ? 'border-emerald-300/10' : 'border-emerald-900/10'
+              }`}
+            />
+            <div
+              className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[480px] h-[480px] sm:w-[640px] sm:h-[640px] rounded-full border ${
+                isDark ? 'border-emerald-300/[0.06]' : 'border-emerald-900/[0.06]'
+              }`}
+            />
+          </div>
+
+          {/* Barra superiore minimale */}
+          <header className="relative z-10 max-w-5xl w-full mx-auto flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <span
+                className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold uppercase tracking-widest border ${
+                  isDark
+                    ? 'bg-white/[0.04] border-white/10 text-emerald-200/80'
+                    : 'bg-white/70 border-emerald-950/10 text-emerald-900/80'
                 }`}
               >
-                <Clock className="w-3.5 h-3.5" />
-                {activeExam?.name || 'Focus Studio'}
+                <Sparkles className="w-3.5 h-3.5" />
+                Sezione Zen · {activeExam?.name || 'Studio'}
               </span>
               <span
-                className={`text-xs font-medium hidden sm:inline ${
-                  isDark ? 'text-slate-400' : 'text-slate-500'
+                className={`text-xs hidden sm:inline ${
+                  isDark ? 'text-white/40' : 'text-emerald-950/45'
                 }`}
               >
-                Premi ESC per uscire
+                ESC per tornare all&apos;app
               </span>
             </div>
 
@@ -4641,10 +4734,10 @@ export default function App() {
                   setPomoSound(next);
                   if (next) playPomodoroSound(pomoSoundType, pomoPhase);
                 }}
-                className={`p-2.5 rounded-xl border transition cursor-pointer ${
+                className={`p-2.5 rounded-full border transition cursor-pointer ${
                   isDark
-                    ? 'bg-slate-900/80 border-slate-800 text-slate-300 hover:bg-slate-800'
-                    : 'bg-white/90 border-slate-200 text-slate-700 hover:bg-white'
+                    ? 'bg-white/[0.04] border-white/10 text-white/70 hover:text-white hover:bg-white/[0.09]'
+                    : 'bg-white/75 border-emerald-950/10 text-emerald-950/75 hover:text-emerald-950 hover:bg-white'
                 }`}
                 title={pomoSound ? 'Suono attivo' : 'Suono disattivato'}
               >
@@ -4657,31 +4750,40 @@ export default function App() {
 
               <button
                 type="button"
-                onClick={() => setIsPomoFullscreen(false)}
-                className={`inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl text-xs font-bold border transition cursor-pointer ${
+                onClick={exitZenFullscreen}
+                className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold border transition cursor-pointer ${
                   isDark
-                    ? 'bg-slate-900 border-slate-700 text-slate-100 hover:bg-slate-800'
-                    : 'bg-white border-slate-300 text-slate-800 hover:bg-slate-50 shadow-sm'
+                    ? 'bg-white/[0.06] border-white/15 text-white/85 hover:bg-white/[0.12]'
+                    : 'bg-white/85 border-emerald-950/15 text-emerald-950/85 hover:bg-white shadow-xs'
                 }`}
               >
-                <Minimize2 className="w-4 h-4" />
-                <span>Esci da Focus</span>
+                <Minimize2 className="w-3.5 h-3.5" />
+                <span>Esci da Zen</span>
               </button>
             </div>
-          </div>
+          </header>
 
-          {/* Centro timer gigante */}
-          <div className="max-w-2xl w-full mx-auto text-center space-y-6 my-auto">
-            <div className="inline-flex rounded-2xl p-1 border bg-black/5 dark:bg-white/5 border-slate-200/60 dark:border-slate-800">
+          {/* Centro contemplativo */}
+          <main className="relative z-10 max-w-2xl w-full mx-auto text-center my-auto space-y-6 py-4">
+            {/* Selettore fase discreto */}
+            <div
+              className={`inline-flex rounded-full p-1 border ${
+                isDark
+                  ? 'bg-white/[0.03] border-white/10'
+                  : 'bg-white/65 border-emerald-950/10'
+              }`}
+            >
               <button
                 type="button"
                 onClick={() => handlePomoSwitchPhase('study')}
-                className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition cursor-pointer ${
+                className={`px-4 py-1.5 rounded-full text-xs font-semibold transition cursor-pointer ${
                   pomoPhase === 'study'
-                    ? 'bg-indigo-600 text-white shadow-sm'
+                    ? isDark
+                      ? 'bg-emerald-400/20 text-emerald-200'
+                      : 'bg-emerald-900 text-white'
                     : isDark
-                    ? 'text-slate-400 hover:text-slate-200'
-                    : 'text-slate-600 hover:text-slate-900'
+                    ? 'text-white/50 hover:text-white/80'
+                    : 'text-emerald-950/55 hover:text-emerald-950'
                 }`}
               >
                 Studio
@@ -4689,130 +4791,156 @@ export default function App() {
               <button
                 type="button"
                 onClick={() => handlePomoSwitchPhase('short_break')}
-                className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition cursor-pointer ${
+                className={`px-4 py-1.5 rounded-full text-xs font-semibold transition cursor-pointer ${
                   pomoPhase === 'short_break'
-                    ? 'bg-emerald-600 text-white shadow-sm'
+                    ? isDark
+                      ? 'bg-teal-400/20 text-teal-200'
+                      : 'bg-teal-800 text-white'
                     : isDark
-                    ? 'text-slate-400 hover:text-slate-200'
-                    : 'text-slate-600 hover:text-slate-900'
+                    ? 'text-white/50 hover:text-white/80'
+                    : 'text-emerald-950/55 hover:text-emerald-950'
                 }`}
               >
-                Pausa Breve
+                Pausa
               </button>
               <button
                 type="button"
                 onClick={() => handlePomoSwitchPhase('long_break')}
-                className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition cursor-pointer ${
+                className={`px-4 py-1.5 rounded-full text-xs font-semibold transition cursor-pointer ${
                   pomoPhase === 'long_break'
-                    ? 'bg-teal-600 text-white shadow-sm'
+                    ? isDark
+                      ? 'bg-cyan-400/20 text-cyan-200'
+                      : 'bg-cyan-900 text-white'
                     : isDark
-                    ? 'text-slate-400 hover:text-slate-200'
-                    : 'text-slate-600 hover:text-slate-900'
+                    ? 'text-white/50 hover:text-white/80'
+                    : 'text-emerald-950/55 hover:text-emerald-950'
                 }`}
               >
                 Pausa Lunga
               </button>
             </div>
 
+            {/* Anello del respiro zen */}
+            <div className="relative w-24 h-24 mx-auto flex items-center justify-center">
+              {pomoRunning && (
+                <span
+                  aria-hidden="true"
+                  className={`absolute inset-0 rounded-full border ${
+                    isDark ? 'border-emerald-300/30' : 'border-emerald-800/25'
+                  }`}
+                  style={{ animation: 'zenRipple 5s ease-out infinite' }}
+                />
+              )}
+              <div
+                aria-hidden="true"
+                className={`w-20 h-20 rounded-full border flex items-center justify-center ${
+                  isDark
+                    ? 'border-emerald-200/30 bg-emerald-300/[0.05]'
+                    : 'border-emerald-900/20 bg-emerald-900/[0.04]'
+                }`}
+                style={{
+                  animation: 'zenBreathSlow 8s ease-in-out infinite',
+                }}
+              >
+                <div
+                  className={`w-3 h-3 rounded-full ${
+                    pomoPhase === 'study'
+                      ? isDark
+                        ? 'bg-emerald-300/80'
+                        : 'bg-emerald-800/75'
+                      : isDark
+                      ? 'bg-teal-300/80'
+                      : 'bg-teal-700/75'
+                  }`}
+                />
+              </div>
+            </div>
+
+            {/* Timer principale */}
+            <div className="space-y-2">
+              <div className="text-7xl sm:text-8xl md:text-9xl font-light tracking-tight tabular-nums leading-none">
+                {pomoMinutesDisplay}:{pomoSecondsDisplay}
+              </div>
+
+              <p
+                className={`text-xs sm:text-sm font-medium uppercase tracking-[0.2em] ${
+                  isDark ? 'text-emerald-200/70' : 'text-emerald-900/70'
+                }`}
+              >
+                {pomoPhase === 'study'
+                  ? `Ciclo ${(pomoCycleCount % 4) + 1} di 4 · Concentrazione`
+                  : pomoPhase === 'short_break'
+                  ? 'Respiro e pausa breve'
+                  : 'Riposo profondo · Pausa lunga'}
+              </p>
+            </div>
+
+            {/* Singolo obiettivo opzionale della sessione */}
+            <div className="max-w-md mx-auto">
+              <input
+                type="text"
+                value={zenGoal}
+                onChange={(e) => setZenGoal(e.target.value)}
+                placeholder="Un solo obiettivo per questo momento..."
+                className={`w-full bg-transparent text-center text-sm sm:text-base font-normal border-b pb-2 transition focus:outline-none ${
+                  isDark
+                    ? 'border-white/15 text-white/90 placeholder-white/30 focus:border-emerald-300/60'
+                    : 'border-emerald-950/15 text-emerald-950 placeholder-emerald-950/35 focus:border-emerald-900/50'
+                }`}
+              />
+            </div>
+
+            {/* Pallini ciclo discreti */}
             <div className="flex items-center justify-center gap-2">
               {[1, 2, 3, 4].map((dot) => (
                 <span
                   key={dot}
-                  className={`h-3 w-12 sm:w-14 rounded-full transition-all ${
+                  className={`h-1.5 w-8 rounded-full transition-all ${
                     dot <= pomoCycleCount
-                      ? pomoPhase === 'study'
-                        ? 'bg-indigo-500 shadow-sm'
-                        : 'bg-emerald-500 shadow-sm'
+                      ? isDark
+                        ? 'bg-emerald-300/85'
+                        : 'bg-emerald-800/80'
                       : isDark
-                      ? 'bg-slate-800'
-                      : 'bg-slate-200'
+                      ? 'bg-white/10'
+                      : 'bg-emerald-950/10'
                   }`}
                 />
               ))}
             </div>
 
-            <div
-              className={`text-7xl sm:text-8xl md:text-9xl font-black tracking-tight tabular-nums leading-none ${
-                pomoPhase === 'study'
-                  ? isDark
-                    ? 'text-white'
-                    : 'text-slate-900'
-                  : isDark
-                  ? 'text-emerald-200'
-                  : 'text-emerald-950'
-              }`}
-            >
-              {pomoMinutesDisplay}:{pomoSecondsDisplay}
-            </div>
-
+            {/* Citazione calma */}
             <p
-              className={`text-sm sm:text-base font-bold uppercase tracking-widest ${
-                pomoPhase === 'study'
-                  ? isDark
-                    ? 'text-indigo-300'
-                    : 'text-indigo-700'
-                  : isDark
-                  ? 'text-emerald-300'
-                  : 'text-emerald-700'
-              }`}
-            >
-              {pomoPhase === 'study'
-                ? `Sessione Studio #${(pomoCycleCount % 4) + 1} di 4`
-                : pomoPhase === 'short_break'
-                ? 'Pausa breve: respira e rilassa gli occhi'
-                : 'Pausa lunga: ricarica mentale'}
-            </p>
-
-            <div
-              className={`max-w-lg mx-auto px-5 py-3.5 rounded-2xl text-sm italic font-medium border ${
-                isDark
-                  ? 'bg-slate-900/70 border-slate-800 text-slate-300'
-                  : 'bg-white/85 border-slate-200/80 text-slate-700 shadow-xs'
+              className={`max-w-lg mx-auto text-xs sm:text-sm italic leading-relaxed ${
+                isDark ? 'text-white/55' : 'text-emerald-950/60'
               }`}
             >
               {POMO_QUOTES[currentQuoteIndex]}
-            </div>
+            </p>
 
-            <div
-              className={`w-full max-w-md mx-auto h-3 rounded-full overflow-hidden ${
-                isDark
-                  ? 'bg-slate-800'
-                  : pomoPhase === 'study'
-                  ? 'bg-indigo-200/70'
-                  : 'bg-emerald-200/70'
-              }`}
-            >
-              <div
-                className={`h-full transition-all duration-300 ${
-                  pomoPhase === 'study' ? 'bg-indigo-600' : 'bg-emerald-500'
-                }`}
-                style={{ width: `${pomoStats.progressPct}%` }}
-              />
-            </div>
-
-            <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+            {/* Controlli essenziali */}
+            <div className="flex items-center justify-center gap-3 pt-1">
               <button
                 type="button"
                 onClick={handleTogglePomoRunning}
-                className={`inline-flex items-center justify-center gap-2 px-8 py-4 rounded-2xl text-base font-extrabold text-white shadow-lg transition cursor-pointer ${
-                  pomoRunning
-                    ? 'bg-amber-500 hover:bg-amber-600'
-                    : pomoPhase === 'study'
-                    ? 'bg-indigo-600 hover:bg-indigo-700'
-                    : 'bg-emerald-600 hover:bg-emerald-700'
+                className={`inline-flex items-center gap-2 px-7 py-3.5 rounded-full text-sm font-semibold transition cursor-pointer ${
+                  isDark
+                    ? 'bg-emerald-300 text-slate-950 hover:bg-emerald-200'
+                    : 'bg-emerald-900 text-white hover:bg-emerald-950 shadow-sm'
                 }`}
               >
                 {pomoRunning ? (
                   <>
-                    <Pause className="w-5 h-5" />
-                    Pausa
+                    <Pause className="w-4 h-4" />
+                    <span>Pausa</span>
                   </>
                 ) : (
                   <>
-                    <Play className="w-5 h-5" />
-                    {pomoSecondsLeft < getPhaseMinutes(pomoPhase) * 60
-                      ? 'Riprendi'
-                      : 'Avvia Focus'}
+                    <Play className="w-4 h-4" />
+                    <span>
+                      {pomoSecondsLeft < getPhaseMinutes(pomoPhase) * 60
+                        ? 'Riprendi'
+                        : 'Avvia'}
+                    </span>
                   </>
                 )}
               </button>
@@ -4820,48 +4948,60 @@ export default function App() {
               <button
                 type="button"
                 onClick={handlePomoReset}
-                className={`p-4 rounded-2xl border transition cursor-pointer ${
+                className={`p-3.5 rounded-full border transition cursor-pointer ${
                   isDark
-                    ? 'bg-slate-900 border-slate-800 text-slate-300 hover:bg-slate-800'
-                    : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
+                    ? 'bg-white/[0.04] border-white/10 text-white/70 hover:text-white hover:bg-white/[0.09]'
+                    : 'bg-white/75 border-emerald-950/10 text-emerald-950/70 hover:text-emerald-950 hover:bg-white'
                 }`}
-                title="Azzera timer"
+                title="Azzera"
               >
-                <RotateCcw className="w-5 h-5" />
+                <RotateCcw className="w-4 h-4" />
               </button>
 
               <button
                 type="button"
                 onClick={handlePomoSkipPhase}
-                className={`p-4 rounded-2xl border transition cursor-pointer ${
+                className={`p-3.5 rounded-full border transition cursor-pointer ${
                   isDark
-                    ? 'bg-slate-900 border-slate-800 text-slate-300 hover:bg-slate-800'
-                    : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
+                    ? 'bg-white/[0.04] border-white/10 text-white/70 hover:text-white hover:bg-white/[0.09]'
+                    : 'bg-white/75 border-emerald-950/10 text-emerald-950/70 hover:text-emerald-950 hover:bg-white'
                 }`}
                 title="Fase successiva"
               >
-                <SkipForward className="w-5 h-5" />
+                <SkipForward className="w-4 h-4" />
               </button>
             </div>
-          </div>
+          </main>
 
-          {/* Footer focus */}
-          <div
-            className={`max-w-4xl w-full mx-auto flex flex-wrap items-center justify-between gap-2 text-xs ${
-              isDark ? 'text-slate-400' : 'text-slate-500'
-            }`}
-          >
-            <span>
-              Completati oggi: <strong>{pomoStats.todayCount}</strong> pom (
-              <strong>{formatMinutesHuman(pomoStats.todayMinutes)}</strong>)
-            </span>
-            <span>
-              {pomoRunning
-                ? 'Timer attivo — continua anche se ricarichi o cambi dispositivo'
-                : 'Timer in pausa'}
-            </span>
-          </div>
-        </div>
+          {/* Barra di avanzamento sottile in fondo */}
+          <footer className="relative z-10 max-w-2xl w-full mx-auto space-y-2">
+            <div
+              className={`w-full h-1 rounded-full overflow-hidden ${
+                isDark ? 'bg-white/10' : 'bg-emerald-950/10'
+              }`}
+            >
+              <div
+                className={`h-full transition-all duration-300 ${
+                  isDark ? 'bg-emerald-300/75' : 'bg-emerald-800/75'
+                }`}
+                style={{ width: `${pomoStats.progressPct}%` }}
+              />
+            </div>
+            <div
+              className={`flex items-center justify-between text-[11px] ${
+                isDark ? 'text-white/45' : 'text-emerald-950/50'
+              }`}
+            >
+              <span>
+                Oggi: {pomoStats.todayCount} pom (
+                {formatMinutesHuman(pomoStats.todayMinutes)})
+              </span>
+              <span>
+                {pomoRunning ? 'Attivo in background' : 'In pausa'}
+              </span>
+            </div>
+          </footer>
+        </section>
       )}
 
       {/* --- HEADER FULL-WIDTH --- */}
@@ -4977,19 +5117,17 @@ export default function App() {
           </div>
 
           <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-            {/* Pillola rapida se il timer è attivo */}
             {pomoRunning && (
               <button
                 type="button"
-                onClick={() => setIsPomoFullscreen(true)}
-                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm transition cursor-pointer"
-                title="Apri Focus a tutto schermo"
+                onClick={enterZenFullscreen}
+                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold bg-emerald-700 hover:bg-emerald-800 text-white shadow-sm transition cursor-pointer"
+                title="Apri Sezione Zen a tutto schermo"
               >
-                <Clock className="w-3.5 h-3.5" />
+                <Sparkles className="w-3.5 h-3.5" />
                 <span className="tabular-nums">
                   {pomoMinutesDisplay}:{pomoSecondsDisplay}
                 </span>
-                <Maximize2 className="w-3 h-3 hidden sm:inline" />
               </button>
             )}
 
@@ -6035,7 +6173,9 @@ export default function App() {
                         : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-white hover:border-slate-300'
                     }`}
                   >
-                    <span className="text-xs sm:text-sm font-extrabold">{yr}° Anno</span>
+                    <span className="text-xs sm:text-sm font-extrabold">
+                      {yr}° Anno
+                    </span>
                     <span
                       className={`text-[10px] sm:text-[11px] font-bold px-2 py-0.5 rounded-full shrink-0 w-max ${
                         isSelected
@@ -6194,7 +6334,6 @@ export default function App() {
                         : ''
                     }`}
                   >
-                    {/* Header Blocco */}
                     <div
                       onClick={() => {
                         if (editingBlockId !== block.id) {
@@ -6320,7 +6459,6 @@ export default function App() {
                         </div>
                       </div>
 
-                      {/* Voto Ponderato Blocco e comandi */}
                       <div
                         className="flex items-center gap-1.5 shrink-0"
                         onClick={(e) => e.stopPropagation()}
@@ -6398,7 +6536,7 @@ export default function App() {
                             className={`p-1.5 rounded cursor-grab active:cursor-grabbing transition ${
                               isDark ? 'hover:bg-slate-700' : 'hover:bg-white'
                             }`}
-                            title="Trascina blocco"
+                            title="Trascina per riordinare il blocco"
                           >
                             <GripVertical className="w-3.5 h-3.5" />
                           </span>
@@ -6409,45 +6547,52 @@ export default function App() {
                           onClick={() =>
                             handleDeleteMedBlock(selectedMedYear, block.id)
                           }
-                          className={`h-8 w-8 inline-flex items-center justify-center rounded-xl border transition cursor-pointer shrink-0 ${
+                          className={`p-2 rounded-lg transition cursor-pointer ${
                             isDark
-                              ? 'border-slate-800 text-slate-500 hover:text-rose-400 hover:bg-rose-950/60'
-                              : 'border-slate-200 text-slate-400 hover:text-rose-600 hover:bg-rose-50'
+                              ? 'text-slate-500 hover:text-rose-400 hover:bg-rose-950/60'
+                              : 'text-slate-400 hover:text-rose-600 hover:bg-rose-50'
                           }`}
                           title="Elimina blocco"
                         >
-                          <Trash2 className="w-3.5 h-3.5" />
+                          <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
                     </div>
 
-                    {/* Contenuto a scomparsa del Blocco */}
                     {isExpanded && (
-                      <div className="p-3.5 sm:p-4 pt-2 flex-1 flex flex-col justify-between gap-3">
-                        {(block.subjects || []).length > 0 ? (
+                      <div className="p-3.5 sm:p-4 space-y-4 flex-1 flex flex-col justify-between">
+                        {(block.subjects || []).length === 0 ? (
+                          <div
+                            className={`rounded-xl border border-dashed p-4 text-center text-xs ${
+                              isDark
+                                ? 'border-slate-800 text-slate-500 bg-slate-800/25'
+                                : 'border-slate-200 text-slate-400 bg-slate-50/50'
+                            }`}
+                          >
+                            Nessuna materia in questo blocco. Aggiungine una qui
+                            sotto.
+                          </div>
+                        ) : (
                           <div className="overflow-x-auto">
-                            <table className="w-full text-left border-collapse text-xs sm:text-sm min-w-[320px]">
+                            <table className="w-full text-left border-collapse text-xs sm:text-sm min-w-[340px]">
                               <thead>
                                 <tr
-                                  className={`border-b text-[10px] sm:text-[11px] uppercase tracking-wider ${
+                                  className={`border-b text-[11px] uppercase tracking-wider ${
                                     isDark
                                       ? 'border-slate-800 text-slate-400'
                                       : 'border-slate-200 text-slate-500'
                                   }`}
                                 >
-                                  <th className="py-2 font-semibold">
+                                  <th className="py-2 pr-2 font-semibold">
                                     Materia
                                   </th>
-                                  <th className="py-2 font-semibold w-14 text-center">
+                                  <th className="py-2 px-1.5 font-semibold w-20">
                                     CFU
                                   </th>
-                                  <th className="py-2 font-semibold w-24 text-center">
+                                  <th className="py-2 px-1.5 font-semibold w-28">
                                     Voto
                                   </th>
-                                  <th className="py-2 font-semibold w-12 text-right">
-                                    Peso
-                                  </th>
-                                  <th className="py-2 font-semibold w-8 text-right" />
+                                  <th className="py-2 pl-1 font-semibold text-right w-10" />
                                 </tr>
                               </thead>
                               <tbody
@@ -6458,31 +6603,23 @@ export default function App() {
                                 }`}
                               >
                                 {(block.subjects || []).map((sub) => {
-                                  const subSelectVal =
+                                  const selectVal =
                                     sub.grade === 30 && sub.lode
                                       ? '30L'
                                       : sub.grade
                                       ? String(sub.grade)
                                       : '';
-                                  const weightPct =
-                                    blkGradedCfu > 0 && sub.grade
-                                      ? (
-                                          ((Number(sub.cfu) || 0) /
-                                            blkGradedCfu) *
-                                          100
-                                        ).toFixed(0)
-                                      : null;
 
                                   return (
                                     <tr
                                       key={sub.id}
-                                      className={
+                                      className={`transition ${
                                         isDark
-                                          ? 'hover:bg-slate-800/40'
+                                          ? 'hover:bg-slate-800/45'
                                           : 'hover:bg-slate-50/70'
-                                      }
+                                      }`}
                                     >
-                                      <td className="py-2 pr-1.5">
+                                      <td className="py-2 pr-2">
                                         <input
                                           type="text"
                                           value={sub.name}
@@ -6494,14 +6631,13 @@ export default function App() {
                                               { name: e.target.value }
                                             )
                                           }
-                                          className={`w-full rounded-lg border px-2 py-1.5 text-xs sm:text-sm font-medium ${inputMutedSurfaceClass}`}
+                                          className={`w-full rounded-lg border px-2.5 py-1.5 text-xs sm:text-sm font-medium ${inputMutedSurfaceClass}`}
                                         />
                                       </td>
-                                      <td className="py-2 px-1 text-center">
+                                      <td className="py-2 px-1.5">
                                         <input
                                           type="number"
                                           min="0.5"
-                                          max="30"
                                           step="0.5"
                                           value={sub.cfu}
                                           onChange={(e) =>
@@ -6511,18 +6647,18 @@ export default function App() {
                                               sub.id,
                                               {
                                                 cfu: Math.max(
-                                                  0,
-                                                  Number(e.target.value) || 0
+                                                  0.5,
+                                                  Number(e.target.value) || 0.5
                                                 ),
                                               }
                                             )
                                           }
-                                          className={`no-spinner w-12 sm:w-14 text-center rounded-lg border px-1 py-1.5 text-xs sm:text-sm font-semibold ${inputMutedSurfaceClass}`}
+                                          className={`no-spinner w-full rounded-lg border px-2 py-1.5 text-xs sm:text-sm font-bold text-center ${inputMutedSurfaceClass}`}
                                         />
                                       </td>
-                                      <td className="py-2 px-1 text-center">
+                                      <td className="py-2 px-1.5">
                                         <select
-                                          value={subSelectVal}
+                                          value={selectVal}
                                           onChange={(e) => {
                                             const v = e.target.value;
                                             if (v === '') {
@@ -6551,28 +6687,19 @@ export default function App() {
                                               );
                                             }
                                           }}
-                                          className={`w-full rounded-lg border px-1.5 py-1.5 text-xs sm:text-sm font-bold text-center ${inputMutedSurfaceClass}`}
+                                          className={`w-full rounded-lg border px-2 py-1.5 text-xs sm:text-sm font-bold ${inputMutedSurfaceClass}`}
                                         >
-                                          <option value="">—</option>
+                                          <option value="">Da fare</option>
+                                          <option value="30L">30 e Lode</option>
                                           {Array.from(
                                             { length: 13 },
-                                            (_, i) => i + 18
+                                            (_, idx) => 30 - idx
                                           ).map((g) => (
-                                            <option key={g} value={g}>
-                                              {g}
+                                            <option key={g} value={String(g)}>
+                                              {g}/30
                                             </option>
                                           ))}
-                                          <option value="30L">30L</option>
                                         </select>
-                                      </td>
-                                      <td
-                                        className={`py-2 px-1 text-right text-[11px] sm:text-xs font-semibold whitespace-nowrap ${
-                                          isDark
-                                            ? 'text-slate-400'
-                                            : 'text-slate-500'
-                                        }`}
-                                      >
-                                        {weightPct !== null ? `${weightPct}%` : '—'}
                                       </td>
                                       <td className="py-2 pl-1 text-right">
                                         <button
@@ -6584,12 +6711,12 @@ export default function App() {
                                               sub.id
                                             )
                                           }
-                                          className={`p-1.5 rounded-lg transition cursor-pointer ${
+                                          className={`p-1.5 rounded-lg cursor-pointer ${
                                             isDark
                                               ? 'text-slate-500 hover:text-rose-400 hover:bg-rose-950/60'
                                               : 'text-slate-400 hover:text-rose-600 hover:bg-rose-50'
                                           }`}
-                                          title="Rimuovi materia"
+                                          title="Elimina materia"
                                         >
                                           <Trash2 className="w-4 h-4" />
                                         </button>
@@ -6600,95 +6727,107 @@ export default function App() {
                               </tbody>
                             </table>
                           </div>
-                        ) : (
-                          <div
-                            className={`rounded-xl border border-dashed p-3 text-center text-xs ${
-                              isDark
-                                ? 'border-slate-800 text-slate-400'
-                                : 'border-slate-200 text-slate-500'
-                            }`}
-                          >
-                            Nessuna materia in questo blocco. Aggiungine una qui
-                            sotto.
-                          </div>
                         )}
 
-                        {/* Form aggiunta materia */}
                         <form
                           onSubmit={(e) =>
                             handleAddMedSubject(e, selectedMedYear, block.id)
                           }
-                          className={`pt-2.5 border-t flex items-center gap-1.5 ${
-                            isDark ? 'border-slate-800/80' : 'border-slate-100'
+                          className={`pt-3 border-t grid grid-cols-1 sm:grid-cols-12 gap-2 items-end ${
+                            isDark ? 'border-slate-800' : 'border-slate-100'
                           }`}
                         >
-                          <input
-                            type="text"
-                            placeholder="Nuova materia..."
-                            value={draft.name}
-                            onChange={(e) =>
-                              setNewSubjectDrafts((prev) => ({
-                                ...prev,
-                                [block.id]: {
-                                  ...draft,
-                                  name: e.target.value,
-                                },
-                              }))
-                            }
-                            required
-                            className={`h-9 flex-1 min-w-0 rounded-lg border px-2.5 text-xs ${inputMutedSurfaceClass}`}
-                          />
-                          <input
-                            type="number"
-                            min="0.5"
-                            max="30"
-                            step="0.5"
-                            placeholder="CFU"
-                            value={draft.cfu}
-                            onChange={(e) =>
-                              setNewSubjectDrafts((prev) => ({
-                                ...prev,
-                                [block.id]: {
-                                  ...draft,
-                                  cfu: e.target.value,
-                                },
-                              }))
-                            }
-                            required
-                            title="CFU"
-                            className={`no-spinner h-9 w-12 text-center rounded-lg border px-1 text-xs font-semibold shrink-0 ${inputMutedSurfaceClass}`}
-                          />
-                          <select
-                            value={draft.grade}
-                            onChange={(e) =>
-                              setNewSubjectDrafts((prev) => ({
-                                ...prev,
-                                [block.id]: {
-                                  ...draft,
-                                  grade: e.target.value,
-                                },
-                              }))
-                            }
-                            title="Voto"
-                            className={`h-9 w-16 rounded-lg border px-1 text-xs font-bold text-center shrink-0 ${inputMutedSurfaceClass}`}
-                          >
-                            <option value="">Voto</option>
-                            {Array.from({ length: 13 }, (_, i) => i + 18).map(
-                              (g) => (
-                                <option key={g} value={g}>
+                          <div className="sm:col-span-6">
+                            <label
+                              className={`block text-[11px] font-semibold mb-1 ${
+                                isDark ? 'text-slate-400' : 'text-slate-500'
+                              }`}
+                            >
+                              Nuova materia
+                            </label>
+                            <input
+                              type="text"
+                              placeholder="Es. Patologia Generale"
+                              value={draft.name}
+                              onChange={(e) =>
+                                setNewSubjectDrafts((prev) => ({
+                                  ...prev,
+                                  [block.id]: {
+                                    ...draft,
+                                    name: e.target.value,
+                                  },
+                                }))
+                              }
+                              className={`w-full rounded-xl border px-3 py-2 text-xs sm:text-sm ${inputMutedSurfaceClass}`}
+                            />
+                          </div>
+                          <div className="sm:col-span-2">
+                            <label
+                              className={`block text-[11px] font-semibold mb-1 ${
+                                isDark ? 'text-slate-400' : 'text-slate-500'
+                              }`}
+                            >
+                              CFU
+                            </label>
+                            <input
+                              type="number"
+                              min="0.5"
+                              step="0.5"
+                              value={draft.cfu}
+                              onChange={(e) =>
+                                setNewSubjectDrafts((prev) => ({
+                                  ...prev,
+                                  [block.id]: {
+                                    ...draft,
+                                    cfu: e.target.value,
+                                  },
+                                }))
+                              }
+                              className={`no-spinner w-full rounded-xl border px-2 py-2 text-xs sm:text-sm font-semibold text-center ${inputMutedSurfaceClass}`}
+                            />
+                          </div>
+                          <div className="sm:col-span-2">
+                            <label
+                              className={`block text-[11px] font-semibold mb-1 ${
+                                isDark ? 'text-slate-400' : 'text-slate-500'
+                              }`}
+                            >
+                              Voto
+                            </label>
+                            <select
+                              value={draft.grade}
+                              onChange={(e) =>
+                                setNewSubjectDrafts((prev) => ({
+                                  ...prev,
+                                  [block.id]: {
+                                    ...draft,
+                                    grade: e.target.value,
+                                  },
+                                }))
+                              }
+                              className={`w-full rounded-xl border px-2 py-2 text-xs sm:text-sm font-semibold ${inputMutedSurfaceClass}`}
+                            >
+                              <option value="">—</option>
+                              <option value="30L">30L</option>
+                              {Array.from(
+                                { length: 13 },
+                                (_, idx) => 30 - idx
+                              ).map((g) => (
+                                <option key={g} value={String(g)}>
                                   {g}
                                 </option>
-                              )
-                            )}
-                            <option value="30L">30L</option>
-                          </select>
-                          <button
-                            type="submit"
-                            className="h-9 w-9 inline-flex items-center justify-center rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shadow-sm transition cursor-pointer shrink-0"
-                            title="Aggiungi materia"
-                          >
-                            <Plus className="w-4 h-4" />
-                          </button>
+                              ))}
+                            </select>
+                          </div>
+                          <div className="sm:col-span-2">
+                            <button
+                              type="submit"
+                              className="w-full inline-flex items-center justify-center gap-1 px-3 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-semibold shadow-sm transition cursor-pointer"
+                            >
+                              <Plus className="w-4 h-4" />
+                              <span>Aggiungi</span>
+                            </button>
+                          </div>
                         </form>
                       </div>
                     )}
