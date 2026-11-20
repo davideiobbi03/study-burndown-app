@@ -1488,23 +1488,20 @@ export default function App() {
       };
 
       const doUpsert = async (token) =>
-        fetch(
-          `${cloudUrl}/rest/v1/studyburn_profiles?on_conflict=user_id`,
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              apikey: cloudAnonKey,
-              Authorization: `Bearer ${token}`,
-              Prefer: 'resolution=merge-duplicates,return=minimal',
-            },
-            body: JSON.stringify({
-              user_id: activeSess.user.id,
-              payload: snapshot,
-              updated_at: new Date().toISOString(),
-            }),
-          }
-        );
+        fetch(`${cloudUrl}/rest/v1/studyburn_profiles?on_conflict=user_id`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            apikey: cloudAnonKey,
+            Authorization: `Bearer ${token}`,
+            Prefer: 'resolution=merge-duplicates,return=minimal',
+          },
+          body: JSON.stringify({
+            user_id: activeSess.user.id,
+            payload: snapshot,
+            updated_at: new Date().toISOString(),
+          }),
+        });
 
       try {
         let res = await doUpsert(activeSess.access_token);
@@ -2996,7 +2993,7 @@ export default function App() {
 
           <div
             className={`${
-              isNarrow ? 'h-[235px]' : 'h-[250px] sm:h-[285px]'
+              isNarrow ? 'h-[230px]' : 'h-[240px] sm:h-[275px]'
             } w-full`}
           >
             <ResponsiveContainer width="100%" height="100%">
@@ -3200,7 +3197,7 @@ export default function App() {
               </div>
             </div>
 
-            <div className="h-[155px] w-full">
+            <div className="h-[150px] w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <ComposedChart
                   data={srAnalytics.forecastChart}
@@ -3952,7 +3949,7 @@ export default function App() {
         </section>
       );
     } else if (sectionId === 'pomodoro') {
-      const actionIconBtnClass = `w-10 h-10 inline-flex items-center justify-center rounded-xl border transition cursor-pointer ${
+      const actionIconBtnClass = `h-10 w-full inline-flex items-center justify-center rounded-xl border transition cursor-pointer ${
         isDark
           ? 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700 hover:text-slate-100'
           : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-slate-900'
@@ -3962,40 +3959,44 @@ export default function App() {
         <section
           className={`rounded-2xl border p-4 sm:p-5 shadow-sm space-y-4 ${cardSurfaceClass}`}
         >
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2 min-w-0">
-              <Clock
-                className={`w-4 h-4 shrink-0 ${
-                  pomoPhase === 'study'
-                    ? isDark
-                      ? 'text-indigo-400'
-                      : 'text-indigo-600'
-                    : isDark
-                    ? 'text-emerald-400'
-                    : 'text-emerald-600'
-                }`}
-              />
-              <h3
-                className={`text-base font-bold whitespace-nowrap ${
-                  isDark ? 'text-slate-100' : 'text-slate-900'
-                }`}
-              >
-                Timer Pomodoro
-              </h3>
+          {/* Header su due righe per evitare compressione del titolo */}
+          <div className="space-y-2.5">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2 min-w-0">
+                <Clock
+                  className={`w-4 h-4 shrink-0 ${
+                    pomoPhase === 'study'
+                      ? isDark
+                        ? 'text-indigo-400'
+                        : 'text-indigo-600'
+                      : isDark
+                      ? 'text-emerald-400'
+                      : 'text-emerald-600'
+                  }`}
+                />
+                <h3
+                  className={`text-base font-bold whitespace-nowrap ${
+                    isDark ? 'text-slate-100' : 'text-slate-900'
+                  }`}
+                >
+                  Timer Pomodoro
+                </h3>
+              </div>
+              {orderControls}
             </div>
 
-            <div className="flex items-center gap-1.5 shrink-0">
+            <div className="flex items-center gap-2">
               <button
                 type="button"
                 onClick={enterZenFullscreen}
-                className={`h-9 inline-flex items-center gap-1.5 px-3 rounded-xl text-xs font-semibold border transition cursor-pointer whitespace-nowrap ${
+                className={`h-9 flex-1 inline-flex items-center justify-center gap-1.5 px-3 rounded-xl text-xs font-semibold border transition cursor-pointer whitespace-nowrap ${
                   isDark
                     ? 'bg-slate-800 border-slate-700 text-emerald-300 hover:bg-slate-700'
                     : 'bg-emerald-50 border-emerald-200 text-emerald-800 hover:bg-emerald-100'
                 }`}
                 title="Apri sezione Focus Zen isolata a schermo intero"
               >
-                <Sparkles className="w-3.5 h-3.5" />
+                <Sparkles className="w-3.5 h-3.5 shrink-0" />
                 <span>Sezione Zen</span>
               </button>
 
@@ -4007,7 +4008,7 @@ export default function App() {
                   setPomoSound(next);
                   if (next) playPomodoroSound(pomoSoundType, 'study');
                 }}
-                className={`w-9 h-9 inline-flex items-center justify-center rounded-xl text-xs transition cursor-pointer ${
+                className={`h-9 w-9 shrink-0 inline-flex items-center justify-center rounded-xl text-xs transition cursor-pointer ${
                   pomoSound
                     ? indigoPillClass
                     : isDark
@@ -4022,7 +4023,6 @@ export default function App() {
                   <VolumeX className="w-4 h-4" />
                 )}
               </button>
-              {orderControls}
             </div>
           </div>
 
@@ -4180,11 +4180,11 @@ export default function App() {
               </div>
 
               {/* BARRA CONTROLLI SIMMETRICA */}
-              <div className="flex items-center justify-center gap-2">
+              <div className="grid grid-cols-4 gap-2">
                 <button
                   type="button"
                   onClick={handleTogglePomoRunning}
-                  className={`h-10 inline-flex items-center justify-center gap-1.5 px-4 rounded-xl text-xs sm:text-sm font-bold text-white shadow-sm transition cursor-pointer ${
+                  className={`h-10 w-full inline-flex items-center justify-center gap-1 px-2 rounded-xl text-xs font-bold text-white shadow-sm transition cursor-pointer ${
                     pomoRunning
                       ? 'bg-amber-500 hover:bg-amber-600'
                       : pomoPhase === 'study'
@@ -4194,13 +4194,13 @@ export default function App() {
                 >
                   {pomoRunning ? (
                     <>
-                      <Pause className="w-4 h-4" />
-                      <span>Pausa</span>
+                      <Pause className="w-3.5 h-3.5 shrink-0" />
+                      <span className="truncate">Pausa</span>
                     </>
                   ) : (
                     <>
-                      <Play className="w-4 h-4" />
-                      <span>Avvia</span>
+                      <Play className="w-3.5 h-3.5 shrink-0" />
+                      <span className="truncate">Avvia</span>
                     </>
                   )}
                 </button>
@@ -6505,15 +6505,15 @@ export default function App() {
                   className={`rounded-2xl border-2 border-dashed p-8 text-center text-xs ${
                     isDark
                       ? 'border-slate-800 text-slate-400'
-                      : 'border-slate-300 text-slate-500'
+                      : 'border-slate-200 text-slate-500'
                   }`}
                 >
-                  Colonna principale vuota — usa il pulsante{' '}
-                  <strong>⇄</strong> su una sezione per spostarla qui.
+                  Colonna principale vuota. Sposta qui una sezione usando le
+                  frecce o il trascinamento.
                 </div>
               )}
-              {layout.left.map((secId, idx) =>
-                renderSection(secId, 'left', idx, layout.left.length)
+              {layout.left.map((sectionId, idx) =>
+                renderSection(sectionId, 'left', idx, layout.left.length)
               )}
             </div>
 
@@ -6541,15 +6541,15 @@ export default function App() {
                   className={`rounded-2xl border-2 border-dashed p-8 text-center text-xs ${
                     isDark
                       ? 'border-slate-800 text-slate-400'
-                      : 'border-slate-300 text-slate-500'
+                      : 'border-slate-200 text-slate-500'
                   }`}
                 >
-                  Colonna laterale vuota — usa il pulsante{' '}
-                  <strong>⇄</strong> su una sezione per spostarla qui.
+                  Colonna laterale vuota. Sposta qui una sezione usando le
+                  frecce o il trascinamento.
                 </div>
               )}
-              {layout.right.map((secId, idx) =>
-                renderSection(secId, 'right', idx, layout.right.length)
+              {layout.right.map((sectionId, idx) =>
+                renderSection(sectionId, 'right', idx, layout.right.length)
               )}
             </div>
           </div>
@@ -6562,20 +6562,20 @@ export default function App() {
       {activeTab === 'libretto' && (
         <main className="w-full px-3 sm:px-6 lg:px-8 py-5 sm:py-6 space-y-6">
           <section className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
               {[1, 2, 3, 4, 5, 6].map((yr) => {
                 const isSelected = selectedMedYear === yr;
-                const yearBlockCount = (medYears[yr] || []).length;
+                const yrBlocks = medYears[yr] || [];
+                const yrExamCount = yrBlocks.reduce(
+                  (acc, b) => acc + (b.subjects?.length || 0),
+                  0
+                );
                 return (
                   <button
                     key={yr}
                     type="button"
-                    onClick={() => {
-                      setSelectedMedYear(yr);
-                      setIsBlockReorderMode(false);
-                      setBlockDragReadyId(null);
-                    }}
-                    className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition cursor-pointer border ${
+                    onClick={() => setSelectedMedYear(yr)}
+                    className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold border transition whitespace-nowrap cursor-pointer ${
                       isSelected
                         ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
                         : isDark
@@ -6583,18 +6583,18 @@ export default function App() {
                         : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
                     }`}
                   >
-                    <span>{yr}° Anno</span>
-                    {yearBlockCount > 0 && (
+                    {yr}° Anno
+                    {yrExamCount > 0 && (
                       <span
-                        className={`text-[10px] px-1.5 py-0.5 rounded-full ${
+                        className={`ml-1.5 text-[11px] px-1.5 py-0.5 rounded-full ${
                           isSelected
                             ? 'bg-indigo-500/80 text-white'
                             : isDark
                             ? 'bg-slate-800 text-slate-400'
-                            : 'bg-slate-100 text-slate-600'
+                            : 'bg-slate-100 text-slate-500'
                         }`}
                       >
-                        {yearBlockCount}
+                        {yrExamCount}
                       </span>
                     )}
                   </button>
@@ -6622,40 +6622,6 @@ export default function App() {
             )}
           </section>
 
-          {isBlockReorderMode && (
-            <div
-              className={`rounded-2xl border p-4 flex flex-wrap items-center justify-between gap-3 ${
-                isDark
-                  ? 'bg-indigo-950/60 border-indigo-800/80 text-indigo-100'
-                  : 'bg-indigo-50 border-indigo-200 text-indigo-950'
-              }`}
-            >
-              <div className="flex items-center gap-2.5">
-                <LayoutGrid
-                  className={`w-5 h-5 shrink-0 ${
-                    isDark ? 'text-indigo-400' : 'text-indigo-600'
-                  }`}
-                />
-                <div>
-                  <p className="text-sm font-bold">
-                    Ordinamento blocchi del {selectedMedYear}° Anno attivo
-                  </p>
-                  <p className="text-xs opacity-85">
-                    Usa le frecce su/giù oppure trascina la maniglia di un
-                    blocco per cambiare l&apos;ordine.
-                  </p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsBlockReorderMode(false)}
-                className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition cursor-pointer"
-              >
-                Fatto
-              </button>
-            </div>
-          )}
-
           <section
             className={`rounded-2xl border p-4 sm:p-5 shadow-sm ${cardSurfaceClass}`}
           >
@@ -6673,16 +6639,16 @@ export default function App() {
                 </label>
                 <input
                   type="text"
-                  placeholder="Es. Sistema Cardiovascolare, Neuroscienze, Anatomia I..."
+                  placeholder="Es. Medicina Interna, Diagnostica per Immagini, Neuroscienze..."
                   value={newBlockName}
                   onChange={(e) => setNewBlockName(e.target.value)}
                   required
-                  className={`w-full rounded-xl border px-3.5 py-2.5 text-sm ${inputMutedSurfaceClass}`}
+                  className={`w-full rounded-xl border px-3 py-2 text-xs sm:text-sm ${inputMutedSurfaceClass}`}
                 />
               </div>
               <button
                 type="submit"
-                className="inline-flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold shadow-sm transition cursor-pointer shrink-0"
+                className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-semibold shadow-sm transition cursor-pointer shrink-0"
               >
                 <Plus className="w-4 h-4" />
                 Aggiungi Blocco
@@ -6690,61 +6656,48 @@ export default function App() {
             </form>
           </section>
 
-          {currentYearBlocks.length === 0 ? (
-            <section
-              className={`rounded-2xl border border-dashed p-10 text-center space-y-2 ${
-                isDark
-                  ? 'border-slate-800 bg-slate-900/40 text-slate-400'
-                  : 'border-slate-300 bg-white text-slate-500'
-              }`}
-            >
-              <GraduationCap
-                className={`w-8 h-8 mx-auto opacity-60 ${
-                  isDark ? 'text-indigo-400' : 'text-indigo-600'
+          <section className="space-y-4">
+            {currentYearBlocks.length === 0 ? (
+              <div
+                className={`rounded-2xl border border-dashed p-8 text-center text-sm ${
+                  isDark
+                    ? 'border-slate-800 text-slate-400 bg-slate-900/40'
+                    : 'border-slate-300 text-slate-500 bg-white/60'
                 }`}
-              />
-              <p className="text-sm font-semibold">
-                Nessun blocco configurato per il {selectedMedYear}° Anno
-              </p>
-              <p className="text-xs max-w-md mx-auto">
-                Aggiungi un blocco qui sopra (es. un corso integrato con più
-                materie/moduli) per calcolare il voto finale ponderato sui CFU.
-              </p>
-            </section>
-          ) : (
-            <div className="space-y-4">
-              {currentYearBlocks.map((block, blockIdx) => {
-                const isExpanded = Boolean(expandedBlocks[block.id]);
-                const subjects = block.subjects || [];
+              >
+                Nessun blocco configurato per il {selectedMedYear}° anno.
+                Aggiungine uno sopra per iniziare a calcolare il voto finale del
+                blocco!
+              </div>
+            ) : (
+              currentYearBlocks.map((block, blockIdx) => {
+                const subs = block.subjects || [];
+                const totalBlockCfu = subs.reduce(
+                  (acc, s) => acc + (Number(s.cfu) || 0),
+                  0
+                );
+                const gradedSubs = subs.filter(
+                  (s) =>
+                    s.grade !== null &&
+                    s.grade !== undefined &&
+                    Number(s.grade) >= 18 &&
+                    (Number(s.cfu) || 0) > 0
+                );
+                const gradedCfu = gradedSubs.reduce(
+                  (acc, s) => acc + (Number(s.cfu) || 0),
+                  0
+                );
+                const weightedSum = gradedSubs.reduce(
+                  (acc, s) => acc + Number(s.grade) * Number(s.cfu),
+                  0
+                );
 
-                const gradedSubjects = subjects.filter(
-                  (s) => s.grade !== null && s.grade !== undefined
-                );
-                const gradedCfu = gradedSubjects.reduce(
-                  (acc, s) => acc + Math.max(0, Number(s.cfu) || 0),
-                  0
-                );
-                const weightedSum = gradedSubjects.reduce(
-                  (acc, s) =>
-                    acc +
-                    Number(s.grade) * Math.max(0, Number(s.cfu) || 0),
-                  0
-                );
-                const totalBlockCfu = subjects.reduce(
-                  (acc, s) => acc + Math.max(0, Number(s.cfu) || 0),
-                  0
-                );
-                const allGraded =
-                  subjects.length > 0 &&
-                  gradedSubjects.length === subjects.length &&
-                  gradedCfu > 0;
-
-                const exactWeightedAvg =
-                  gradedCfu > 0 ? weightedSum / gradedCfu : null;
-                const roundedBlockGrade =
-                  exactWeightedAvg !== null
-                    ? Math.min(30, Math.max(18, Math.round(exactWeightedAvg)))
-                    : null;
+                const exactAvg = gradedCfu > 0 ? weightedSum / gradedCfu : null;
+                const roundedGrade =
+                  exactAvg !== null ? Math.round(exactAvg) : null;
+                const hasLode = gradedSubs.some((s) => Boolean(s.lode));
+                const isBlockComplete =
+                  subs.length > 0 && gradedSubs.length === subs.length;
 
                 const draft = newSubjectDrafts[block.id] || {
                   name: '',
@@ -6752,12 +6705,14 @@ export default function App() {
                   grade: '',
                 };
 
-                const isBlockBeingDragged = draggedBlockId === block.id;
-                const isBlockDropTarget =
+                const isExpanded = Boolean(expandedBlocks[block.id]);
+
+                const isBeingDragged = draggedBlockId === block.id;
+                const isDropTargetBefore =
                   dragOverBlockIdx === blockIdx && draggedBlockId !== block.id;
 
                 return (
-                  <section
+                  <div
                     key={block.id}
                     draggable={blockDragReadyId === block.id}
                     onDragStart={(e) => {
@@ -6772,7 +6727,6 @@ export default function App() {
                     }}
                     onDrop={(e) => {
                       e.preventDefault();
-                      e.stopPropagation();
                       handleDropMedBlock(blockIdx);
                     }}
                     onDragEnd={() => {
@@ -6780,10 +6734,10 @@ export default function App() {
                       setDragOverBlockIdx(null);
                       setBlockDragReadyId(null);
                     }}
-                    className={`rounded-2xl border shadow-sm overflow-hidden transition-all ${cardSurfaceClass} ${
-                      isBlockBeingDragged ? 'opacity-45 scale-[0.99]' : ''
+                    className={`rounded-2xl border p-4 sm:p-5 shadow-sm space-y-4 transition-all duration-200 ${cardSurfaceClass} ${
+                      isBeingDragged ? 'opacity-45 scale-[0.99]' : ''
                     } ${
-                      isBlockDropTarget
+                      isDropTargetBefore
                         ? `ring-2 ring-indigo-500 ring-offset-4 ${
                             isDark
                               ? 'ring-offset-slate-950'
@@ -6799,107 +6753,110 @@ export default function App() {
                     }`}
                   >
                     <div
-                      role="button"
-                      tabIndex={0}
-                      onClick={() => {
-                        if (editingBlockId !== block.id) {
-                          toggleBlockExpanded(block.id);
-                        }
-                      }}
-                      onKeyDown={(e) => {
-                        if (
-                          (e.key === 'Enter' || e.key === ' ') &&
-                          editingBlockId !== block.id
-                        ) {
-                          e.preventDefault();
-                          toggleBlockExpanded(block.id);
-                        }
-                      }}
-                      className={`p-4 sm:p-5 flex flex-wrap items-center justify-between gap-4 cursor-pointer select-none transition ${
-                        isDark
-                          ? 'hover:bg-slate-800/40'
-                          : 'hover:bg-slate-50/80'
+                      className={`flex flex-wrap items-start justify-between gap-3 pb-3 ${
+                        isExpanded
+                          ? isDark
+                            ? 'border-b border-slate-800'
+                            : 'border-b border-slate-100'
+                          : ''
                       }`}
                     >
-                      <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                        <div
-                          className={`p-1.5 rounded-lg transition-transform ${
-                            isDark
-                              ? 'bg-slate-800 text-slate-300'
-                              : 'bg-slate-100 text-slate-600'
-                          }`}
-                        >
-                          {isExpanded ? (
-                            <ChevronDown className="w-4 h-4" />
-                          ) : (
-                            <ChevronRight className="w-4 h-4" />
-                          )}
-                        </div>
-
-                        {editingBlockId === block.id ? (
-                          <div
-                            className="flex items-center gap-2 flex-1 max-w-md"
-                            onClick={(e) => e.stopPropagation()}
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => toggleBlockExpanded(block.id)}
+                            className={`p-1.5 rounded-lg transition cursor-pointer shrink-0 ${
+                              isDark
+                                ? 'text-slate-400 hover:text-slate-100 hover:bg-slate-800'
+                                : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
+                            }`}
+                            title={
+                              isExpanded ? 'Comprimi blocco' : 'Espandi blocco'
+                            }
+                            aria-expanded={isExpanded}
                           >
-                            <input
-                              type="text"
-                              value={editingBlockTitle}
-                              onChange={(e) =>
-                                setEditingBlockTitle(e.target.value)
-                              }
-                              onKeyDown={(e) => {
-                                if (e.key === 'Enter')
+                            {isExpanded ? (
+                              <ChevronDown className="w-4 h-4" />
+                            ) : (
+                              <ChevronRight className="w-4 h-4" />
+                            )}
+                          </button>
+
+                          {editingBlockId === block.id ? (
+                            <div className="flex items-center gap-1.5 flex-1">
+                              <input
+                                type="text"
+                                value={editingBlockTitle}
+                                onChange={(e) =>
+                                  setEditingBlockTitle(e.target.value)
+                                }
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') {
+                                    handleRenameMedBlock(
+                                      selectedMedYear,
+                                      block.id
+                                    );
+                                  }
+                                  if (e.key === 'Escape') {
+                                    setEditingBlockId(null);
+                                  }
+                                }}
+                                autoFocus
+                                className={`flex-1 rounded-lg border px-2.5 py-1 text-sm font-bold ${inputSurfaceClass}`}
+                              />
+                              <button
+                                type="button"
+                                onClick={() =>
                                   handleRenameMedBlock(
                                     selectedMedYear,
                                     block.id
-                                  );
-                                if (e.key === 'Escape')
-                                  setEditingBlockId(null);
-                              }}
-                              className={`flex-1 rounded-xl border px-3 py-1.5 text-sm font-bold ${inputSurfaceClass}`}
-                              autoFocus
-                            />
-                            <button
-                              type="button"
-                              onClick={() =>
-                                handleRenameMedBlock(selectedMedYear, block.id)
-                              }
-                              className="p-2 rounded-xl bg-emerald-600 text-white cursor-pointer"
-                              title="Salva nome blocco"
-                            >
-                              <Check className="w-4 h-4" />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setEditingBlockId(null)}
-                              className={`p-2 rounded-xl border cursor-pointer ${
-                                isDark
-                                  ? 'bg-slate-800 border-slate-700 text-slate-300'
-                                  : 'bg-white border-slate-200 text-slate-600'
-                              }`}
-                              title="Annulla"
-                            >
-                              <X className="w-4 h-4" />
-                            </button>
-                          </div>
-                        ) : (
-                          <div className="min-w-0">
-                            <div className="flex items-center gap-2">
-                              <h2
-                                className={`text-base sm:text-lg font-bold truncate ${
-                                  isDark ? 'text-slate-100' : 'text-slate-900'
+                                  )
+                                }
+                                className={`p-1.5 rounded-lg cursor-pointer ${
+                                  isDark
+                                    ? 'text-emerald-400 hover:bg-emerald-950/60'
+                                    : 'text-emerald-600 hover:bg-emerald-50'
                                 }`}
                               >
-                                {block.name}
-                              </h2>
+                                <Check className="w-4 h-4" />
+                              </button>
                               <button
                                 type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
+                                onClick={() => setEditingBlockId(null)}
+                                className={`p-1.5 rounded-lg cursor-pointer ${
+                                  isDark
+                                    ? 'text-slate-400 hover:bg-slate-800'
+                                    : 'text-slate-500 hover:bg-slate-100'
+                                }`}
+                              >
+                                <X className="w-4 h-4" />
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-1.5 min-w-0">
+                              <button
+                                type="button"
+                                onClick={() => toggleBlockExpanded(block.id)}
+                                className="text-left truncate cursor-pointer"
+                              >
+                                <h2
+                                  className={`text-base sm:text-lg font-bold truncate ${
+                                    isDark
+                                      ? 'text-slate-100 hover:text-indigo-400'
+                                      : 'text-slate-900 hover:text-indigo-600'
+                                  }`}
+                                >
+                                  {block.name}
+                                </h2>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
                                   setEditingBlockId(block.id);
                                   setEditingBlockTitle(block.name);
                                 }}
-                                className={`p-1.5 rounded-lg cursor-pointer ${
+                                className={`p-1.5 rounded-lg cursor-pointer shrink-0 ${
                                   isDark
                                     ? 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
                                     : 'text-slate-400 hover:text-slate-700 hover:bg-slate-100'
@@ -6909,90 +6866,65 @@ export default function App() {
                                 <Edit3 className="w-3.5 h-3.5" />
                               </button>
                             </div>
-                            <p
-                              className={`text-xs ${
-                                isDark ? 'text-slate-400' : 'text-slate-500'
-                              }`}
-                            >
-                              {subjects.length}{' '}
-                              {subjects.length === 1 ? 'materia' : 'materie'} ·{' '}
-                              {totalBlockCfu} CFU totali ·{' '}
-                              <span className="font-medium">
-                                {isExpanded
-                                  ? 'Clicca per comprimere'
-                                  : 'Clicca per espandere'}
-                              </span>
-                            </p>
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="flex items-center gap-3 shrink-0">
-                        <div
-                          className={`rounded-xl px-4 py-2.5 border text-right ${
-                            allGraded
-                              ? isDark
-                                ? 'bg-emerald-950/50 border-emerald-800/70'
-                                : 'bg-emerald-50 border-emerald-200'
-                              : exactWeightedAvg !== null
-                              ? indigoPillClass
-                              : subPanelClass
-                          }`}
-                        >
-                          <div
-                            className={`text-[10px] font-bold uppercase tracking-wider ${
-                              allGraded
-                                ? isDark
-                                  ? 'text-emerald-300'
-                                  : 'text-emerald-700'
-                                : isDark
-                                ? 'text-slate-400'
-                                : 'text-slate-500'
-                            }`}
-                          >
-                            {allGraded
-                              ? 'Voto Blocco Finale'
-                              : 'Media Parziale'}
-                          </div>
-                          {exactWeightedAvg !== null ? (
-                            <div className="flex items-baseline justify-end gap-2 mt-0.5">
-                              <span
-                                className={`text-xl sm:text-2xl font-extrabold ${
-                                  allGraded
-                                    ? isDark
-                                      ? 'text-emerald-300'
-                                      : 'text-emerald-800'
-                                    : isDark
-                                    ? 'text-indigo-300'
-                                    : 'text-indigo-700'
-                                }`}
-                              >
-                                {roundedBlockGrade}/30
-                              </span>
-                              <span
-                                className={`text-xs font-semibold ${
-                                  isDark ? 'text-slate-400' : 'text-slate-500'
-                                }`}
-                              >
-                                (media {exactWeightedAvg.toFixed(2)})
-                              </span>
-                            </div>
-                          ) : (
-                            <div
-                              className={`text-sm font-bold mt-0.5 ${
-                                isDark ? 'text-slate-400' : 'text-slate-500'
-                              }`}
-                            >
-                              — / 30
-                            </div>
                           )}
                         </div>
 
+                        <p
+                          className={`text-xs mt-1 pl-8 ${
+                            isDark ? 'text-slate-400' : 'text-slate-500'
+                          }`}
+                        >
+                          {subs.length}{' '}
+                          {subs.length === 1 ? 'modulo' : 'moduli'} ·{' '}
+                          <strong
+                            className={
+                              isDark ? 'text-slate-200' : 'text-slate-700'
+                            }
+                          >
+                            {totalBlockCfu} CFU
+                          </strong>{' '}
+                          totali ({gradedCfu} CFU verbalizzati)
+                        </p>
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-2">
+                        {exactAvg !== null ? (
+                          <div
+                            className={`px-3.5 py-2 rounded-xl border text-right ${
+                              isBlockComplete
+                                ? isDark
+                                  ? 'bg-emerald-950/50 border-emerald-800/70'
+                                  : 'bg-emerald-50 border-emerald-200'
+                                : indigoPillClass
+                            }`}
+                          >
+                            <div className="text-[10px] font-bold uppercase tracking-wider opacity-80">
+                              {isBlockComplete
+                                ? 'Voto Finale Blocco'
+                                : 'Media Parziale Blocco'}
+                            </div>
+                            <div className="text-base sm:text-lg font-extrabold leading-tight">
+                              {roundedGrade}
+                              {roundedGrade === 30 && hasLode ? ' e Lode' : ''}
+                              <span className="text-xs font-semibold ml-1.5 opacity-80">
+                                ({exactAvg.toFixed(2)}/30)
+                              </span>
+                            </div>
+                          </div>
+                        ) : (
+                          <div
+                            className={`px-3 py-2 rounded-xl border text-xs font-medium ${subPanelClass} ${
+                              isDark ? 'text-slate-400' : 'text-slate-500'
+                            }`}
+                          >
+                            Nessun voto inserito
+                          </div>
+                        )}
+
                         <div
                           role="group"
-                          aria-label="Controlli ordine blocco"
-                          onClick={(e) => e.stopPropagation()}
-                          className={`inline-flex items-center gap-0.5 rounded-xl p-1 border transition-colors ${
+                          aria-label="Ordina blocco"
+                          className={`inline-flex items-center gap-0.5 rounded-xl p-1 border transition-colors shrink-0 ${
                             isBlockReorderMode
                               ? isDark
                                 ? 'bg-indigo-950/80 border-indigo-700/90 text-indigo-300'
@@ -7008,7 +6940,7 @@ export default function App() {
                             disabled={blockIdx === 0}
                             className={`p-1.5 rounded-lg disabled:opacity-30 disabled:pointer-events-none transition cursor-pointer ${
                               isDark
-                                ? 'hover:bg-slate-700 hover:text-slate-100'
+                                ? 'hover:bg-slate-700/80 hover:text-slate-100'
                                 : 'hover:bg-white hover:text-slate-900'
                             }`}
                             title="Sposta blocco in alto"
@@ -7021,7 +6953,7 @@ export default function App() {
                             disabled={blockIdx === currentYearBlocks.length - 1}
                             className={`p-1.5 rounded-lg disabled:opacity-30 disabled:pointer-events-none transition cursor-pointer ${
                               isDark
-                                ? 'hover:bg-slate-700 hover:text-slate-100'
+                                ? 'hover:bg-slate-700/80 hover:text-slate-100'
                                 : 'hover:bg-white hover:text-slate-900'
                             }`}
                             title="Sposta blocco in basso"
@@ -7034,10 +6966,11 @@ export default function App() {
                             onMouseLeave={() => setBlockDragReadyId(null)}
                             className={`p-1.5 rounded-lg cursor-grab active:cursor-grabbing transition ${
                               isDark
-                                ? 'hover:bg-slate-700 hover:text-slate-100'
+                                ? 'hover:bg-slate-700/80 hover:text-slate-100'
                                 : 'hover:bg-white hover:text-slate-900'
                             }`}
                             title="Trascina per riordinare blocco"
+                            aria-hidden="true"
                           >
                             <GripVertical className="w-3.5 h-3.5" />
                           </span>
@@ -7045,11 +6978,10 @@ export default function App() {
 
                         <button
                           type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDeleteMedBlock(selectedMedYear, block.id);
-                          }}
-                          className={`p-2 rounded-xl transition cursor-pointer ${
+                          onClick={() =>
+                            handleDeleteMedBlock(selectedMedYear, block.id)
+                          }
+                          className={`p-2 rounded-lg transition cursor-pointer ${
                             isDark
                               ? 'text-slate-500 hover:text-rose-400 hover:bg-rose-950/60'
                               : 'text-slate-400 hover:text-rose-600 hover:bg-rose-50'
@@ -7062,16 +6994,177 @@ export default function App() {
                     </div>
 
                     {isExpanded && (
-                      <div
-                        className={`px-4 sm:px-5 pb-5 pt-4 border-t space-y-4 ${
-                          isDark ? 'border-slate-800' : 'border-slate-100'
-                        }`}
-                      >
+                      <>
+                        {subs.length > 0 && (
+                          <div className="overflow-x-auto">
+                            <table className="w-full text-left border-collapse text-sm min-w-[460px]">
+                              <thead>
+                                <tr
+                                  className={`border-b text-xs ${
+                                    isDark
+                                      ? 'border-slate-800 text-slate-400'
+                                      : 'border-slate-200 text-slate-500'
+                                  }`}
+                                >
+                                  <th className="py-2 font-semibold">
+                                    Materia / Modulo
+                                  </th>
+                                  <th className="py-2 font-semibold w-28">
+                                    CFU
+                                  </th>
+                                  <th className="py-2 font-semibold w-36">
+                                    Voto
+                                  </th>
+                                  <th className="py-2 font-semibold w-20 text-center">
+                                    Lode
+                                  </th>
+                                  <th className="py-2 font-semibold w-14 text-right">
+                                    Elimina
+                                  </th>
+                                </tr>
+                              </thead>
+                              <tbody
+                                className={`divide-y ${
+                                  isDark
+                                    ? 'divide-slate-800/80'
+                                    : 'divide-slate-100'
+                                }`}
+                              >
+                                {subs.map((sub) => (
+                                  <tr
+                                    key={sub.id}
+                                    className={`transition ${
+                                      isDark
+                                        ? 'hover:bg-slate-800/50'
+                                        : 'hover:bg-slate-50/70'
+                                    }`}
+                                  >
+                                    <td className="py-2.5 pr-2">
+                                      <input
+                                        type="text"
+                                        value={sub.name}
+                                        onChange={(e) =>
+                                          handleUpdateMedSubject(
+                                            selectedMedYear,
+                                            block.id,
+                                            sub.id,
+                                            { name: e.target.value }
+                                          )
+                                        }
+                                        className={`w-full rounded-lg border px-2.5 py-1.5 text-xs sm:text-sm font-medium ${inputMutedSurfaceClass}`}
+                                      />
+                                    </td>
+                                    <td className="py-2.5 pr-2">
+                                      <input
+                                        type="number"
+                                        min="0.5"
+                                        max="30"
+                                        step="0.5"
+                                        value={sub.cfu}
+                                        onChange={(e) =>
+                                          handleUpdateMedSubject(
+                                            selectedMedYear,
+                                            block.id,
+                                            sub.id,
+                                            {
+                                              cfu: Math.max(
+                                                0.5,
+                                                Number(e.target.value) || 0.5
+                                              ),
+                                            }
+                                          )
+                                        }
+                                        className={`w-full rounded-lg border px-2.5 py-1.5 text-xs sm:text-sm font-semibold ${inputMutedSurfaceClass}`}
+                                      />
+                                    </td>
+                                    <td className="py-2.5 pr-2">
+                                      <select
+                                        value={
+                                          sub.grade === null ||
+                                          sub.grade === undefined
+                                            ? ''
+                                            : String(sub.grade)
+                                        }
+                                        onChange={(e) => {
+                                          const raw = e.target.value;
+                                          const parsed =
+                                            raw === '' ? null : Number(raw);
+                                          handleUpdateMedSubject(
+                                            selectedMedYear,
+                                            block.id,
+                                            sub.id,
+                                            {
+                                              grade: parsed,
+                                              lode:
+                                                parsed === 30 ? sub.lode : false,
+                                            }
+                                          );
+                                        }}
+                                        className={`w-full rounded-lg border pl-2.5 pr-7 py-1.5 text-xs sm:text-sm font-semibold ${inputMutedSurfaceClass}`}
+                                      >
+                                        <option value="">Da fare</option>
+                                        {Array.from(
+                                          { length: 13 },
+                                          (_, i) => 18 + i
+                                        ).map((g) => (
+                                          <option key={g} value={String(g)}>
+                                            {g}/30
+                                          </option>
+                                        ))}
+                                      </select>
+                                    </td>
+                                    <td className="py-2.5 text-center">
+                                      <input
+                                        type="checkbox"
+                                        disabled={Number(sub.grade) !== 30}
+                                        checked={
+                                          Number(sub.grade) === 30 &&
+                                          Boolean(sub.lode)
+                                        }
+                                        onChange={(e) =>
+                                          handleUpdateMedSubject(
+                                            selectedMedYear,
+                                            block.id,
+                                            sub.id,
+                                            { lode: e.target.checked }
+                                          )
+                                        }
+                                        className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 disabled:opacity-30 cursor-pointer"
+                                        title="30 e Lode"
+                                      />
+                                    </td>
+                                    <td className="py-2.5 text-right">
+                                      <button
+                                        type="button"
+                                        onClick={() =>
+                                          handleDeleteMedSubject(
+                                            selectedMedYear,
+                                            block.id,
+                                            sub.id
+                                          )
+                                        }
+                                        className={`p-1.5 rounded-lg cursor-pointer ${
+                                          isDark
+                                            ? 'text-slate-500 hover:text-rose-400 hover:bg-rose-950/60'
+                                            : 'text-slate-400 hover:text-rose-600 hover:bg-rose-50'
+                                        }`}
+                                        title="Elimina materia"
+                                      >
+                                        <Trash2 className="w-4 h-4" />
+                                      </button>
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        )}
+
                         <form
                           onSubmit={(e) =>
                             handleAddMedSubject(e, selectedMedYear, block.id)
                           }
-                          className="grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-end"
+                          className="grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-end pt-1"
                         >
                           <div className="sm:col-span-6">
                             <label
@@ -7083,7 +7176,7 @@ export default function App() {
                             </label>
                             <input
                               type="text"
-                              placeholder="Es. Fisiologia Cardiovascolare"
+                              placeholder="Es. Patologia Generale, Immunologia..."
                               value={draft.name}
                               onChange={(e) =>
                                 setNewSubjectDrafts((prev) => ({
@@ -7098,7 +7191,6 @@ export default function App() {
                               className={`w-full rounded-xl border px-3 py-2 text-xs sm:text-sm ${inputMutedSurfaceClass}`}
                             />
                           </div>
-
                           <div className="sm:col-span-2">
                             <label
                               className={`block text-[11px] font-semibold mb-1 ${
@@ -7116,17 +7208,13 @@ export default function App() {
                               onChange={(e) =>
                                 setNewSubjectDrafts((prev) => ({
                                   ...prev,
-                                  [block.id]: {
-                                    ...draft,
-                                    cfu: e.target.value,
-                                  },
+                                  [block.id]: { ...draft, cfu: e.target.value },
                                 }))
                               }
                               required
-                              className={`w-full rounded-xl border px-3 py-2 text-xs sm:text-sm font-semibold ${inputMutedSurfaceClass}`}
+                              className={`w-full rounded-xl border px-3 py-2 text-xs sm:text-sm ${inputMutedSurfaceClass}`}
                             />
                           </div>
-
                           <div className="sm:col-span-2">
                             <label
                               className={`block text-[11px] font-semibold mb-1 ${
@@ -7146,20 +7234,20 @@ export default function App() {
                                   },
                                 }))
                               }
-                              className={`w-full rounded-xl border pl-2.5 pr-6 py-2 text-xs sm:text-sm font-semibold ${inputMutedSurfaceClass}`}
+                              className={`w-full rounded-xl border pl-2.5 pr-7 py-2 text-xs sm:text-sm ${inputMutedSurfaceClass}`}
                             >
                               <option value="">Da fare</option>
-                              {Array.from({ length: 13 }, (_, idx) => 18 + idx).map(
-                                (v) => (
-                                  <option key={v} value={String(v)}>
-                                    {v}
-                                  </option>
-                                )
-                              )}
+                              {Array.from(
+                                { length: 13 },
+                                (_, i) => 18 + i
+                              ).map((g) => (
+                                <option key={g} value={String(g)}>
+                                  {g}/30
+                                </option>
+                              ))}
                               <option value="30L">30 e Lode</option>
                             </select>
                           </div>
-
                           <div className="sm:col-span-2">
                             <button
                               type="submit"
@@ -7170,211 +7258,13 @@ export default function App() {
                             </button>
                           </div>
                         </form>
-
-                        {subjects.length === 0 ? (
-                          <div
-                            className={`rounded-xl border border-dashed p-5 text-center text-xs ${
-                              isDark
-                                ? 'border-slate-800 text-slate-400'
-                                : 'border-slate-200 text-slate-500'
-                            }`}
-                          >
-                            Nessuna materia in questo blocco. Aggiungi le materie
-                            sopra per calcolare il voto ponderato.
-                          </div>
-                        ) : (
-                          <div className="overflow-x-auto">
-                            <table className="w-full text-left border-collapse text-sm min-w-[460px]">
-                              <thead>
-                                <tr
-                                  className={`border-b text-xs ${
-                                    isDark
-                                      ? 'border-slate-800 text-slate-400'
-                                      : 'border-slate-200 text-slate-500'
-                                  }`}
-                                >
-                                  <th className="py-2 font-semibold">Materia</th>
-                                  <th className="py-2 font-semibold w-28">
-                                    CFU
-                                  </th>
-                                  <th className="py-2 font-semibold w-36">
-                                    Voto
-                                  </th>
-                                  <th className="py-2 font-semibold w-24">
-                                    Lode
-                                  </th>
-                                  <th className="py-2 font-semibold text-right w-16">
-                                    Elimina
-                                  </th>
-                                </tr>
-                              </thead>
-                              <tbody
-                                className={`divide-y ${
-                                  isDark
-                                    ? 'divide-slate-800/80'
-                                    : 'divide-slate-100'
-                                }`}
-                              >
-                                {subjects.map((sub) => {
-                                  const gradeSelectValue =
-                                    sub.grade === null ||
-                                    sub.grade === undefined
-                                      ? ''
-                                      : String(sub.grade);
-                                  const isThirty = Number(sub.grade) === 30;
-
-                                  return (
-                                    <tr
-                                      key={sub.id}
-                                      className={`transition ${
-                                        isDark
-                                          ? 'hover:bg-slate-800/50'
-                                          : 'hover:bg-slate-50/80'
-                                      }`}
-                                    >
-                                      <td className="py-2.5 pr-3">
-                                        <input
-                                          type="text"
-                                          value={sub.name}
-                                          onChange={(e) =>
-                                            handleUpdateMedSubject(
-                                              selectedMedYear,
-                                              block.id,
-                                              sub.id,
-                                              { name: e.target.value }
-                                            )
-                                          }
-                                          className={`w-full rounded-lg border px-2.5 py-1.5 text-xs sm:text-sm font-medium ${inputSurfaceClass}`}
-                                        />
-                                      </td>
-                                      <td className="py-2.5 pr-3">
-                                        <input
-                                          type="number"
-                                          min="0.5"
-                                          max="30"
-                                          step="0.5"
-                                          value={sub.cfu}
-                                          onChange={(e) =>
-                                            handleUpdateMedSubject(
-                                              selectedMedYear,
-                                              block.id,
-                                              sub.id,
-                                              {
-                                                cfu: Math.max(
-                                                  0.5,
-                                                  Number(e.target.value) || 0.5
-                                                ),
-                                              }
-                                            )
-                                          }
-                                          className={`w-24 rounded-lg border px-2.5 py-1.5 text-xs sm:text-sm font-semibold ${inputSurfaceClass}`}
-                                        />
-                                      </td>
-                                      <td className="py-2.5 pr-3">
-                                        <select
-                                          value={gradeSelectValue}
-                                          onChange={(e) => {
-                                            const val = e.target.value;
-                                            if (val === '') {
-                                              handleUpdateMedSubject(
-                                                selectedMedYear,
-                                                block.id,
-                                                sub.id,
-                                                { grade: null, lode: false }
-                                              );
-                                            } else {
-                                              const num = Number(val);
-                                              handleUpdateMedSubject(
-                                                selectedMedYear,
-                                                block.id,
-                                                sub.id,
-                                                {
-                                                  grade: num,
-                                                  lode:
-                                                    num === 30
-                                                      ? Boolean(sub.lode)
-                                                      : false,
-                                                }
-                                              );
-                                            }
-                                          }}
-                                          className={`w-28 rounded-lg border pl-2.5 pr-6 py-1.5 text-xs sm:text-sm font-semibold ${inputSurfaceClass}`}
-                                        >
-                                          <option value="">Da fare</option>
-                                          {Array.from(
-                                            { length: 13 },
-                                            (_, idx) => 18 + idx
-                                          ).map((v) => (
-                                            <option key={v} value={String(v)}>
-                                              {v}
-                                            </option>
-                                          ))}
-                                        </select>
-                                      </td>
-                                      <td className="py-2.5 pr-3">
-                                        <label
-                                          className={`inline-flex items-center gap-1.5 text-xs font-semibold select-none ${
-                                            isThirty
-                                              ? 'cursor-pointer'
-                                              : 'opacity-35 pointer-events-none'
-                                          }`}
-                                          title={
-                                            isThirty
-                                              ? 'Segna 30 e Lode'
-                                              : 'Disponibile con voto 30'
-                                          }
-                                        >
-                                          <input
-                                            type="checkbox"
-                                            checked={Boolean(sub.lode)}
-                                            disabled={!isThirty}
-                                            onChange={(e) =>
-                                              handleUpdateMedSubject(
-                                                selectedMedYear,
-                                                block.id,
-                                                sub.id,
-                                                { lode: e.target.checked }
-                                              )
-                                            }
-                                            className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
-                                          />
-                                          <span>Lode</span>
-                                        </label>
-                                      </td>
-                                      <td className="py-2.5 text-right">
-                                        <button
-                                          type="button"
-                                          onClick={() =>
-                                            handleDeleteMedSubject(
-                                              selectedMedYear,
-                                              block.id,
-                                              sub.id
-                                            )
-                                          }
-                                          className={`p-2 rounded-lg cursor-pointer ${
-                                            isDark
-                                              ? 'text-slate-500 hover:text-rose-400 hover:bg-rose-950/60'
-                                              : 'text-slate-400 hover:text-rose-600 hover:bg-rose-50'
-                                          }`}
-                                          title="Elimina materia"
-                                        >
-                                          <Trash2 className="w-4 h-4" />
-                                        </button>
-                                      </td>
-                                    </tr>
-                                  );
-                                })}
-                              </tbody>
-                            </table>
-                          </div>
-                        )}
-                      </div>
+                      </>
                     )}
-                  </section>
+                  </div>
                 );
-              })}
-            </div>
-          )}
+              })
+            )}
+          </section>
         </main>
       )}
     </div>
