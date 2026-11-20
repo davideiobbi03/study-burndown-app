@@ -54,6 +54,8 @@ import {
   ChevronDown,
   ChevronRight,
   ChevronsUpDown,
+  Maximize2,
+  Minimize2,
 } from 'lucide-react';
 
 // ============================================================================
@@ -410,6 +412,7 @@ const STORAGE_KEY = 'studyburn_state_v2';
 const LAYOUT_STORAGE_KEY = 'studyburn_layout_v1';
 const THEME_STORAGE_KEY = 'studyburn_theme_v1';
 const POMO_PREFS_STORAGE_KEY = 'studyburn_pomo_prefs_v1';
+const POMO_TIMER_STATE_KEY = 'studyburn_pomo_timer_v1';
 const CLOUD_CONFIG_STORAGE_KEY = 'studyburn_cloud_config_v1';
 const CLOUD_SESSION_STORAGE_KEY = 'studyburn_cloud_session_v1';
 
@@ -777,7 +780,7 @@ export default function App() {
   const [editingLogDate, setEditingLogDate] = useState(null);
   const [editingLogPages, setEditingLogPages] = useState('');
 
-  // --- STATO TIMER POMODORO ---
+  // --- STATO TIMER POMODORO (PERSISTENTE LOCALE + CLOUD) ---
   const initialPomoPrefs = useMemo(() => {
     try {
       const saved = localStorage.getItem(POMO_PREFS_STORAGE_KEY);
@@ -788,6 +791,58 @@ export default function App() {
     return {};
   }, []);
 
+  const initialTimerSnapshot = useMemo(() => {
+    const defaultStudy = initialPomoPrefs.studyMin || 25;
+    try {
+      const raw = localStorage.getItem(POMO_TIMER_STATE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed && typeof parsed === 'object') {
+          const phase = ['study', 'short_break', 'long_break'].includes(
+            parsed.phase
+          )
+            ? parsed.phase
+            : 'study';
+          const cycleCount = Math.max(
+            0,
+            Math.min(4, Number(parsed.cycleCount) || 0)
+          );
+          const running = Boolean(parsed.running);
+          const endAt = parsed.endAt ? Number(parsed.endAt) : null;
+          let secondsLeft =
+            parsed.secondsLeft !== undefined
+              ? Math.max(0, Number(parsed.secondsLeft))
+              : defaultStudy * 60;
+
+          if (running && endAt) {
+            secondsLeft = Math.max(0, Math.ceil((endAt - Date.now()) / 1000));
+          }
+
+          return {
+            phase,
+            cycleCount,
+            running: running && secondsLeft > 0,
+            secondsLeft: secondsLeft > 0 ? secondsLeft : defaultStudy * 60,
+            endAt: running && secondsLeft > 0 ? endAt : null,
+            activeSessionExamId: parsed.activeSessionExamId || null,
+            updatedAt: parsed.updatedAt || 0,
+          };
+        }
+      }
+    } catch (e) {
+      console.error('Errore lettura stato timer Pomodoro:', e);
+    }
+    return {
+      phase: 'study',
+      cycleCount: 0,
+      running: false,
+      secondsLeft: defaultStudy * 60,
+      endAt: null,
+      activeSessionExamId: null,
+      updatedAt: 0,
+    };
+  }, [initialPomoPrefs.studyMin]);
+
   const [pomoStudyMin, setPomoStudyMin] = useState(
     initialPomoPrefs.studyMin || 25
   );
@@ -797,12 +852,23 @@ export default function App() {
   const [pomoLongBreakMin, setPomoLongBreakMin] = useState(
     initialPomoPrefs.longBreakMin || 15
   );
-  const [pomoPhase, setPomoPhase] = useState('study');
+  const [pomoPhase, setPomoPhase] = useState(initialTimerSnapshot.phase);
   const [pomoSecondsLeft, setPomoSecondsLeft] = useState(
-    (initialPomoPrefs.studyMin || 25) * 60
+    initialTimerSnapshot.secondsLeft
   );
-  const [pomoRunning, setPomoRunning] = useState(false);
-  const [pomoCycleCount, setPomoCycleCount] = useState(0);
+  const [pomoEndAt, setPomoEndAt] = useState(initialTimerSnapshot.endAt);
+  const [pomoRunning, setPomoRunning] = useState(initialTimerSnapshot.running);
+  const [pomoCycleCount, setPomoCycleCount] = useState(
+    initialTimerSnapshot.cycleCount
+  );
+  const [pomoSessionExamId, setPomoSessionExamId] = useState(
+    initialTimerSnapshot.activeSessionExamId
+  );
+  const [pomoTimerUpdatedAt, setPomoTimerUpdatedAt] = useState(
+    initialTimerSnapshot.updatedAt
+  );
+  const [isPomoFullscreen, setIsPomoFullscreen] = useState(false);
+
   const [pomoAutoContinue, setPomoAutoContinue] = useState(
     Boolean(initialPomoPrefs.autoContinue)
   );
@@ -816,6 +882,46 @@ export default function App() {
   );
   const [showPomoHistory, setShowPomoHistory] = useState(false);
   const [currentQuoteIndex, setCurrentQuoteIndex] = useState(0);
+
+  // Salva stato timer in localStorage ogni volta che cambia
+  useEffect(() => {
+    try {
+      localStorage.setItem(
+        POMO_TIMER_STATE_KEY,
+        JSON.stringify({
+          phase: pomoPhase,
+          cycleCount: pomoCycleCount,
+          running: pomoRunning,
+          secondsLeft: pomoSecondsLeft,
+          endAt: pomoRunning ? pomoEndAt : null,
+          activeSessionExamId: pomoSessionExamId,
+          updatedAt: pomoTimerUpdatedAt || Date.now(),
+        })
+      );
+    } catch (e) {
+      console.error('Errore salvataggio stato timer Pomodoro:', e);
+    }
+  }, [
+    pomoPhase,
+    pomoCycleCount,
+    pomoRunning,
+    pomoSecondsLeft,
+    pomoEndAt,
+    pomoSessionExamId,
+    pomoTimerUpdatedAt,
+  ]);
+
+  // Chiudi modalità focus full-screen con tasto ESC
+  useEffect(() => {
+    if (!isPomoFullscreen) return;
+    const onKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        setIsPomoFullscreen(false);
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [isPomoFullscreen]);
 
   useEffect(() => {
     try {
@@ -950,7 +1056,6 @@ export default function App() {
     if (payload.pomoPrefs) {
       if (payload.pomoPrefs.studyMin) {
         setPomoStudyMin(payload.pomoPrefs.studyMin);
-        setPomoSecondsLeft(payload.pomoPrefs.studyMin * 60);
       }
       if (payload.pomoPrefs.shortBreakMin) {
         setPomoShortBreakMin(payload.pomoPrefs.shortBreakMin);
@@ -967,6 +1072,50 @@ export default function App() {
       if (payload.pomoPrefs.soundType) {
         setPomoSoundType(payload.pomoPrefs.soundType);
       }
+    }
+
+    if (payload.pomoTimerState && typeof payload.pomoTimerState === 'object') {
+      const ts = payload.pomoTimerState;
+      const remoteUpdatedAt = Number(ts.updatedAt || 0);
+      setPomoTimerUpdatedAt((localUpdatedAt) => {
+        if (remoteUpdatedAt >= localUpdatedAt) {
+          const phase = ['study', 'short_break', 'long_break'].includes(ts.phase)
+            ? ts.phase
+            : 'study';
+          const cycle = Math.max(0, Math.min(4, Number(ts.cycleCount) || 0));
+          const isRun = Boolean(ts.running);
+          const remoteEndAt = ts.endAt ? Number(ts.endAt) : null;
+          const fallbackStudy = payload.pomoPrefs?.studyMin || 25;
+
+          let calcLeft =
+            ts.secondsLeft !== undefined
+              ? Math.max(0, Number(ts.secondsLeft))
+              : fallbackStudy * 60;
+
+          if (isRun && remoteEndAt) {
+            calcLeft = Math.max(
+              0,
+              Math.ceil((remoteEndAt - Date.now()) / 1000)
+            );
+          }
+
+          setPomoPhase(phase);
+          setPomoCycleCount(cycle);
+          setPomoSessionExamId(ts.activeSessionExamId || null);
+
+          if (isRun && remoteEndAt && calcLeft > 0) {
+            setPomoEndAt(remoteEndAt);
+            setPomoSecondsLeft(calcLeft);
+            setPomoRunning(true);
+          } else {
+            setPomoEndAt(null);
+            setPomoSecondsLeft(calcLeft > 0 ? calcLeft : fallbackStudy * 60);
+            setPomoRunning(false);
+          }
+          return remoteUpdatedAt;
+        }
+        return localUpdatedAt;
+      });
     }
   }, []);
 
@@ -1024,6 +1173,15 @@ export default function App() {
           autoContinue: pomoAutoContinue,
           soundEnabled: pomoSound,
           soundType: pomoSoundType,
+        },
+        pomoTimerState: {
+          phase: pomoPhase,
+          cycleCount: pomoCycleCount,
+          running: pomoRunning,
+          secondsLeft: pomoSecondsLeft,
+          endAt: pomoRunning ? pomoEndAt : null,
+          activeSessionExamId: pomoSessionExamId,
+          updatedAt: pomoTimerUpdatedAt || Date.now(),
         },
       };
 
@@ -1085,6 +1243,13 @@ export default function App() {
       pomoAutoContinue,
       pomoSound,
       pomoSoundType,
+      pomoPhase,
+      pomoCycleCount,
+      pomoRunning,
+      pomoSecondsLeft,
+      pomoEndAt,
+      pomoSessionExamId,
+      pomoTimerUpdatedAt,
       refreshCloudToken,
     ]
   );
@@ -1203,6 +1368,10 @@ export default function App() {
     pomoAutoContinue,
     pomoSound,
     pomoSoundType,
+    pomoRunning,
+    pomoPhase,
+    pomoCycleCount,
+    pomoTimerUpdatedAt,
     cloudUrl,
     cloudAnonKey,
     cloudSession,
@@ -1304,6 +1473,15 @@ export default function App() {
         soundEnabled: pomoSound,
         soundType: pomoSoundType,
       },
+      pomoTimerState: {
+        phase: pomoPhase,
+        cycleCount: pomoCycleCount,
+        running: pomoRunning,
+        secondsLeft: pomoSecondsLeft,
+        endAt: pomoRunning ? pomoEndAt : null,
+        activeSessionExamId: pomoSessionExamId,
+        updatedAt: pomoTimerUpdatedAt || Date.now(),
+      },
     };
     const blob = new Blob([JSON.stringify(backup, null, 2)], {
       type: 'application/json',
@@ -1371,15 +1549,16 @@ export default function App() {
     );
   }, [state]);
 
-  const updateActiveExam = (updater, saveUndo = false) => {
+  const updateActiveExam = (updater, saveUndo = false, targetExamId = null) => {
     setState((prev) => {
       if (saveUndo) {
         setUndoStack((u) => [prev, ...u.slice(0, 9)]);
       }
+      const idToUpdate = targetExamId || prev.activeExamId || prev.exams[0]?.id;
       return {
         ...prev,
         exams: prev.exams.map((ex) =>
-          ex.id === activeExam.id
+          ex.id === idToUpdate
             ? typeof updater === 'function'
               ? updater(ex)
               : { ...ex, ...updater }
@@ -1389,16 +1568,92 @@ export default function App() {
     });
   };
 
-  // --- LOGICA TIMER POMODORO ---
+  // --- LOGICA TIMER POMODORO (BASATA SU ENDAT PER PERSISTENZA) ---
+  const getPhaseMinutes = useCallback(
+    (phase) => {
+      if (phase === 'study') return Math.max(1, Number(pomoStudyMin) || 25);
+      if (phase === 'short_break')
+        return Math.max(1, Number(pomoShortBreakMin) || 5);
+      return Math.max(1, Number(pomoLongBreakMin) || 15);
+    },
+    [pomoStudyMin, pomoShortBreakMin, pomoLongBreakMin]
+  );
+
+  const handlePhaseCompleted = useCallback(() => {
+    if (pomoSoundRef.current) {
+      playPomodoroSound(pomoSoundTypeRef.current, pomoPhase);
+    }
+
+    const shouldAutoContinue = pomoAutoContinueRef.current;
+    const nowTs = Date.now();
+
+    if (pomoPhase === 'study') {
+      const completedDuration = getPhaseMinutes('study');
+      const targetExamId = pomoSessionExamId || activeExam?.id;
+      const newSession = {
+        id: `pomo_${nowTs}_${Math.random().toString(36).slice(2, 5)}`,
+        date: getTodayStr(),
+        time: getCurrentTimeStr(),
+        durationMin: completedDuration,
+      };
+      updateActiveExam(
+        (ex) => ({
+          ...ex,
+          pomodoroSessions: [newSession, ...(ex.pomodoroSessions || [])],
+        }),
+        false,
+        targetExamId
+      );
+
+      const nextCycle = pomoCycleCount + 1;
+      if (nextCycle >= 4) {
+        const nextSecs = getPhaseMinutes('long_break') * 60;
+        setPomoCycleCount(4);
+        setPomoPhase('long_break');
+        setPomoSecondsLeft(nextSecs);
+        setPomoEndAt(shouldAutoContinue ? nowTs + nextSecs * 1000 : null);
+        setPomoRunning(shouldAutoContinue);
+      } else {
+        const nextSecs = getPhaseMinutes('short_break') * 60;
+        setPomoCycleCount(nextCycle);
+        setPomoPhase('short_break');
+        setPomoSecondsLeft(nextSecs);
+        setPomoEndAt(shouldAutoContinue ? nowTs + nextSecs * 1000 : null);
+        setPomoRunning(shouldAutoContinue);
+      }
+      setPomoTimerUpdatedAt(nowTs);
+      setCurrentQuoteIndex((prev) => (prev + 1) % POMO_QUOTES.length);
+    } else {
+      const nextCycle = pomoPhase === 'long_break' || pomoCycleCount >= 4 ? 0 : pomoCycleCount;
+      const nextSecs = getPhaseMinutes('study') * 60;
+      setPomoCycleCount(nextCycle);
+      setPomoPhase('study');
+      setPomoSecondsLeft(nextSecs);
+      setPomoEndAt(shouldAutoContinue ? nowTs + nextSecs * 1000 : null);
+      setPomoRunning(shouldAutoContinue);
+      setPomoTimerUpdatedAt(nowTs);
+      setCurrentQuoteIndex((prev) => (prev + 1) % POMO_QUOTES.length);
+    }
+  }, [
+    pomoPhase,
+    pomoCycleCount,
+    pomoSessionExamId,
+    activeExam?.id,
+    getPhaseMinutes,
+  ]);
+
   useEffect(() => {
     if (!pomoRunning) {
       document.title = 'StudyBurn';
       return;
     }
 
-    const endTime = Date.now() + pomoSecondsLeft * 1000;
-    let handled = false;
+    const effectiveEndAt = pomoEndAt || Date.now() + pomoSecondsLeft * 1000;
+    if (!pomoEndAt) {
+      setPomoEndAt(effectiveEndAt);
+    }
 
+    let handled = false;
     const phaseLabel =
       pomoPhase === 'study'
         ? 'Studio'
@@ -1406,8 +1661,11 @@ export default function App() {
         ? 'Pausa'
         : 'Pausa Lunga';
 
-    const interval = setInterval(() => {
-      const remaining = Math.max(0, Math.ceil((endTime - Date.now()) / 1000));
+    const tick = () => {
+      const remaining = Math.max(
+        0,
+        Math.ceil((effectiveEndAt - Date.now()) / 1000)
+      );
       setPomoSecondsLeft(remaining);
 
       const mm = String(Math.floor(remaining / 60)).padStart(2, '0');
@@ -1416,87 +1674,57 @@ export default function App() {
 
       if (remaining === 0 && !handled) {
         handled = true;
-        clearInterval(interval);
-
-        if (pomoSoundRef.current) {
-          playPomodoroSound(pomoSoundTypeRef.current, pomoPhase);
-        }
-
-        const shouldAutoContinue = pomoAutoContinueRef.current;
-
-        if (pomoPhase === 'study') {
-          const completedDuration = Math.max(1, Number(pomoStudyMin) || 25);
-          const newSession = {
-            id: `pomo_${Date.now()}_${Math.random().toString(36).slice(2, 5)}`,
-            date: getTodayStr(),
-            time: getCurrentTimeStr(),
-            durationMin: completedDuration,
-          };
-          updateActiveExam((ex) => ({
-            ...ex,
-            pomodoroSessions: [newSession, ...(ex.pomodoroSessions || [])],
-          }));
-
-          const nextCycle = pomoCycleCount + 1;
-          if (nextCycle >= 4) {
-            setPomoCycleCount(4);
-            setPomoPhase('long_break');
-            setPomoSecondsLeft(Math.max(1, Number(pomoLongBreakMin) || 15) * 60);
-          } else {
-            setPomoCycleCount(nextCycle);
-            setPomoPhase('short_break');
-            setPomoSecondsLeft(
-              Math.max(1, Number(pomoShortBreakMin) || 5) * 60
-            );
-          }
-          setCurrentQuoteIndex((prev) => (prev + 1) % POMO_QUOTES.length);
-          setPomoRunning(shouldAutoContinue);
-        } else {
-          if (pomoPhase === 'long_break' || pomoCycleCount >= 4) {
-            setPomoCycleCount(0);
-          }
-          setPomoPhase('study');
-          setPomoSecondsLeft(Math.max(1, Number(pomoStudyMin) || 25) * 60);
-          setCurrentQuoteIndex((prev) => (prev + 1) % POMO_QUOTES.length);
-          setPomoRunning(shouldAutoContinue);
-        }
+        handlePhaseCompleted();
       }
-    }, 200);
+    };
 
+    tick();
+    const interval = setInterval(tick, 250);
     return () => clearInterval(interval);
-  }, [
-    pomoRunning,
-    pomoPhase,
-    pomoCycleCount,
-    pomoStudyMin,
-    pomoShortBreakMin,
-    pomoLongBreakMin,
-  ]);
-
-  const getPhaseMinutes = (phase) => {
-    if (phase === 'study') return Math.max(1, Number(pomoStudyMin) || 25);
-    if (phase === 'short_break')
-      return Math.max(1, Number(pomoShortBreakMin) || 5);
-    return Math.max(1, Number(pomoLongBreakMin) || 15);
-  };
+  }, [pomoRunning, pomoEndAt, pomoSecondsLeft, pomoPhase, handlePhaseCompleted]);
 
   const handleTogglePomoRunning = () => {
     getUnlockedAudioContext();
-    setPomoRunning((r) => !r);
+    const nowTs = Date.now();
+    if (pomoRunning) {
+      const exactRemaining = pomoEndAt
+        ? Math.max(0, Math.ceil((pomoEndAt - nowTs) / 1000))
+        : pomoSecondsLeft;
+      setPomoRunning(false);
+      setPomoEndAt(null);
+      setPomoSecondsLeft(exactRemaining);
+      setPomoTimerUpdatedAt(nowTs);
+    } else {
+      const baseSecs =
+        pomoSecondsLeft > 0 ? pomoSecondsLeft : getPhaseMinutes(pomoPhase) * 60;
+      const newEndAt = nowTs + baseSecs * 1000;
+      setPomoSecondsLeft(baseSecs);
+      setPomoEndAt(newEndAt);
+      if (pomoPhase === 'study') {
+        setPomoSessionExamId(activeExam?.id || null);
+      }
+      setPomoRunning(true);
+      setPomoTimerUpdatedAt(nowTs);
+    }
   };
 
   const handlePomoSwitchPhase = (targetPhase) => {
+    const nowTs = Date.now();
     setPomoRunning(false);
+    setPomoEndAt(null);
     if (targetPhase === 'study' && pomoCycleCount >= 4) {
       setPomoCycleCount(0);
     }
     setPomoPhase(targetPhase);
     setPomoSecondsLeft(getPhaseMinutes(targetPhase) * 60);
+    setPomoTimerUpdatedAt(nowTs);
     setCurrentQuoteIndex((prev) => (prev + 1) % POMO_QUOTES.length);
   };
 
   const handlePomoSkipPhase = () => {
+    const nowTs = Date.now();
     setPomoRunning(false);
+    setPomoEndAt(null);
     if (pomoPhase === 'study') {
       const nextCycle = pomoCycleCount + 1;
       if (nextCycle >= 4) {
@@ -1515,25 +1743,32 @@ export default function App() {
       setPomoPhase('study');
       setPomoSecondsLeft(getPhaseMinutes('study') * 60);
     }
+    setPomoTimerUpdatedAt(nowTs);
     setCurrentQuoteIndex((prev) => (prev + 1) % POMO_QUOTES.length);
   };
 
   const handlePomoReset = () => {
+    const nowTs = Date.now();
     setPomoRunning(false);
+    setPomoEndAt(null);
     setPomoSecondsLeft(getPhaseMinutes(pomoPhase) * 60);
+    setPomoTimerUpdatedAt(nowTs);
   };
 
   const handlePomoPreset = (studyMins, shortBreakMins, longBreakMins) => {
+    const nowTs = Date.now();
     setPomoRunning(false);
+    setPomoEndAt(null);
     setPomoStudyMin(studyMins);
     setPomoShortBreakMin(shortBreakMins);
     setPomoLongBreakMin(longBreakMins);
     setPomoPhase('study');
     setPomoSecondsLeft(studyMins * 60);
+    setPomoTimerUpdatedAt(nowTs);
   };
 
   const handleAddManualPomoSession = () => {
-    const duration = Math.max(1, Number(pomoStudyMin) || 25);
+    const duration = getPhaseMinutes('study');
     const manualSession = {
       id: `pomo_${Date.now()}_${Math.random().toString(36).slice(2, 5)}`,
       date: getTodayStr(),
@@ -1545,6 +1780,7 @@ export default function App() {
       pomodoroSessions: [manualSession, ...(ex.pomodoroSessions || [])],
     }));
     setPomoCycleCount((c) => (c >= 4 ? 1 : c + 1));
+    setPomoTimerUpdatedAt(Date.now());
   };
 
   const handleDeletePomoSession = (sessionId) => {
@@ -2025,7 +2261,6 @@ export default function App() {
       });
     });
 
-    // Proiezione coerente con futureStart (se oggi hai già loggato, la prossima sessione parte da domani)
     const projectionStartDate =
       futureStart > realCutoffDate ? futureStart : realCutoffDate;
     let estimatedFinishDate = null;
@@ -3417,11 +3652,25 @@ export default function App() {
                   isDark ? 'text-slate-400' : 'text-slate-500'
                 }`}
               >
-                Cicli Studio + Pausa Breve e Lunga
+                Continua anche al refresh o su altri device
               </p>
             </div>
 
             <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => setIsPomoFullscreen(true)}
+                className={`inline-flex items-center gap-1 px-2.5 py-2 rounded-lg text-xs font-semibold border transition cursor-pointer ${
+                  isDark
+                    ? 'bg-slate-800 border-slate-700 text-slate-200 hover:bg-slate-700'
+                    : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
+                }`}
+                title="Attiva modalità Focus a tutto schermo"
+              >
+                <Maximize2 className="w-3.5 h-3.5 text-indigo-500" />
+                <span className="hidden sm:inline">Focus</span>
+              </button>
+
               <button
                 type="button"
                 onClick={() => {
@@ -3602,11 +3851,11 @@ export default function App() {
                 />
               </div>
 
-              <div className="flex items-center justify-center gap-2">
+              <div className="flex flex-wrap items-center justify-center gap-2">
                 <button
                   type="button"
                   onClick={handleTogglePomoRunning}
-                  className={`inline-flex items-center justify-center gap-1.5 px-6 py-3 sm:py-2.5 rounded-xl text-sm font-bold text-white shadow-md transition cursor-pointer ${
+                  className={`inline-flex items-center justify-center gap-1.5 px-5 py-3 sm:py-2.5 rounded-xl text-sm font-bold text-white shadow-md transition cursor-pointer ${
                     pomoRunning
                       ? 'bg-amber-500 hover:bg-amber-600'
                       : pomoPhase === 'study'
@@ -3651,6 +3900,19 @@ export default function App() {
                   title="Salta alla fase successiva"
                 >
                   <SkipForward className="w-4 h-4" />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setIsPomoFullscreen(true)}
+                  className={`p-3 sm:p-2.5 rounded-xl border transition cursor-pointer ${
+                    isDark
+                      ? 'bg-slate-800 border-slate-700 text-indigo-300 hover:bg-slate-700'
+                      : 'bg-white border-slate-200 text-indigo-600 hover:bg-slate-50'
+                  }`}
+                  title="Modalità Focus a tutto schermo"
+                >
+                  <Maximize2 className="w-4 h-4" />
                 </button>
               </div>
             </div>
@@ -3718,6 +3980,7 @@ export default function App() {
                     setPomoStudyMin(val);
                     if (!pomoRunning && pomoPhase === 'study') {
                       setPomoSecondsLeft(val * 60);
+                      setPomoTimerUpdatedAt(Date.now());
                     }
                   }}
                   className={`w-full rounded-xl border px-3 py-2 text-xs sm:text-sm font-semibold ${inputMutedSurfaceClass}`}
@@ -3741,6 +4004,7 @@ export default function App() {
                     setPomoShortBreakMin(val);
                     if (!pomoRunning && pomoPhase === 'short_break') {
                       setPomoSecondsLeft(val * 60);
+                      setPomoTimerUpdatedAt(Date.now());
                     }
                   }}
                   className={`w-full rounded-xl border px-3 py-2 text-xs sm:text-sm font-semibold ${inputMutedSurfaceClass}`}
@@ -3764,6 +4028,7 @@ export default function App() {
                     setPomoLongBreakMin(val);
                     if (!pomoRunning && pomoPhase === 'long_break') {
                       setPomoSecondsLeft(val * 60);
+                      setPomoTimerUpdatedAt(Date.now());
                     }
                   }}
                   className={`w-full rounded-xl border px-3 py-2 text-xs sm:text-sm font-semibold ${inputMutedSurfaceClass}`}
@@ -4328,6 +4593,277 @@ export default function App() {
         }
       `}</style>
 
+      {/* --- MODALITÀ FOCUS POMODORO A TUTTO SCHERMO --- */}
+      {isPomoFullscreen && (
+        <div
+          className={`fixed inset-0 z-50 flex flex-col justify-between p-4 sm:p-8 select-none transition-colors ${
+            pomoPhase === 'study'
+              ? isDark
+                ? 'bg-gradient-to-b from-slate-950 via-indigo-950/35 to-slate-950 text-slate-100'
+                : 'bg-gradient-to-b from-indigo-50 via-white to-indigo-50/60 text-slate-900'
+              : isDark
+              ? 'bg-gradient-to-b from-slate-950 via-emerald-950/30 to-slate-950 text-slate-100'
+              : 'bg-gradient-to-b from-emerald-50 via-white to-emerald-50/60 text-slate-900'
+          }`}
+        >
+          {/* Barra superiore focus */}
+          <div className="flex items-center justify-between gap-3 max-w-4xl w-full mx-auto">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <span
+                className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border ${
+                  pomoPhase === 'study'
+                    ? isDark
+                      ? 'bg-indigo-950/80 text-indigo-300 border-indigo-800'
+                      : 'bg-indigo-100 text-indigo-800 border-indigo-200'
+                    : isDark
+                    ? 'bg-emerald-950/80 text-emerald-300 border-emerald-800'
+                    : 'bg-emerald-100 text-emerald-800 border-emerald-200'
+                }`}
+              >
+                <Clock className="w-3.5 h-3.5" />
+                {activeExam?.name || 'Focus Studio'}
+              </span>
+              <span
+                className={`text-xs font-medium hidden sm:inline ${
+                  isDark ? 'text-slate-400' : 'text-slate-500'
+                }`}
+              >
+                Premi ESC per uscire
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  getUnlockedAudioContext();
+                  const next = !pomoSound;
+                  setPomoSound(next);
+                  if (next) playPomodoroSound(pomoSoundType, pomoPhase);
+                }}
+                className={`p-2.5 rounded-xl border transition cursor-pointer ${
+                  isDark
+                    ? 'bg-slate-900/80 border-slate-800 text-slate-300 hover:bg-slate-800'
+                    : 'bg-white/90 border-slate-200 text-slate-700 hover:bg-white'
+                }`}
+                title={pomoSound ? 'Suono attivo' : 'Suono disattivato'}
+              >
+                {pomoSound ? (
+                  <Volume2 className="w-4 h-4" />
+                ) : (
+                  <VolumeX className="w-4 h-4" />
+                )}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setIsPomoFullscreen(false)}
+                className={`inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl text-xs font-bold border transition cursor-pointer ${
+                  isDark
+                    ? 'bg-slate-900 border-slate-700 text-slate-100 hover:bg-slate-800'
+                    : 'bg-white border-slate-300 text-slate-800 hover:bg-slate-50 shadow-sm'
+                }`}
+              >
+                <Minimize2 className="w-4 h-4" />
+                <span>Esci da Focus</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Centro timer gigante */}
+          <div className="max-w-2xl w-full mx-auto text-center space-y-6 my-auto">
+            <div className="inline-flex rounded-2xl p-1 border bg-black/5 dark:bg-white/5 border-slate-200/60 dark:border-slate-800">
+              <button
+                type="button"
+                onClick={() => handlePomoSwitchPhase('study')}
+                className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition cursor-pointer ${
+                  pomoPhase === 'study'
+                    ? 'bg-indigo-600 text-white shadow-sm'
+                    : isDark
+                    ? 'text-slate-400 hover:text-slate-200'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                Studio
+              </button>
+              <button
+                type="button"
+                onClick={() => handlePomoSwitchPhase('short_break')}
+                className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition cursor-pointer ${
+                  pomoPhase === 'short_break'
+                    ? 'bg-emerald-600 text-white shadow-sm'
+                    : isDark
+                    ? 'text-slate-400 hover:text-slate-200'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                Pausa Breve
+              </button>
+              <button
+                type="button"
+                onClick={() => handlePomoSwitchPhase('long_break')}
+                className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition cursor-pointer ${
+                  pomoPhase === 'long_break'
+                    ? 'bg-teal-600 text-white shadow-sm'
+                    : isDark
+                    ? 'text-slate-400 hover:text-slate-200'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                Pausa Lunga
+              </button>
+            </div>
+
+            <div className="flex items-center justify-center gap-2">
+              {[1, 2, 3, 4].map((dot) => (
+                <span
+                  key={dot}
+                  className={`h-3 w-12 sm:w-14 rounded-full transition-all ${
+                    dot <= pomoCycleCount
+                      ? pomoPhase === 'study'
+                        ? 'bg-indigo-500 shadow-sm'
+                        : 'bg-emerald-500 shadow-sm'
+                      : isDark
+                      ? 'bg-slate-800'
+                      : 'bg-slate-200'
+                  }`}
+                />
+              ))}
+            </div>
+
+            <div
+              className={`text-7xl sm:text-8xl md:text-9xl font-black tracking-tight tabular-nums leading-none ${
+                pomoPhase === 'study'
+                  ? isDark
+                    ? 'text-white'
+                    : 'text-slate-900'
+                  : isDark
+                  ? 'text-emerald-200'
+                  : 'text-emerald-950'
+              }`}
+            >
+              {pomoMinutesDisplay}:{pomoSecondsDisplay}
+            </div>
+
+            <p
+              className={`text-sm sm:text-base font-bold uppercase tracking-widest ${
+                pomoPhase === 'study'
+                  ? isDark
+                    ? 'text-indigo-300'
+                    : 'text-indigo-700'
+                  : isDark
+                  ? 'text-emerald-300'
+                  : 'text-emerald-700'
+              }`}
+            >
+              {pomoPhase === 'study'
+                ? `Sessione Studio #${(pomoCycleCount % 4) + 1} di 4`
+                : pomoPhase === 'short_break'
+                ? 'Pausa breve: respira e rilassa gli occhi'
+                : 'Pausa lunga: ricarica mentale'}
+            </p>
+
+            <div
+              className={`max-w-lg mx-auto px-5 py-3.5 rounded-2xl text-sm italic font-medium border ${
+                isDark
+                  ? 'bg-slate-900/70 border-slate-800 text-slate-300'
+                  : 'bg-white/85 border-slate-200/80 text-slate-700 shadow-xs'
+              }`}
+            >
+              {POMO_QUOTES[currentQuoteIndex]}
+            </div>
+
+            <div
+              className={`w-full max-w-md mx-auto h-3 rounded-full overflow-hidden ${
+                isDark
+                  ? 'bg-slate-800'
+                  : pomoPhase === 'study'
+                  ? 'bg-indigo-200/70'
+                  : 'bg-emerald-200/70'
+              }`}
+            >
+              <div
+                className={`h-full transition-all duration-300 ${
+                  pomoPhase === 'study' ? 'bg-indigo-600' : 'bg-emerald-500'
+                }`}
+                style={{ width: `${pomoStats.progressPct}%` }}
+              />
+            </div>
+
+            <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+              <button
+                type="button"
+                onClick={handleTogglePomoRunning}
+                className={`inline-flex items-center justify-center gap-2 px-8 py-4 rounded-2xl text-base font-extrabold text-white shadow-lg transition cursor-pointer ${
+                  pomoRunning
+                    ? 'bg-amber-500 hover:bg-amber-600'
+                    : pomoPhase === 'study'
+                    ? 'bg-indigo-600 hover:bg-indigo-700'
+                    : 'bg-emerald-600 hover:bg-emerald-700'
+                }`}
+              >
+                {pomoRunning ? (
+                  <>
+                    <Pause className="w-5 h-5" />
+                    Pausa
+                  </>
+                ) : (
+                  <>
+                    <Play className="w-5 h-5" />
+                    {pomoSecondsLeft < getPhaseMinutes(pomoPhase) * 60
+                      ? 'Riprendi'
+                      : 'Avvia Focus'}
+                  </>
+                )}
+              </button>
+
+              <button
+                type="button"
+                onClick={handlePomoReset}
+                className={`p-4 rounded-2xl border transition cursor-pointer ${
+                  isDark
+                    ? 'bg-slate-900 border-slate-800 text-slate-300 hover:bg-slate-800'
+                    : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
+                }`}
+                title="Azzera timer"
+              >
+                <RotateCcw className="w-5 h-5" />
+              </button>
+
+              <button
+                type="button"
+                onClick={handlePomoSkipPhase}
+                className={`p-4 rounded-2xl border transition cursor-pointer ${
+                  isDark
+                    ? 'bg-slate-900 border-slate-800 text-slate-300 hover:bg-slate-800'
+                    : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
+                }`}
+                title="Fase successiva"
+              >
+                <SkipForward className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+
+          {/* Footer focus */}
+          <div
+            className={`max-w-4xl w-full mx-auto flex flex-wrap items-center justify-between gap-2 text-xs ${
+              isDark ? 'text-slate-400' : 'text-slate-500'
+            }`}
+          >
+            <span>
+              Completati oggi: <strong>{pomoStats.todayCount}</strong> pom (
+              <strong>{formatMinutesHuman(pomoStats.todayMinutes)}</strong>)
+            </span>
+            <span>
+              {pomoRunning
+                ? 'Timer attivo — continua anche se ricarichi o cambi dispositivo'
+                : 'Timer in pausa'}
+            </span>
+          </div>
+        </div>
+      )}
+
       {/* --- HEADER FULL-WIDTH --- */}
       <header
         className={`border-b sticky top-0 z-30 w-full transition-colors duration-200 ${
@@ -4441,6 +4977,22 @@ export default function App() {
           </div>
 
           <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+            {/* Pillola rapida se il timer è attivo */}
+            {pomoRunning && (
+              <button
+                type="button"
+                onClick={() => setIsPomoFullscreen(true)}
+                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm transition cursor-pointer"
+                title="Apri Focus a tutto schermo"
+              >
+                <Clock className="w-3.5 h-3.5" />
+                <span className="tabular-nums">
+                  {pomoMinutesDisplay}:{pomoSecondsDisplay}
+                </span>
+                <Maximize2 className="w-3 h-3 hidden sm:inline" />
+              </button>
+            )}
+
             {/* NAVIGAZIONE TRA LE DUE PAGINE */}
             <div
               className={`inline-flex rounded-xl p-1 border ${
@@ -5912,13 +6464,14 @@ export default function App() {
                                       : sub.grade
                                       ? String(sub.grade)
                                       : '';
-                                  const weightPoints =
-                                    sub.grade >= 18 && sub.grade <= 30
+                                  const weightPct =
+                                    blkGradedCfu > 0 && sub.grade
                                       ? (
-                                          Number(sub.grade) *
-                                          Number(sub.cfu || 0)
+                                          ((Number(sub.cfu) || 0) /
+                                            blkGradedCfu) *
+                                          100
                                         ).toFixed(0)
-                                      : '—';
+                                      : null;
 
                                   return (
                                     <tr
@@ -5929,7 +6482,7 @@ export default function App() {
                                           : 'hover:bg-slate-50/70'
                                       }
                                     >
-                                      <td className="py-2.5 pr-2 min-w-[120px]">
+                                      <td className="py-2 pr-1.5">
                                         <input
                                           type="text"
                                           value={sub.name}
@@ -5941,14 +6494,10 @@ export default function App() {
                                               { name: e.target.value }
                                             )
                                           }
-                                          className={`w-full bg-transparent font-medium truncate focus:outline-none focus:underline ${
-                                            isDark
-                                              ? 'text-slate-100'
-                                              : 'text-slate-800'
-                                          }`}
+                                          className={`w-full rounded-lg border px-2 py-1.5 text-xs sm:text-sm font-medium ${inputMutedSurfaceClass}`}
                                         />
                                       </td>
-                                      <td className="py-2.5 px-1 text-center">
+                                      <td className="py-2 px-1 text-center">
                                         <input
                                           type="number"
                                           min="0.5"
@@ -5962,91 +6511,70 @@ export default function App() {
                                               sub.id,
                                               {
                                                 cfu: Math.max(
-                                                  0.5,
-                                                  Number(e.target.value) || 0.5
+                                                  0,
+                                                  Number(e.target.value) || 0
                                                 ),
                                               }
                                             )
                                           }
-                                          className={`no-spinner h-8 w-12 text-center rounded-lg border px-1 text-xs font-bold tabular-nums ${inputMutedSurfaceClass}`}
+                                          className={`no-spinner w-12 sm:w-14 text-center rounded-lg border px-1 py-1.5 text-xs sm:text-sm font-semibold ${inputMutedSurfaceClass}`}
                                         />
                                       </td>
-                                      <td className="py-2.5 px-1 text-center">
-                                        <div className="relative inline-block w-22 sm:w-24">
-                                          <select
-                                            value={subSelectVal}
-                                            onChange={(e) => {
-                                              const v = e.target.value;
-                                              if (v === '') {
-                                                handleUpdateMedSubject(
-                                                  selectedMedYear,
-                                                  block.id,
-                                                  sub.id,
-                                                  { grade: null, lode: false }
-                                                );
-                                              } else if (v === '30L') {
-                                                handleUpdateMedSubject(
-                                                  selectedMedYear,
-                                                  block.id,
-                                                  sub.id,
-                                                  { grade: 30, lode: true }
-                                                );
-                                              } else {
-                                                handleUpdateMedSubject(
-                                                  selectedMedYear,
-                                                  block.id,
-                                                  sub.id,
-                                                  {
-                                                    grade: Number(v),
-                                                    lode: false,
-                                                  }
-                                                );
-                                              }
-                                            }}
-                                            className={`appearance-none h-8 w-full rounded-lg border pl-2 pr-6 text-xs font-bold cursor-pointer ${
-                                              subSelectVal
-                                                ? isDark
-                                                  ? 'bg-indigo-950/80 border-indigo-700 text-indigo-200'
-                                                  : 'bg-indigo-50 border-indigo-200 text-indigo-800'
-                                                : inputMutedSurfaceClass
-                                            }`}
-                                          >
-                                            <option value="">Da dare</option>
-                                            <option value="30L">
-                                              30 e Lode
+                                      <td className="py-2 px-1 text-center">
+                                        <select
+                                          value={subSelectVal}
+                                          onChange={(e) => {
+                                            const v = e.target.value;
+                                            if (v === '') {
+                                              handleUpdateMedSubject(
+                                                selectedMedYear,
+                                                block.id,
+                                                sub.id,
+                                                { grade: null, lode: false }
+                                              );
+                                            } else if (v === '30L') {
+                                              handleUpdateMedSubject(
+                                                selectedMedYear,
+                                                block.id,
+                                                sub.id,
+                                                { grade: 30, lode: true }
+                                              );
+                                            } else {
+                                              handleUpdateMedSubject(
+                                                selectedMedYear,
+                                                block.id,
+                                                sub.id,
+                                                {
+                                                  grade: Number(v),
+                                                  lode: false,
+                                                }
+                                              );
+                                            }
+                                          }}
+                                          className={`w-full rounded-lg border px-1.5 py-1.5 text-xs sm:text-sm font-bold text-center ${inputMutedSurfaceClass}`}
+                                        >
+                                          <option value="">—</option>
+                                          {Array.from(
+                                            { length: 13 },
+                                            (_, i) => i + 18
+                                          ).map((g) => (
+                                            <option key={g} value={g}>
+                                              {g}
                                             </option>
-                                            {[
-                                              30, 29, 28, 27, 26, 25, 24, 23,
-                                              22, 21, 20, 19, 18,
-                                            ].map((g) => (
-                                              <option key={g} value={String(g)}>
-                                                {g}
-                                              </option>
-                                            ))}
-                                          </select>
-                                          <ChevronDown
-                                            className={`w-3.5 h-3.5 pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2 ${
-                                              subSelectVal
-                                                ? isDark
-                                                  ? 'text-indigo-300'
-                                                  : 'text-indigo-700'
-                                                : isDark
-                                                ? 'text-slate-400'
-                                                : 'text-slate-500'
-                                            }`}
-                                          />
-                                        </div>
+                                          ))}
+                                          <option value="30L">30L</option>
+                                        </select>
                                       </td>
                                       <td
-                                        className={`py-2.5 text-right text-xs font-semibold tabular-nums ${
+                                        className={`py-2 px-1 text-right text-[11px] sm:text-xs font-semibold whitespace-nowrap ${
                                           isDark
                                             ? 'text-slate-400'
                                             : 'text-slate-500'
                                         }`}
                                       >
-                                        {weightPoints}
+                                        {weightPct !== null ? `${weightPct}%` : '—'}
                                       </td>
-                                      <td className="py-2.5 text-right">
+                                      <td className="py-2 pl-1 text-right">
                                         <button
                                           type="button"
                                           onClick={() =>
@@ -6056,14 +6584,14 @@ export default function App() {
                                               sub.id
                                             )
                                           }
-                                          className={`h-8 w-8 inline-flex items-center justify-center rounded-lg transition cursor-pointer ${
+                                          className={`p-1.5 rounded-lg transition cursor-pointer ${
                                             isDark
                                               ? 'text-slate-500 hover:text-rose-400 hover:bg-rose-950/60'
                                               : 'text-slate-400 hover:text-rose-600 hover:bg-rose-50'
                                           }`}
                                           title="Rimuovi materia"
                                         >
-                                          <Trash2 className="w-3.5 h-3.5" />
+                                          <Trash2 className="w-4 h-4" />
                                         </button>
                                       </td>
                                     </tr>
@@ -6074,23 +6602,24 @@ export default function App() {
                           </div>
                         ) : (
                           <div
-                            className={`rounded-xl border border-dashed py-3 px-3 text-center text-xs ${
+                            className={`rounded-xl border border-dashed p-3 text-center text-xs ${
                               isDark
                                 ? 'border-slate-800 text-slate-400'
                                 : 'border-slate-200 text-slate-500'
                             }`}
                           >
-                            Nessuna materia inserita in questo blocco.
+                            Nessuna materia in questo blocco. Aggiungine una qui
+                            sotto.
                           </div>
                         )}
 
-                        {/* Form rapido aggiunta materia */}
+                        {/* Form aggiunta materia */}
                         <form
                           onSubmit={(e) =>
                             handleAddMedSubject(e, selectedMedYear, block.id)
                           }
-                          className={`mt-auto pt-3 border-t flex flex-col sm:flex-row items-stretch sm:items-center gap-2 ${
-                            isDark ? 'border-slate-800' : 'border-slate-100'
+                          className={`pt-2.5 border-t flex items-center gap-1.5 ${
+                            isDark ? 'border-slate-800/80' : 'border-slate-100'
                           }`}
                         >
                           <input
@@ -6100,68 +6629,66 @@ export default function App() {
                             onChange={(e) =>
                               setNewSubjectDrafts((prev) => ({
                                 ...prev,
-                                [block.id]: { ...draft, name: e.target.value },
+                                [block.id]: {
+                                  ...draft,
+                                  name: e.target.value,
+                                },
                               }))
                             }
                             required
-                            className={`h-10 sm:h-9 flex-1 rounded-xl border px-3 text-xs ${inputMutedSurfaceClass}`}
+                            className={`h-9 flex-1 min-w-0 rounded-lg border px-2.5 text-xs ${inputMutedSurfaceClass}`}
                           />
-                          <div className="flex items-center gap-2">
-                            <input
-                              type="number"
-                              min="0.5"
-                              max="30"
-                              step="0.5"
-                              placeholder="CFU"
-                              value={draft.cfu}
-                              onChange={(e) =>
-                                setNewSubjectDrafts((prev) => ({
-                                  ...prev,
-                                  [block.id]: { ...draft, cfu: e.target.value },
-                                }))
-                              }
-                              required
-                              className={`no-spinner h-10 sm:h-9 w-16 rounded-xl border px-2 text-xs text-center font-bold tabular-nums shrink-0 ${inputMutedSurfaceClass}`}
-                            />
-                            <div className="relative flex-1 sm:w-24 shrink-0">
-                              <select
-                                value={draft.grade}
-                                onChange={(e) =>
-                                  setNewSubjectDrafts((prev) => ({
-                                    ...prev,
-                                    [block.id]: {
-                                      ...draft,
-                                      grade: e.target.value,
-                                    },
-                                  }))
-                                }
-                                className={`appearance-none h-10 sm:h-9 w-full rounded-xl border pl-2.5 pr-6 text-xs font-semibold cursor-pointer ${inputMutedSurfaceClass}`}
-                              >
-                                <option value="">Da dare</option>
-                                <option value="30L">30L</option>
-                                {[
-                                  30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20,
-                                  19, 18,
-                                ].map((g) => (
-                                  <option key={g} value={String(g)}>
-                                    {g}
-                                  </option>
-                                ))}
-                              </select>
-                              <ChevronDown
-                                className={`w-3.5 h-3.5 pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 ${
-                                  isDark ? 'text-slate-400' : 'text-slate-500'
-                                }`}
-                              />
-                            </div>
-                            <button
-                              type="submit"
-                              className="h-10 sm:h-9 px-4 inline-flex items-center justify-center gap-1 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shadow-sm transition cursor-pointer shrink-0"
-                            >
-                              <Plus className="w-3.5 h-3.5" />
-                              <span>Aggiungi</span>
-                            </button>
-                          </div>
+                          <input
+                            type="number"
+                            min="0.5"
+                            max="30"
+                            step="0.5"
+                            placeholder="CFU"
+                            value={draft.cfu}
+                            onChange={(e) =>
+                              setNewSubjectDrafts((prev) => ({
+                                ...prev,
+                                [block.id]: {
+                                  ...draft,
+                                  cfu: e.target.value,
+                                },
+                              }))
+                            }
+                            required
+                            title="CFU"
+                            className={`no-spinner h-9 w-12 text-center rounded-lg border px-1 text-xs font-semibold shrink-0 ${inputMutedSurfaceClass}`}
+                          />
+                          <select
+                            value={draft.grade}
+                            onChange={(e) =>
+                              setNewSubjectDrafts((prev) => ({
+                                ...prev,
+                                [block.id]: {
+                                  ...draft,
+                                  grade: e.target.value,
+                                },
+                              }))
+                            }
+                            title="Voto"
+                            className={`h-9 w-16 rounded-lg border px-1 text-xs font-bold text-center shrink-0 ${inputMutedSurfaceClass}`}
+                          >
+                            <option value="">Voto</option>
+                            {Array.from({ length: 13 }, (_, i) => i + 18).map(
+                              (g) => (
+                                <option key={g} value={g}>
+                                  {g}
+                                </option>
+                              )
+                            )}
+                            <option value="30L">30L</option>
+                          </select>
+                          <button
+                            type="submit"
+                            className="h-9 w-9 inline-flex items-center justify-center rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shadow-sm transition cursor-pointer shrink-0"
+                            title="Aggiungi materia"
+                          >
+                            <Plus className="w-4 h-4" />
+                          </button>
                         </form>
                       </div>
                     )}
