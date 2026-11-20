@@ -2934,9 +2934,9 @@ export default function App() {
     if (sectionId === 'burndown') {
       sectionContent = (
         <section
-          className={`rounded-2xl border p-4 sm:p-6 shadow-sm ${cardSurfaceClass}`}
+          className={`rounded-2xl border p-4 sm:p-5 shadow-sm ${cardSurfaceClass}`}
         >
-          <div className="flex flex-wrap items-start justify-between gap-3 mb-5">
+          <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
             <div>
               <h3
                 className={`text-base sm:text-lg font-bold ${
@@ -2996,13 +2996,13 @@ export default function App() {
 
           <div
             className={`${
-              isNarrow ? 'h-[280px]' : 'h-[320px] sm:h-[360px]'
+              isNarrow ? 'h-[235px]' : 'h-[250px] sm:h-[285px]'
             } w-full`}
           >
             <ResponsiveContainer width="100%" height="100%">
               <ComposedChart
                 data={analytics.chartData}
-                margin={{ top: 18, right: 16, left: -12, bottom: 5 }}
+                margin={{ top: 16, right: 16, left: -12, bottom: 4 }}
               >
                 <CartesianGrid
                   strokeDasharray="3 3"
@@ -3111,7 +3111,7 @@ export default function App() {
     } else if (sectionId === 'spaced_repetition') {
       sectionContent = (
         <section
-          className={`rounded-2xl border p-4 sm:p-6 shadow-sm space-y-5 ${cardSurfaceClass}`}
+          className={`rounded-2xl border p-4 sm:p-5 shadow-sm space-y-4 ${cardSurfaceClass}`}
         >
           <div
             className={`flex flex-wrap items-start justify-between gap-3 pb-3 border-b ${
@@ -3170,13 +3170,13 @@ export default function App() {
           </div>
 
           <div
-            className={`rounded-xl border p-3.5 sm:p-4 ${
+            className={`rounded-xl border p-3.5 ${
               isDark
                 ? 'bg-slate-800/45 border-slate-800'
                 : 'bg-slate-50/70 border-slate-200/80'
             }`}
           >
-            <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+            <div className="flex flex-wrap items-center justify-between gap-2 mb-2.5">
               <span
                 className={`text-xs font-bold uppercase tracking-wider ${
                   isDark ? 'text-slate-300' : 'text-slate-600'
@@ -3200,11 +3200,11 @@ export default function App() {
               </div>
             </div>
 
-            <div className="h-[185px] w-full">
+            <div className="h-[155px] w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <ComposedChart
                   data={srAnalytics.forecastChart}
-                  margin={{ top: 14, right: 12, left: -22, bottom: 0 }}
+                  margin={{ top: 12, right: 12, left: -22, bottom: 0 }}
                 >
                   <CartesianGrid
                     strokeDasharray="3 3"
@@ -3276,7 +3276,7 @@ export default function App() {
                     />
                   )}
 
-                  <Bar dataKey="ripassi" radius={[6, 6, 0, 0]} maxBarSize={28}>
+                  <Bar dataKey="ripassi" radius={[6, 6, 0, 0]} maxBarSize={26}>
                     {srAnalytics.forecastChart.map((entry, idx) => (
                       <Cell
                         key={`cell-${idx}`}
@@ -3441,7 +3441,7 @@ export default function App() {
                   : 'Nessun argomento in questa vista.'}
               </div>
             ) : (
-              <div className="space-y-2 max-h-[340px] overflow-y-auto pr-0.5">
+              <div className="space-y-2 max-h-[300px] overflow-y-auto pr-0.5">
                 {filteredSrTopics.map((topic) => {
                   const previewHard =
                     topic.repetitions <= 1
@@ -3631,7 +3631,7 @@ export default function App() {
     } else if (sectionId === 'progress_log') {
       sectionContent = (
         <section
-          className={`rounded-2xl border p-4 sm:p-6 shadow-sm ${cardSurfaceClass}`}
+          className={`rounded-2xl border p-4 sm:p-5 shadow-sm ${cardSurfaceClass}`}
         >
           <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
             <div>
@@ -3789,7 +3789,7 @@ export default function App() {
                 qui sopra!
               </div>
             ) : (
-              <div className="overflow-x-auto max-h-64 overflow-y-auto pr-1">
+              <div className="overflow-x-auto max-h-60 overflow-y-auto pr-1">
                 <table className="w-full text-left border-collapse text-sm min-w-[340px]">
                   <thead>
                     <tr
@@ -3952,46 +3952,43 @@ export default function App() {
         </section>
       );
     } else if (sectionId === 'pomodoro') {
+      const actionIconBtnClass = `w-10 h-10 inline-flex items-center justify-center rounded-xl border transition cursor-pointer ${
+        isDark
+          ? 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700 hover:text-slate-100'
+          : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+      }`;
+
       sectionContent = (
         <section
-          className={`rounded-2xl border p-4 sm:p-6 shadow-sm space-y-4 ${cardSurfaceClass}`}
+          className={`rounded-2xl border p-4 sm:p-5 shadow-sm space-y-4 ${cardSurfaceClass}`}
         >
-          <div className="flex items-start justify-between gap-2">
-            <div>
-              <div className="flex items-center gap-2">
-                <Clock
-                  className={`w-4 h-4 ${
-                    pomoPhase === 'study'
-                      ? isDark
-                        ? 'text-indigo-400'
-                        : 'text-indigo-600'
-                      : isDark
-                      ? 'text-emerald-400'
-                      : 'text-emerald-600'
-                  }`}
-                />
-                <h3
-                  className={`text-base font-bold ${
-                    isDark ? 'text-slate-100' : 'text-slate-900'
-                  }`}
-                >
-                  Timer Pomodoro
-                </h3>
-              </div>
-              <p
-                className={`text-xs mt-0.5 ${
-                  isDark ? 'text-slate-400' : 'text-slate-500'
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 min-w-0">
+              <Clock
+                className={`w-4 h-4 shrink-0 ${
+                  pomoPhase === 'study'
+                    ? isDark
+                      ? 'text-indigo-400'
+                      : 'text-indigo-600'
+                    : isDark
+                    ? 'text-emerald-400'
+                    : 'text-emerald-600'
+                }`}
+              />
+              <h3
+                className={`text-base font-bold whitespace-nowrap ${
+                  isDark ? 'text-slate-100' : 'text-slate-900'
                 }`}
               >
-                Continua anche al refresh o su altri device
-              </p>
+                Timer Pomodoro
+              </h3>
             </div>
 
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1.5 shrink-0">
               <button
                 type="button"
                 onClick={enterZenFullscreen}
-                className={`inline-flex items-center gap-1 px-2.5 py-2 rounded-xl text-xs font-semibold border transition cursor-pointer ${
+                className={`h-9 inline-flex items-center gap-1.5 px-3 rounded-xl text-xs font-semibold border transition cursor-pointer whitespace-nowrap ${
                   isDark
                     ? 'bg-slate-800 border-slate-700 text-emerald-300 hover:bg-slate-700'
                     : 'bg-emerald-50 border-emerald-200 text-emerald-800 hover:bg-emerald-100'
@@ -3999,7 +3996,7 @@ export default function App() {
                 title="Apri sezione Focus Zen isolata a schermo intero"
               >
                 <Sparkles className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Sezione Zen</span>
+                <span>Sezione Zen</span>
               </button>
 
               <button
@@ -4010,7 +4007,7 @@ export default function App() {
                   setPomoSound(next);
                   if (next) playPomodoroSound(pomoSoundType, 'study');
                 }}
-                className={`p-2 rounded-xl text-xs transition cursor-pointer ${
+                className={`w-9 h-9 inline-flex items-center justify-center rounded-xl text-xs transition cursor-pointer ${
                   pomoSound
                     ? indigoPillClass
                     : isDark
@@ -4182,11 +4179,12 @@ export default function App() {
                 />
               </div>
 
-              <div className="flex flex-wrap items-center justify-center gap-2">
+              {/* BARRA CONTROLLI SIMMETRICA */}
+              <div className="flex items-center justify-center gap-2">
                 <button
                   type="button"
                   onClick={handleTogglePomoRunning}
-                  className={`inline-flex items-center justify-center gap-1.5 px-5 py-3 sm:py-2.5 rounded-xl text-sm font-bold text-white shadow-md transition cursor-pointer ${
+                  className={`h-10 inline-flex items-center justify-center gap-1.5 px-4 rounded-xl text-xs sm:text-sm font-bold text-white shadow-sm transition cursor-pointer ${
                     pomoRunning
                       ? 'bg-amber-500 hover:bg-amber-600'
                       : pomoPhase === 'study'
@@ -4197,12 +4195,12 @@ export default function App() {
                   {pomoRunning ? (
                     <>
                       <Pause className="w-4 h-4" />
-                      Pausa
+                      <span>Pausa</span>
                     </>
                   ) : (
                     <>
                       <Play className="w-4 h-4" />
-                      Avvia
+                      <span>Avvia</span>
                     </>
                   )}
                 </button>
@@ -4210,12 +4208,9 @@ export default function App() {
                 <button
                   type="button"
                   onClick={handlePomoReset}
-                  className={`p-3 sm:p-2.5 rounded-xl border transition cursor-pointer ${
-                    isDark
-                      ? 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700'
-                      : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
-                  }`}
+                  className={actionIconBtnClass}
                   title="Azzera timer corrente"
+                  aria-label="Azzera timer corrente"
                 >
                   <RotateCcw className="w-4 h-4" />
                 </button>
@@ -4223,12 +4218,9 @@ export default function App() {
                 <button
                   type="button"
                   onClick={handlePomoSkipPhase}
-                  className={`p-3 sm:p-2.5 rounded-xl border transition cursor-pointer ${
-                    isDark
-                      ? 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700'
-                      : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
-                  }`}
+                  className={actionIconBtnClass}
                   title="Salta alla fase successiva"
+                  aria-label="Salta alla fase successiva"
                 >
                   <SkipForward className="w-4 h-4" />
                 </button>
@@ -4236,12 +4228,9 @@ export default function App() {
                 <button
                   type="button"
                   onClick={enterZenFullscreen}
-                  className={`p-3 sm:p-2.5 rounded-xl border transition cursor-pointer ${
-                    isDark
-                      ? 'bg-slate-800 border-slate-700 text-emerald-300 hover:bg-slate-700'
-                      : 'bg-white border-slate-200 text-emerald-700 hover:bg-slate-50'
-                  }`}
+                  className={actionIconBtnClass}
                   title="Apri sezione Focus Zen a tutto schermo"
+                  aria-label="Apri sezione Focus Zen a tutto schermo"
                 >
                   <Maximize2 className="w-4 h-4" />
                 </button>
@@ -4439,7 +4428,7 @@ export default function App() {
                   getUnlockedAudioContext();
                   playPomodoroSound(pomoSoundType, 'study');
                 }}
-                className={`px-3 py-2 rounded-xl border text-xs font-semibold transition shrink-0 disabled:opacity-40 cursor-pointer ${
+                className={`h-9 px-3 rounded-xl border text-xs font-semibold transition shrink-0 disabled:opacity-40 cursor-pointer ${
                   isDark
                     ? 'bg-slate-800 border-slate-700 text-slate-200 hover:bg-slate-700'
                     : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
@@ -4593,7 +4582,7 @@ export default function App() {
     } else if (sectionId === 'parameters') {
       sectionContent = (
         <section
-          className={`rounded-2xl border p-4 sm:p-6 shadow-sm space-y-5 ${cardSurfaceClass}`}
+          className={`rounded-2xl border p-4 sm:p-5 shadow-sm space-y-5 ${cardSurfaceClass}`}
         >
           <div
             className={`flex items-center justify-between gap-2 pb-3 border-b ${
@@ -6490,64 +6479,80 @@ export default function App() {
             </div>
           </section>
 
-          {/* 3. CORPO PRINCIPALE PERSONALIZZABILE */}
-          {(() => {
-            const hasLeft = layout.left.length > 0;
-            const hasRight = layout.right.length > 0;
-
-            if (hasLeft && hasRight) {
-              return (
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-                  <div
-                    onDragOver={(e) => e.preventDefault()}
-                    onDrop={(e) => {
-                      e.preventDefault();
-                      handleDropSection('left', layout.left.length);
-                    }}
-                    className="lg:col-span-8 space-y-6 min-h-[120px]"
-                  >
-                    {layout.left.map((secId, idx) =>
-                      renderSection(secId, 'left', idx, layout.left.length)
-                    )}
-                  </div>
-
-                  <div
-                    onDragOver={(e) => e.preventDefault()}
-                    onDrop={(e) => {
-                      e.preventDefault();
-                      handleDropSection('right', layout.right.length);
-                    }}
-                    className="lg:col-span-4 space-y-6 min-h-[120px]"
-                  >
-                    {layout.right.map((secId, idx) =>
-                      renderSection(secId, 'right', idx, layout.right.length)
-                    )}
-                  </div>
+          {/* 3. CORPO PRINCIPALE ORDINABILE */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            <div
+              onDragOver={(e) => {
+                e.preventDefault();
+                if (layout.left.length === 0) {
+                  setDragOverTarget({ col: 'left', index: 0 });
+                }
+              }}
+              onDrop={(e) => {
+                e.preventDefault();
+                if (layout.left.length === 0) {
+                  handleDropSection('left', 0);
+                }
+              }}
+              className={`${
+                layout.right.length > 0 && layout.left.length > 0
+                  ? 'lg:col-span-8'
+                  : 'lg:col-span-12'
+              } space-y-6 min-w-0`}
+            >
+              {layout.left.length === 0 && (
+                <div
+                  className={`rounded-2xl border-2 border-dashed p-8 text-center text-xs ${
+                    isDark
+                      ? 'border-slate-800 text-slate-400'
+                      : 'border-slate-300 text-slate-500'
+                  }`}
+                >
+                  Colonna principale vuota — usa il pulsante{' '}
+                  <strong>⇄</strong> su una sezione per spostarla qui.
                 </div>
-              );
-            }
+              )}
+              {layout.left.map((secId, idx) =>
+                renderSection(secId, 'left', idx, layout.left.length)
+              )}
+            </div>
 
-            const singleCol = hasLeft ? 'left' : 'right';
-            return (
-              <div
-                onDragOver={(e) => e.preventDefault()}
-                onDrop={(e) => {
-                  e.preventDefault();
-                  handleDropSection(singleCol, layout[singleCol].length);
-                }}
-                className="space-y-6 min-h-[120px]"
-              >
-                {layout[singleCol].map((secId, idx) =>
-                  renderSection(
-                    secId,
-                    singleCol,
-                    idx,
-                    layout[singleCol].length
-                  )
-                )}
-              </div>
-            );
-          })()}
+            <div
+              onDragOver={(e) => {
+                e.preventDefault();
+                if (layout.right.length === 0) {
+                  setDragOverTarget({ col: 'right', index: 0 });
+                }
+              }}
+              onDrop={(e) => {
+                e.preventDefault();
+                if (layout.right.length === 0) {
+                  handleDropSection('right', 0);
+                }
+              }}
+              className={`${
+                layout.left.length > 0 && layout.right.length > 0
+                  ? 'lg:col-span-4'
+                  : 'lg:col-span-12'
+              } space-y-6 min-w-0`}
+            >
+              {layout.right.length === 0 && (
+                <div
+                  className={`rounded-2xl border-2 border-dashed p-8 text-center text-xs ${
+                    isDark
+                      ? 'border-slate-800 text-slate-400'
+                      : 'border-slate-300 text-slate-500'
+                  }`}
+                >
+                  Colonna laterale vuota — usa il pulsante{' '}
+                  <strong>⇄</strong> su una sezione per spostarla qui.
+                </div>
+              )}
+              {layout.right.map((secId, idx) =>
+                renderSection(secId, 'right', idx, layout.right.length)
+              )}
+            </div>
+          </div>
         </main>
       )}
 
@@ -6556,933 +6561,820 @@ export default function App() {
          ===================================================================== */}
       {activeTab === 'libretto' && (
         <main className="w-full px-3 sm:px-6 lg:px-8 py-5 sm:py-6 space-y-6">
-          {/* Selettore Anni Medicina 1° - 6° Anno */}
-          <section
-            className={`rounded-2xl border p-3 sm:p-4 shadow-sm ${cardSurfaceClass}`}
-          >
-            <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
-              <div className="flex items-center gap-2">
-                <GraduationCap
-                  className={`w-4 h-4 ${
-                    isDark ? 'text-indigo-400' : 'text-indigo-600'
-                  }`}
-                />
-                <span
-                  className={`text-xs font-bold uppercase tracking-wider ${
-                    isDark ? 'text-slate-300' : 'text-slate-600'
-                  }`}
-                >
-                  Anno di Corso — Medicina e Chirurgia
-                </span>
-              </div>
-              <span
-                className={`text-xs ${
-                  isDark ? 'text-slate-400' : 'text-slate-500'
-                }`}
-              >
-                Voto blocco = media ponderata sui CFU delle materie del blocco
-              </span>
-            </div>
-
-            <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+          <section className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
               {[1, 2, 3, 4, 5, 6].map((yr) => {
                 const isSelected = selectedMedYear === yr;
-                const yrBlocks = medYears[yr] || [];
-                const yrSubjectsCount = yrBlocks.reduce(
-                  (acc, b) => acc + (b.subjects?.length || 0),
-                  0
-                );
+                const yearBlockCount = (medYears[yr] || []).length;
                 return (
                   <button
                     key={yr}
                     type="button"
-                    onClick={() => setSelectedMedYear(yr)}
-                    className={`p-2.5 sm:p-3 rounded-xl border text-left transition cursor-pointer ${
+                    onClick={() => {
+                      setSelectedMedYear(yr);
+                      setIsBlockReorderMode(false);
+                      setBlockDragReadyId(null);
+                    }}
+                    className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition cursor-pointer border ${
                       isSelected
                         ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
                         : isDark
-                        ? 'bg-slate-800/60 border-slate-700/80 text-slate-200 hover:bg-slate-800'
-                        : 'bg-slate-50 border-slate-200 text-slate-800 hover:bg-slate-100'
+                        ? 'bg-slate-900 text-slate-300 border-slate-800 hover:bg-slate-800'
+                        : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
                     }`}
                   >
-                    <div className="text-sm font-extrabold">{yr}° Anno</div>
-                    <div
-                      className={`text-[11px] mt-0.5 ${
-                        isSelected
-                          ? 'text-indigo-100'
-                          : isDark
-                          ? 'text-slate-400'
-                          : 'text-slate-500'
-                      }`}
-                    >
-                      {yrBlocks.length}{' '}
-                      {yrBlocks.length === 1 ? 'blocco' : 'blocchi'} ·{' '}
-                      {yrSubjectsCount}{' '}
-                      {yrSubjectsCount === 1 ? 'materia' : 'materie'}
-                    </div>
+                    <span>{yr}° Anno</span>
+                    {yearBlockCount > 0 && (
+                      <span
+                        className={`text-[10px] px-1.5 py-0.5 rounded-full ${
+                          isSelected
+                            ? 'bg-indigo-500/80 text-white'
+                            : isDark
+                            ? 'bg-slate-800 text-slate-400'
+                            : 'bg-slate-100 text-slate-600'
+                        }`}
+                      >
+                        {yearBlockCount}
+                      </span>
+                    )}
                   </button>
                 );
               })}
             </div>
+
+            {currentYearBlocks.length > 0 && (
+              <button
+                type="button"
+                onClick={handleToggleAllCurrentBlocks}
+                className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold border transition cursor-pointer ${
+                  isDark
+                    ? 'bg-slate-900 text-slate-300 border-slate-800 hover:bg-slate-800'
+                    : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+                }`}
+              >
+                <ChevronsUpDown className="w-3.5 h-3.5" />
+                <span>
+                  {areAllCurrentBlocksExpanded
+                    ? 'Comprimi tutti i blocchi'
+                    : 'Espandi tutti i blocchi'}
+                </span>
+              </button>
+            )}
           </section>
 
-          {/* Riepilogo Anno Selezionato */}
-          {(() => {
-            const blocks = medYears[selectedMedYear] || [];
+          {isBlockReorderMode && (
+            <div
+              className={`rounded-2xl border p-4 flex flex-wrap items-center justify-between gap-3 ${
+                isDark
+                  ? 'bg-indigo-950/60 border-indigo-800/80 text-indigo-100'
+                  : 'bg-indigo-50 border-indigo-200 text-indigo-950'
+              }`}
+            >
+              <div className="flex items-center gap-2.5">
+                <LayoutGrid
+                  className={`w-5 h-5 shrink-0 ${
+                    isDark ? 'text-indigo-400' : 'text-indigo-600'
+                  }`}
+                />
+                <div>
+                  <p className="text-sm font-bold">
+                    Ordinamento blocchi del {selectedMedYear}° Anno attivo
+                  </p>
+                  <p className="text-xs opacity-85">
+                    Usa le frecce su/giù oppure trascina la maniglia di un
+                    blocco per cambiare l&apos;ordine.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsBlockReorderMode(false)}
+                className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition cursor-pointer"
+              >
+                Fatto
+              </button>
+            </div>
+          )}
 
-            const computedBlocks = blocks.map((blk) => {
-              const subjects = blk.subjects || [];
-              const totalCfu = subjects.reduce(
-                (s, item) => s + (Number(item.cfu) || 0),
-                0
-              );
-              const gradedSubjects = subjects.filter(
-                (item) => item.grade !== null && item.grade !== undefined
-              );
-              const gradedCfu = gradedSubjects.reduce(
-                (s, item) => s + (Number(item.cfu) || 0),
-                0
-              );
-              const weightedSum = gradedSubjects.reduce(
-                (s, item) => s + Number(item.grade) * (Number(item.cfu) || 0),
-                0
-              );
-              const blockAvg = gradedCfu > 0 ? weightedSum / gradedCfu : null;
-              const isBlockComplete =
-                subjects.length > 0 && gradedSubjects.length === subjects.length;
-              const hasLode = gradedSubjects.some((item) => Boolean(item.lode));
-
-              return {
-                ...blk,
-                totalCfu,
-                gradedCfu,
-                gradedCount: gradedSubjects.length,
-                totalCount: subjects.length,
-                blockAvg,
-                isBlockComplete,
-                hasLode,
-              };
-            });
-
-            const yearTotalCfu = computedBlocks.reduce(
-              (s, b) => s + b.totalCfu,
-              0
-            );
-            const yearGradedSubjects = computedBlocks.flatMap((b) =>
-              (b.subjects || []).filter(
-                (item) => item.grade !== null && item.grade !== undefined
-              )
-            );
-            const yearGradedCfu = yearGradedSubjects.reduce(
-              (s, item) => s + (Number(item.cfu) || 0),
-              0
-            );
-            const yearWeightedSum = yearGradedSubjects.reduce(
-              (s, item) => s + Number(item.grade) * (Number(item.cfu) || 0),
-              0
-            );
-            const yearWeightedAvg =
-              yearGradedCfu > 0 ? yearWeightedSum / yearGradedCfu : null;
-            const yearBase110 =
-              yearWeightedAvg !== null ? (yearWeightedAvg / 30) * 110 : null;
-
-            return (
-              <>
-                <section className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-                  <div
-                    className={`rounded-2xl border p-4 shadow-sm ${cardSurfaceClass}`}
-                  >
-                    <span
-                      className={`text-[11px] font-semibold uppercase tracking-wide ${
-                        isDark ? 'text-slate-400' : 'text-slate-500'
-                      }`}
-                    >
-                      Media {selectedMedYear}° Anno
-                    </span>
-                    <div
-                      className={`text-2xl sm:text-3xl font-extrabold mt-1.5 ${
-                        isDark ? 'text-indigo-400' : 'text-indigo-600'
-                      }`}
-                    >
-                      {yearWeightedAvg !== null
-                        ? yearWeightedAvg.toFixed(2)
-                        : '—'}
-                      <span
-                        className={`text-xs font-semibold ml-1 ${
-                          isDark ? 'text-slate-400' : 'text-slate-500'
-                        }`}
-                      >
-                        / 30
-                      </span>
-                    </div>
-                    <p
-                      className={`text-xs mt-1 ${
-                        isDark ? 'text-slate-400' : 'text-slate-500'
-                      }`}
-                    >
-                      Ponderata su {yearGradedCfu} CFU verbalizzati
-                    </p>
-                  </div>
-
-                  <div
-                    className={`rounded-2xl border p-4 shadow-sm ${cardSurfaceClass}`}
-                  >
-                    <span
-                      className={`text-[11px] font-semibold uppercase tracking-wide ${
-                        isDark ? 'text-slate-400' : 'text-slate-500'
-                      }`}
-                    >
-                      Base Laurea Stimata
-                    </span>
-                    <div
-                      className={`text-2xl sm:text-3xl font-extrabold mt-1.5 ${
-                        isDark ? 'text-slate-50' : 'text-slate-900'
-                      }`}
-                    >
-                      {yearBase110 !== null ? yearBase110.toFixed(1) : '—'}
-                      <span
-                        className={`text-xs font-semibold ml-1 ${
-                          isDark ? 'text-slate-400' : 'text-slate-500'
-                        }`}
-                      >
-                        / 110
-                      </span>
-                    </div>
-                    <p
-                      className={`text-xs mt-1 ${
-                        isDark ? 'text-slate-400' : 'text-slate-500'
-                      }`}
-                    >
-                      Proiezione lineare dell&apos;anno
-                    </p>
-                  </div>
-
-                  <div
-                    className={`rounded-2xl border p-4 shadow-sm ${cardSurfaceClass}`}
-                  >
-                    <span
-                      className={`text-[11px] font-semibold uppercase tracking-wide ${
-                        isDark ? 'text-slate-400' : 'text-slate-500'
-                      }`}
-                    >
-                      CFU Verbalizzati Anno
-                    </span>
-                    <div
-                      className={`text-2xl sm:text-3xl font-extrabold mt-1.5 ${
-                        isDark ? 'text-slate-50' : 'text-slate-900'
-                      }`}
-                    >
-                      {yearGradedCfu}{' '}
-                      <span
-                        className={`text-xs font-semibold ${
-                          isDark ? 'text-slate-400' : 'text-slate-500'
-                        }`}
-                      >
-                        / {yearTotalCfu} CFU
-                      </span>
-                    </div>
-                    <p
-                      className={`text-xs mt-1 ${
-                        isDark ? 'text-slate-400' : 'text-slate-500'
-                      }`}
-                    >
-                      {yearGradedSubjects.length} esami con voto registrato
-                    </p>
-                  </div>
-
-                  <div
-                    className={`rounded-2xl border p-4 shadow-sm ${cardSurfaceClass}`}
-                  >
-                    <span
-                      className={`text-[11px] font-semibold uppercase tracking-wide ${
-                        isDark ? 'text-slate-400' : 'text-slate-500'
-                      }`}
-                    >
-                      Blocchi Configurati
-                    </span>
-                    <div
-                      className={`text-2xl sm:text-3xl font-extrabold mt-1.5 ${
-                        isDark ? 'text-slate-50' : 'text-slate-900'
-                      }`}
-                    >
-                      {computedBlocks.length}
-                    </div>
-                    <p
-                      className={`text-xs mt-1 ${
-                        isDark ? 'text-slate-400' : 'text-slate-500'
-                      }`}
-                    >
-                      {
-                        computedBlocks.filter((b) => b.isBlockComplete).length
-                      }{' '}
-                      blocchi completi
-                    </p>
-                  </div>
-                </section>
-
-                {/* Form Aggiungi Nuovo Blocco per l'Anno Selezionato */}
-                <section
-                  className={`rounded-2xl border p-4 sm:p-5 shadow-sm ${cardSurfaceClass}`}
+          <section
+            className={`rounded-2xl border p-4 sm:p-5 shadow-sm ${cardSurfaceClass}`}
+          >
+            <form
+              onSubmit={handleAddMedBlock}
+              className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-end"
+            >
+              <div className="flex-1">
+                <label
+                  className={`block text-xs font-semibold mb-1 ${
+                    isDark ? 'text-slate-300' : 'text-slate-600'
+                  }`}
                 >
-                  <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
-                    <div>
-                      <h2
-                        className={`text-sm sm:text-base font-bold ${
-                          isDark ? 'text-slate-100' : 'text-slate-900'
-                        }`}
-                      >
-                        Nuovo Blocco — {selectedMedYear}° Anno
-                      </h2>
-                      <p
-                        className={`text-xs ${
-                          isDark ? 'text-slate-400' : 'text-slate-500'
-                        }`}
-                      >
-                        Crea un blocco integrato o d&apos;esame (es. &ldquo;Fisiologia&rdquo;,
-                        &ldquo;Patologia e Immunologia&rdquo;) e aggiungi le materie con i
-                        relativi CFU e voti
-                      </p>
-                    </div>
-                    {computedBlocks.length > 0 && (
-                      <button
-                        type="button"
-                        onClick={handleToggleAllCurrentBlocks}
-                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition cursor-pointer ${
-                          isDark
-                            ? 'bg-slate-800 border-slate-700 text-slate-200 hover:bg-slate-700'
-                            : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
-                        }`}
-                      >
-                        <ChevronsUpDown className="w-3.5 h-3.5" />
-                        <span>
-                          {areAllCurrentBlocksExpanded
-                            ? 'Comprimi tutti i blocchi'
-                            : 'Espandi tutti i blocchi'}
-                        </span>
-                      </button>
-                    )}
-                  </div>
+                  Nuovo Blocco / Corso Integrato ({selectedMedYear}° Anno)
+                </label>
+                <input
+                  type="text"
+                  placeholder="Es. Sistema Cardiovascolare, Neuroscienze, Anatomia I..."
+                  value={newBlockName}
+                  onChange={(e) => setNewBlockName(e.target.value)}
+                  required
+                  className={`w-full rounded-xl border px-3.5 py-2.5 text-sm ${inputMutedSurfaceClass}`}
+                />
+              </div>
+              <button
+                type="submit"
+                className="inline-flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold shadow-sm transition cursor-pointer shrink-0"
+              >
+                <Plus className="w-4 h-4" />
+                Aggiungi Blocco
+              </button>
+            </form>
+          </section>
 
-                  <form
-                    onSubmit={handleAddMedBlock}
-                    className="flex flex-col sm:flex-row gap-2.5"
-                  >
-                    <input
-                      type="text"
-                      placeholder={`Nome blocco ${selectedMedYear}° anno (es. Anatomia Umana, Biochimica...)`}
-                      value={newBlockName}
-                      onChange={(e) => setNewBlockName(e.target.value)}
-                      required
-                      className={`flex-1 rounded-xl border px-3.5 py-2.5 text-sm ${inputMutedSurfaceClass}`}
-                    />
-                    <button
-                      type="submit"
-                      className="inline-flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold shadow-sm transition cursor-pointer shrink-0"
-                    >
-                      <Plus className="w-4 h-4" />
-                      Aggiungi Blocco
-                    </button>
-                  </form>
-                </section>
+          {currentYearBlocks.length === 0 ? (
+            <section
+              className={`rounded-2xl border border-dashed p-10 text-center space-y-2 ${
+                isDark
+                  ? 'border-slate-800 bg-slate-900/40 text-slate-400'
+                  : 'border-slate-300 bg-white text-slate-500'
+              }`}
+            >
+              <GraduationCap
+                className={`w-8 h-8 mx-auto opacity-60 ${
+                  isDark ? 'text-indigo-400' : 'text-indigo-600'
+                }`}
+              />
+              <p className="text-sm font-semibold">
+                Nessun blocco configurato per il {selectedMedYear}° Anno
+              </p>
+              <p className="text-xs max-w-md mx-auto">
+                Aggiungi un blocco qui sopra (es. un corso integrato con più
+                materie/moduli) per calcolare il voto finale ponderato sui CFU.
+              </p>
+            </section>
+          ) : (
+            <div className="space-y-4">
+              {currentYearBlocks.map((block, blockIdx) => {
+                const isExpanded = Boolean(expandedBlocks[block.id]);
+                const subjects = block.subjects || [];
 
-                {/* Lista Blocchi dell'Anno Selezionato */}
-                {computedBlocks.length === 0 ? (
-                  <div
-                    className={`rounded-2xl border border-dashed p-10 text-center space-y-2 ${
-                      isDark
-                        ? 'border-slate-800 bg-slate-900/50 text-slate-400'
-                        : 'border-slate-200 bg-white text-slate-500'
+                const gradedSubjects = subjects.filter(
+                  (s) => s.grade !== null && s.grade !== undefined
+                );
+                const gradedCfu = gradedSubjects.reduce(
+                  (acc, s) => acc + Math.max(0, Number(s.cfu) || 0),
+                  0
+                );
+                const weightedSum = gradedSubjects.reduce(
+                  (acc, s) =>
+                    acc +
+                    Number(s.grade) * Math.max(0, Number(s.cfu) || 0),
+                  0
+                );
+                const totalBlockCfu = subjects.reduce(
+                  (acc, s) => acc + Math.max(0, Number(s.cfu) || 0),
+                  0
+                );
+                const allGraded =
+                  subjects.length > 0 &&
+                  gradedSubjects.length === subjects.length &&
+                  gradedCfu > 0;
+
+                const exactWeightedAvg =
+                  gradedCfu > 0 ? weightedSum / gradedCfu : null;
+                const roundedBlockGrade =
+                  exactWeightedAvg !== null
+                    ? Math.min(30, Math.max(18, Math.round(exactWeightedAvg)))
+                    : null;
+
+                const draft = newSubjectDrafts[block.id] || {
+                  name: '',
+                  cfu: '6',
+                  grade: '',
+                };
+
+                const isBlockBeingDragged = draggedBlockId === block.id;
+                const isBlockDropTarget =
+                  dragOverBlockIdx === blockIdx && draggedBlockId !== block.id;
+
+                return (
+                  <section
+                    key={block.id}
+                    draggable={blockDragReadyId === block.id}
+                    onDragStart={(e) => {
+                      setDraggedBlockId(block.id);
+                      e.dataTransfer.effectAllowed = 'move';
+                    }}
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      if (dragOverBlockIdx !== blockIdx) {
+                        setDragOverBlockIdx(blockIdx);
+                      }
+                    }}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleDropMedBlock(blockIdx);
+                    }}
+                    onDragEnd={() => {
+                      setDraggedBlockId(null);
+                      setDragOverBlockIdx(null);
+                      setBlockDragReadyId(null);
+                    }}
+                    className={`rounded-2xl border shadow-sm overflow-hidden transition-all ${cardSurfaceClass} ${
+                      isBlockBeingDragged ? 'opacity-45 scale-[0.99]' : ''
+                    } ${
+                      isBlockDropTarget
+                        ? `ring-2 ring-indigo-500 ring-offset-4 ${
+                            isDark
+                              ? 'ring-offset-slate-950'
+                              : 'ring-offset-slate-50'
+                          }`
+                        : ''
+                    } ${
+                      isBlockReorderMode
+                        ? isDark
+                          ? 'ring-2 ring-indigo-500/45'
+                          : 'ring-2 ring-indigo-300/80'
+                        : ''
                     }`}
                   >
-                    <p className="text-sm font-semibold">
-                      Nessun blocco inserito per il {selectedMedYear}° anno.
-                    </p>
-                    <p className="text-xs">
-                      Usa il modulo qui sopra per creare il primo blocco e
-                      calcolare il voto medio ponderato.
-                    </p>
-                  </div>
-                ) : (
-                  <section className="space-y-4">
-                    {computedBlocks.map((blk, blkIdx) => {
-                      const draft = newSubjectDrafts[blk.id] || {
-                        name: '',
-                        cfu: '6',
-                        grade: '',
-                      };
-                      const isExpanded = Boolean(expandedBlocks[blk.id]);
-                      const isDraggingThis = draggedBlockId === blk.id;
-                      const isDropTargetThis =
-                        dragOverBlockIdx === blkIdx &&
-                        draggedBlockId !== blk.id;
-
-                      return (
+                    <div
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => {
+                        if (editingBlockId !== block.id) {
+                          toggleBlockExpanded(block.id);
+                        }
+                      }}
+                      onKeyDown={(e) => {
+                        if (
+                          (e.key === 'Enter' || e.key === ' ') &&
+                          editingBlockId !== block.id
+                        ) {
+                          e.preventDefault();
+                          toggleBlockExpanded(block.id);
+                        }
+                      }}
+                      className={`p-4 sm:p-5 flex flex-wrap items-center justify-between gap-4 cursor-pointer select-none transition ${
+                        isDark
+                          ? 'hover:bg-slate-800/40'
+                          : 'hover:bg-slate-50/80'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0 flex-1">
                         <div
-                          key={blk.id}
-                          draggable={isBlockReorderMode && blockDragReadyId === blk.id}
-                          onDragStart={(e) => {
-                            setDraggedBlockId(blk.id);
-                            e.dataTransfer.effectAllowed = 'move';
-                          }}
-                          onDragOver={(e) => {
-                            if (!isBlockReorderMode) return;
-                            e.preventDefault();
-                            if (dragOverBlockIdx !== blkIdx) {
-                              setDragOverBlockIdx(blkIdx);
-                            }
-                          }}
-                          onDrop={(e) => {
-                            if (!isBlockReorderMode) return;
-                            e.preventDefault();
-                            handleDropMedBlock(blkIdx);
-                          }}
-                          onDragEnd={() => {
-                            setDraggedBlockId(null);
-                            setDragOverBlockIdx(null);
-                            setBlockDragReadyId(null);
-                          }}
-                          className={`rounded-2xl border p-4 sm:p-6 shadow-sm space-y-4 transition ${cardSurfaceClass} ${
-                            isDraggingThis ? 'opacity-45 scale-[0.99]' : ''
-                          } ${
-                            isDropTargetThis
-                              ? `ring-2 ring-indigo-500 ring-offset-4 ${
-                                  isDark
-                                    ? 'ring-offset-slate-950'
-                                    : 'ring-offset-slate-50'
-                                }`
-                              : ''
-                          } ${
-                            isBlockReorderMode
-                              ? isDark
-                                ? 'ring-2 ring-indigo-500/45'
-                                : 'ring-2 ring-indigo-300/80'
-                              : ''
+                          className={`p-1.5 rounded-lg transition-transform ${
+                            isDark
+                              ? 'bg-slate-800 text-slate-300'
+                              : 'bg-slate-100 text-slate-600'
                           }`}
                         >
-                          {/* Intestazione Blocco + Voto Blocco Calcolato */}
+                          {isExpanded ? (
+                            <ChevronDown className="w-4 h-4" />
+                          ) : (
+                            <ChevronRight className="w-4 h-4" />
+                          )}
+                        </div>
+
+                        {editingBlockId === block.id ? (
                           <div
-                            className={`flex flex-wrap items-start justify-between gap-4 ${
-                              isExpanded
-                                ? `pb-4 border-b ${
-                                    isDark
-                                      ? 'border-slate-800'
-                                      : 'border-slate-100'
-                                  }`
-                                : ''
-                            }`}
+                            className="flex items-center gap-2 flex-1 max-w-md"
+                            onClick={(e) => e.stopPropagation()}
                           >
-                            <div className="space-y-1 flex-1 min-w-[220px]">
-                              {editingBlockId === blk.id ? (
-                                <div className="flex items-center gap-2">
-                                  <input
-                                    type="text"
-                                    value={editingBlockTitle}
-                                    onChange={(e) =>
-                                      setEditingBlockTitle(e.target.value)
-                                    }
-                                    onKeyDown={(e) => {
-                                      if (e.key === 'Enter')
-                                        handleRenameMedBlock(
-                                          selectedMedYear,
-                                          blk.id
-                                        );
-                                      if (e.key === 'Escape')
-                                        setEditingBlockId(null);
-                                    }}
-                                    className={`rounded-xl border px-3 py-1.5 text-sm font-bold ${inputSurfaceClass}`}
-                                    autoFocus
-                                  />
-                                  <button
-                                    type="button"
-                                    onClick={() =>
-                                      handleRenameMedBlock(
-                                        selectedMedYear,
-                                        blk.id
-                                      )
-                                    }
-                                    className="p-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 cursor-pointer"
-                                    title="Salva nome blocco"
-                                  >
-                                    <Check className="w-4 h-4" />
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => setEditingBlockId(null)}
-                                    className={`p-2 rounded-lg border cursor-pointer ${
-                                      isDark
-                                        ? 'border-slate-700 text-slate-300 hover:bg-slate-800'
-                                        : 'border-slate-200 text-slate-600 hover:bg-slate-100'
-                                    }`}
-                                    title="Annulla"
-                                  >
-                                    <X className="w-4 h-4" />
-                                  </button>
-                                </div>
-                              ) : (
-                                <div className="flex items-center gap-2 flex-wrap">
-                                  <button
-                                    type="button"
-                                    onClick={() => toggleBlockExpanded(blk.id)}
-                                    className={`inline-flex items-center gap-2 text-left text-base sm:text-lg font-bold transition cursor-pointer ${
-                                      isDark
-                                        ? 'text-slate-100 hover:text-indigo-400'
-                                        : 'text-slate-900 hover:text-indigo-600'
-                                    }`}
-                                    title={
-                                      isExpanded
-                                        ? 'Comprimi materie del blocco'
-                                        : 'Espandi materie del blocco'
-                                    }
-                                  >
-                                    {isExpanded ? (
-                                      <ChevronDown className="w-4 h-4 shrink-0 text-indigo-500" />
-                                    ) : (
-                                      <ChevronRight className="w-4 h-4 shrink-0 text-indigo-500" />
-                                    )}
-                                    <span>{blk.name}</span>
-                                  </button>
-
-                                  <span
-                                    className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full ${
-                                      blk.isBlockComplete
-                                        ? isDark
-                                          ? 'bg-emerald-950/70 text-emerald-300 border border-emerald-800/70'
-                                          : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                                        : isDark
-                                        ? 'bg-slate-800 text-slate-300'
-                                        : 'bg-slate-100 text-slate-600'
-                                    }`}
-                                  >
-                                    {blk.gradedCount}/{blk.totalCount} materie ·{' '}
-                                    {blk.totalCfu} CFU
-                                  </span>
-                                </div>
-                              )}
-                              <p
-                                className={`text-xs pl-6 ${
-                                  isDark ? 'text-slate-400' : 'text-slate-500'
+                            <input
+                              type="text"
+                              value={editingBlockTitle}
+                              onChange={(e) =>
+                                setEditingBlockTitle(e.target.value)
+                              }
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter')
+                                  handleRenameMedBlock(
+                                    selectedMedYear,
+                                    block.id
+                                  );
+                                if (e.key === 'Escape')
+                                  setEditingBlockId(null);
+                              }}
+                              className={`flex-1 rounded-xl border px-3 py-1.5 text-sm font-bold ${inputSurfaceClass}`}
+                              autoFocus
+                            />
+                            <button
+                              type="button"
+                              onClick={() =>
+                                handleRenameMedBlock(selectedMedYear, block.id)
+                              }
+                              className="p-2 rounded-xl bg-emerald-600 text-white cursor-pointer"
+                              title="Salva nome blocco"
+                            >
+                              <Check className="w-4 h-4" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setEditingBlockId(null)}
+                              className={`p-2 rounded-xl border cursor-pointer ${
+                                isDark
+                                  ? 'bg-slate-800 border-slate-700 text-slate-300'
+                                  : 'bg-white border-slate-200 text-slate-600'
+                              }`}
+                              title="Annulla"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2">
+                              <h2
+                                className={`text-base sm:text-lg font-bold truncate ${
+                                  isDark ? 'text-slate-100' : 'text-slate-900'
                                 }`}
                               >
-                                {blk.gradedCfu > 0
-                                  ? `Media ponderata calcolata su ${blk.gradedCfu} CFU`
-                                  : 'Inserisci almeno un voto per calcolare il voto del blocco'}
-                              </p>
-                            </div>
-
-                            <div className="flex items-center gap-3">
-                              <div
-                                className={`px-3.5 py-2 rounded-xl border text-right ${
-                                  blk.blockAvg !== null
-                                    ? indigoPillClass
-                                    : isDark
-                                    ? 'bg-slate-800/70 border-slate-700 text-slate-400'
-                                    : 'bg-slate-50 border-slate-200 text-slate-500'
-                                }`}
-                              >
-                                <div className="text-[10px] font-bold uppercase tracking-wider opacity-80">
-                                  Voto Blocco
-                                </div>
-                                <div className="text-lg sm:text-xl font-black tabular-nums leading-tight">
-                                  {blk.blockAvg !== null ? (
-                                    <>
-                                      {blk.blockAvg.toFixed(2)}
-                                      <span className="text-xs font-bold ml-1">
-                                        /30
-                                        {blk.hasLode ? ' + Lode' : ''}
-                                      </span>
-                                    </>
-                                  ) : (
-                                    '— / 30'
-                                  )}
-                                </div>
-                              </div>
-
-                              {isBlockReorderMode && (
-                                <div
-                                  className={`inline-flex items-center gap-0.5 rounded-xl p-1 border ${
-                                    isDark
-                                      ? 'bg-indigo-950/80 border-indigo-700/90 text-indigo-300'
-                                      : 'bg-indigo-50/90 border-indigo-200 text-indigo-700'
-                                  }`}
-                                >
-                                  <button
-                                    type="button"
-                                    onClick={() => moveBlockUp(blkIdx)}
-                                    disabled={blkIdx === 0}
-                                    className={`p-1.5 rounded-lg disabled:opacity-30 disabled:pointer-events-none transition cursor-pointer ${
-                                      isDark
-                                        ? 'hover:bg-slate-700/80 hover:text-slate-100'
-                                        : 'hover:bg-white hover:text-slate-900'
-                                    }`}
-                                    title="Sposta blocco in alto"
-                                  >
-                                    <ArrowUp className="w-3.5 h-3.5" />
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => moveBlockDown(blkIdx)}
-                                    disabled={
-                                      blkIdx === computedBlocks.length - 1
-                                    }
-                                    className={`p-1.5 rounded-lg disabled:opacity-30 disabled:pointer-events-none transition cursor-pointer ${
-                                      isDark
-                                        ? 'hover:bg-slate-700/80 hover:text-slate-100'
-                                        : 'hover:bg-white hover:text-slate-900'
-                                    }`}
-                                    title="Sposta blocco in basso"
-                                  >
-                                    <ArrowDown className="w-3.5 h-3.5" />
-                                  </button>
-                                  <span
-                                    onMouseDown={() => setBlockDragReadyId(blk.id)}
-                                    onMouseUp={() => setBlockDragReadyId(null)}
-                                    onMouseLeave={() => setBlockDragReadyId(null)}
-                                    className={`p-1.5 rounded-lg cursor-grab active:cursor-grabbing transition ${
-                                      isDark
-                                        ? 'hover:bg-slate-700/80 hover:text-slate-100'
-                                        : 'hover:bg-white hover:text-slate-900'
-                                    }`}
-                                    title="Trascina per riordinare il blocco"
-                                  >
-                                    <GripVertical className="w-3.5 h-3.5" />
-                                  </span>
-                                </div>
-                              )}
-
+                                {block.name}
+                              </h2>
                               <button
                                 type="button"
-                                onClick={() => {
-                                  setEditingBlockId(blk.id);
-                                  setEditingBlockTitle(blk.name);
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setEditingBlockId(block.id);
+                                  setEditingBlockTitle(block.name);
                                 }}
-                                className={`p-2 rounded-xl border transition cursor-pointer ${
+                                className={`p-1.5 rounded-lg cursor-pointer ${
                                   isDark
-                                    ? 'border-slate-700 text-slate-300 hover:bg-slate-800'
-                                    : 'border-slate-200 text-slate-600 hover:bg-slate-50'
+                                    ? 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+                                    : 'text-slate-400 hover:text-slate-700 hover:bg-slate-100'
                                 }`}
                                 title="Rinomina blocco"
                               >
-                                <Edit3 className="w-4 h-4" />
-                              </button>
-
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  handleDeleteMedBlock(selectedMedYear, blk.id)
-                                }
-                                className={`p-2 rounded-xl border transition cursor-pointer ${
-                                  isDark
-                                    ? 'border-slate-700 text-rose-400 hover:bg-rose-950/60'
-                                    : 'border-slate-200 text-rose-600 hover:bg-rose-50'
-                                }`}
-                                title="Elimina blocco"
-                              >
-                                <Trash2 className="w-4 h-4" />
+                                <Edit3 className="w-3.5 h-3.5" />
                               </button>
                             </div>
+                            <p
+                              className={`text-xs ${
+                                isDark ? 'text-slate-400' : 'text-slate-500'
+                              }`}
+                            >
+                              {subjects.length}{' '}
+                              {subjects.length === 1 ? 'materia' : 'materie'} ·{' '}
+                              {totalBlockCfu} CFU totali ·{' '}
+                              <span className="font-medium">
+                                {isExpanded
+                                  ? 'Clicca per comprimere'
+                                  : 'Clicca per espandere'}
+                              </span>
+                            </p>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="flex items-center gap-3 shrink-0">
+                        <div
+                          className={`rounded-xl px-4 py-2.5 border text-right ${
+                            allGraded
+                              ? isDark
+                                ? 'bg-emerald-950/50 border-emerald-800/70'
+                                : 'bg-emerald-50 border-emerald-200'
+                              : exactWeightedAvg !== null
+                              ? indigoPillClass
+                              : subPanelClass
+                          }`}
+                        >
+                          <div
+                            className={`text-[10px] font-bold uppercase tracking-wider ${
+                              allGraded
+                                ? isDark
+                                  ? 'text-emerald-300'
+                                  : 'text-emerald-700'
+                                : isDark
+                                ? 'text-slate-400'
+                                : 'text-slate-500'
+                            }`}
+                          >
+                            {allGraded
+                              ? 'Voto Blocco Finale'
+                              : 'Media Parziale'}
+                          </div>
+                          {exactWeightedAvg !== null ? (
+                            <div className="flex items-baseline justify-end gap-2 mt-0.5">
+                              <span
+                                className={`text-xl sm:text-2xl font-extrabold ${
+                                  allGraded
+                                    ? isDark
+                                      ? 'text-emerald-300'
+                                      : 'text-emerald-800'
+                                    : isDark
+                                    ? 'text-indigo-300'
+                                    : 'text-indigo-700'
+                                }`}
+                              >
+                                {roundedBlockGrade}/30
+                              </span>
+                              <span
+                                className={`text-xs font-semibold ${
+                                  isDark ? 'text-slate-400' : 'text-slate-500'
+                                }`}
+                              >
+                                (media {exactWeightedAvg.toFixed(2)})
+                              </span>
+                            </div>
+                          ) : (
+                            <div
+                              className={`text-sm font-bold mt-0.5 ${
+                                isDark ? 'text-slate-400' : 'text-slate-500'
+                              }`}
+                            >
+                              — / 30
+                            </div>
+                          )}
+                        </div>
+
+                        <div
+                          role="group"
+                          aria-label="Controlli ordine blocco"
+                          onClick={(e) => e.stopPropagation()}
+                          className={`inline-flex items-center gap-0.5 rounded-xl p-1 border transition-colors ${
+                            isBlockReorderMode
+                              ? isDark
+                                ? 'bg-indigo-950/80 border-indigo-700/90 text-indigo-300'
+                                : 'bg-indigo-50/90 border-indigo-200 text-indigo-700'
+                              : isDark
+                              ? 'bg-slate-800/80 border-slate-700/80 text-slate-400'
+                              : 'bg-slate-100/80 border-slate-200/80 text-slate-500'
+                          }`}
+                        >
+                          <button
+                            type="button"
+                            onClick={() => moveBlockUp(blockIdx)}
+                            disabled={blockIdx === 0}
+                            className={`p-1.5 rounded-lg disabled:opacity-30 disabled:pointer-events-none transition cursor-pointer ${
+                              isDark
+                                ? 'hover:bg-slate-700 hover:text-slate-100'
+                                : 'hover:bg-white hover:text-slate-900'
+                            }`}
+                            title="Sposta blocco in alto"
+                          >
+                            <ArrowUp className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => moveBlockDown(blockIdx)}
+                            disabled={blockIdx === currentYearBlocks.length - 1}
+                            className={`p-1.5 rounded-lg disabled:opacity-30 disabled:pointer-events-none transition cursor-pointer ${
+                              isDark
+                                ? 'hover:bg-slate-700 hover:text-slate-100'
+                                : 'hover:bg-white hover:text-slate-900'
+                            }`}
+                            title="Sposta blocco in basso"
+                          >
+                            <ArrowDown className="w-3.5 h-3.5" />
+                          </button>
+                          <span
+                            onMouseDown={() => setBlockDragReadyId(block.id)}
+                            onMouseUp={() => setBlockDragReadyId(null)}
+                            onMouseLeave={() => setBlockDragReadyId(null)}
+                            className={`p-1.5 rounded-lg cursor-grab active:cursor-grabbing transition ${
+                              isDark
+                                ? 'hover:bg-slate-700 hover:text-slate-100'
+                                : 'hover:bg-white hover:text-slate-900'
+                            }`}
+                            title="Trascina per riordinare blocco"
+                          >
+                            <GripVertical className="w-3.5 h-3.5" />
+                          </span>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteMedBlock(selectedMedYear, block.id);
+                          }}
+                          className={`p-2 rounded-xl transition cursor-pointer ${
+                            isDark
+                              ? 'text-slate-500 hover:text-rose-400 hover:bg-rose-950/60'
+                              : 'text-slate-400 hover:text-rose-600 hover:bg-rose-50'
+                          }`}
+                          title="Elimina blocco"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+
+                    {isExpanded && (
+                      <div
+                        className={`px-4 sm:px-5 pb-5 pt-4 border-t space-y-4 ${
+                          isDark ? 'border-slate-800' : 'border-slate-100'
+                        }`}
+                      >
+                        <form
+                          onSubmit={(e) =>
+                            handleAddMedSubject(e, selectedMedYear, block.id)
+                          }
+                          className="grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-end"
+                        >
+                          <div className="sm:col-span-6">
+                            <label
+                              className={`block text-[11px] font-semibold mb-1 ${
+                                isDark ? 'text-slate-300' : 'text-slate-600'
+                              }`}
+                            >
+                              Materia / Modulo del blocco
+                            </label>
+                            <input
+                              type="text"
+                              placeholder="Es. Fisiologia Cardiovascolare"
+                              value={draft.name}
+                              onChange={(e) =>
+                                setNewSubjectDrafts((prev) => ({
+                                  ...prev,
+                                  [block.id]: {
+                                    ...draft,
+                                    name: e.target.value,
+                                  },
+                                }))
+                              }
+                              required
+                              className={`w-full rounded-xl border px-3 py-2 text-xs sm:text-sm ${inputMutedSurfaceClass}`}
+                            />
                           </div>
 
-                          {/* Contenuto Espandibile del Blocco */}
-                          {isExpanded && (
-                            <div className="space-y-4">
-                              {/* Form Aggiungi Materia al Blocco */}
-                              <form
-                                onSubmit={(e) =>
-                                  handleAddMedSubject(e, selectedMedYear, blk.id)
-                                }
-                                className="grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-end"
-                              >
-                                <div className="sm:col-span-6">
-                                  <label
-                                    className={`block text-[11px] font-semibold mb-1 ${
-                                      isDark
-                                        ? 'text-slate-300'
-                                        : 'text-slate-600'
-                                    }`}
-                                  >
-                                    Materia / Modulo
-                                  </label>
-                                  <input
-                                    type="text"
-                                    placeholder="Es. Fisiologia Cardiovascolare"
-                                    value={draft.name}
-                                    onChange={(e) =>
-                                      setNewSubjectDrafts((prev) => ({
-                                        ...prev,
-                                        [blk.id]: {
-                                          ...draft,
-                                          name: e.target.value,
-                                        },
-                                      }))
-                                    }
-                                    required
-                                    className={`w-full rounded-xl border px-3 py-2 text-xs sm:text-sm ${inputMutedSurfaceClass}`}
-                                  />
-                                </div>
+                          <div className="sm:col-span-2">
+                            <label
+                              className={`block text-[11px] font-semibold mb-1 ${
+                                isDark ? 'text-slate-300' : 'text-slate-600'
+                              }`}
+                            >
+                              CFU
+                            </label>
+                            <input
+                              type="number"
+                              min="0.5"
+                              max="30"
+                              step="0.5"
+                              value={draft.cfu}
+                              onChange={(e) =>
+                                setNewSubjectDrafts((prev) => ({
+                                  ...prev,
+                                  [block.id]: {
+                                    ...draft,
+                                    cfu: e.target.value,
+                                  },
+                                }))
+                              }
+                              required
+                              className={`w-full rounded-xl border px-3 py-2 text-xs sm:text-sm font-semibold ${inputMutedSurfaceClass}`}
+                            />
+                          </div>
 
-                                <div className="sm:col-span-2">
-                                  <label
-                                    className={`block text-[11px] font-semibold mb-1 ${
-                                      isDark
-                                        ? 'text-slate-300'
-                                        : 'text-slate-600'
-                                    }`}
-                                  >
-                                    CFU
-                                  </label>
-                                  <input
-                                    type="number"
-                                    min="0.5"
-                                    step="0.5"
-                                    value={draft.cfu}
-                                    onChange={(e) =>
-                                      setNewSubjectDrafts((prev) => ({
-                                        ...prev,
-                                        [blk.id]: {
-                                          ...draft,
-                                          cfu: e.target.value,
-                                        },
-                                      }))
-                                    }
-                                    required
-                                    className={`w-full rounded-xl border px-3 py-2 text-xs sm:text-sm font-semibold ${inputMutedSurfaceClass}`}
-                                  />
-                                </div>
+                          <div className="sm:col-span-2">
+                            <label
+                              className={`block text-[11px] font-semibold mb-1 ${
+                                isDark ? 'text-slate-300' : 'text-slate-600'
+                              }`}
+                            >
+                              Voto
+                            </label>
+                            <select
+                              value={draft.grade}
+                              onChange={(e) =>
+                                setNewSubjectDrafts((prev) => ({
+                                  ...prev,
+                                  [block.id]: {
+                                    ...draft,
+                                    grade: e.target.value,
+                                  },
+                                }))
+                              }
+                              className={`w-full rounded-xl border pl-2.5 pr-6 py-2 text-xs sm:text-sm font-semibold ${inputMutedSurfaceClass}`}
+                            >
+                              <option value="">Da fare</option>
+                              {Array.from({ length: 13 }, (_, idx) => 18 + idx).map(
+                                (v) => (
+                                  <option key={v} value={String(v)}>
+                                    {v}
+                                  </option>
+                                )
+                              )}
+                              <option value="30L">30 e Lode</option>
+                            </select>
+                          </div>
 
-                                <div className="sm:col-span-2">
-                                  <label
-                                    className={`block text-[11px] font-semibold mb-1 ${
-                                      isDark
-                                        ? 'text-slate-300'
-                                        : 'text-slate-600'
-                                    }`}
-                                  >
-                                    Voto
-                                  </label>
-                                  <select
-                                    value={draft.grade}
-                                    onChange={(e) =>
-                                      setNewSubjectDrafts((prev) => ({
-                                        ...prev,
-                                        [blk.id]: {
-                                          ...draft,
-                                          grade: e.target.value,
-                                        },
-                                      }))
-                                    }
-                                    className={`w-full rounded-xl border px-2.5 py-2 text-xs sm:text-sm font-semibold ${inputMutedSurfaceClass}`}
-                                  >
-                                    <option value="">Da fare</option>
-                                    {Array.from(
-                                      { length: 13 },
-                                      (_, i) => 18 + i
-                                    ).map((g) => (
-                                      <option key={g} value={String(g)}>
-                                        {g} / 30
-                                      </option>
-                                    ))}
-                                    <option value="30L">30 e Lode</option>
-                                  </select>
-                                </div>
+                          <div className="sm:col-span-2">
+                            <button
+                              type="submit"
+                              className="w-full inline-flex items-center justify-center gap-1 px-3 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-semibold shadow-sm transition cursor-pointer"
+                            >
+                              <Plus className="w-4 h-4" />
+                              Aggiungi
+                            </button>
+                          </div>
+                        </form>
 
-                                <div className="sm:col-span-2">
-                                  <button
-                                    type="submit"
-                                    className="w-full inline-flex items-center justify-center gap-1 px-3 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-semibold shadow-sm transition cursor-pointer"
-                                  >
-                                    <Plus className="w-4 h-4" />
-                                    Materia
-                                  </button>
-                                </div>
-                              </form>
-
-                              {/* Tabella Materie del Blocco */}
-                              {(blk.subjects || []).length === 0 ? (
-                                <div
-                                  className={`rounded-xl border border-dashed p-4 text-center text-xs ${
+                        {subjects.length === 0 ? (
+                          <div
+                            className={`rounded-xl border border-dashed p-5 text-center text-xs ${
+                              isDark
+                                ? 'border-slate-800 text-slate-400'
+                                : 'border-slate-200 text-slate-500'
+                            }`}
+                          >
+                            Nessuna materia in questo blocco. Aggiungi le materie
+                            sopra per calcolare il voto ponderato.
+                          </div>
+                        ) : (
+                          <div className="overflow-x-auto">
+                            <table className="w-full text-left border-collapse text-sm min-w-[460px]">
+                              <thead>
+                                <tr
+                                  className={`border-b text-xs ${
                                     isDark
                                       ? 'border-slate-800 text-slate-400'
                                       : 'border-slate-200 text-slate-500'
                                   }`}
                                 >
-                                  Nessuna materia in questo blocco. Aggiungine
-                                  una qui sopra.
-                                </div>
-                              ) : (
-                                <div className="overflow-x-auto">
-                                  <table className="w-full text-left border-collapse text-sm min-w-[460px]">
-                                    <thead>
-                                      <tr
-                                        className={`border-b text-xs ${
-                                          isDark
-                                            ? 'border-slate-800 text-slate-400'
-                                            : 'border-slate-200 text-slate-500'
-                                        }`}
-                                      >
-                                        <th className="py-2 font-semibold">
-                                          Materia
-                                        </th>
-                                        <th className="py-2 font-semibold w-24">
-                                          CFU
-                                        </th>
-                                        <th className="py-2 font-semibold w-36">
-                                          Voto
-                                        </th>
-                                        <th className="py-2 font-semibold text-right w-14">
-                                          Elimina
-                                        </th>
-                                      </tr>
-                                    </thead>
-                                    <tbody
-                                      className={`divide-y ${
+                                  <th className="py-2 font-semibold">Materia</th>
+                                  <th className="py-2 font-semibold w-28">
+                                    CFU
+                                  </th>
+                                  <th className="py-2 font-semibold w-36">
+                                    Voto
+                                  </th>
+                                  <th className="py-2 font-semibold w-24">
+                                    Lode
+                                  </th>
+                                  <th className="py-2 font-semibold text-right w-16">
+                                    Elimina
+                                  </th>
+                                </tr>
+                              </thead>
+                              <tbody
+                                className={`divide-y ${
+                                  isDark
+                                    ? 'divide-slate-800/80'
+                                    : 'divide-slate-100'
+                                }`}
+                              >
+                                {subjects.map((sub) => {
+                                  const gradeSelectValue =
+                                    sub.grade === null ||
+                                    sub.grade === undefined
+                                      ? ''
+                                      : String(sub.grade);
+                                  const isThirty = Number(sub.grade) === 30;
+
+                                  return (
+                                    <tr
+                                      key={sub.id}
+                                      className={`transition ${
                                         isDark
-                                          ? 'divide-slate-800/80'
-                                          : 'divide-slate-100'
+                                          ? 'hover:bg-slate-800/50'
+                                          : 'hover:bg-slate-50/80'
                                       }`}
                                     >
-                                      {(blk.subjects || []).map((sub) => {
-                                        const selectVal =
-                                          sub.grade === null ||
-                                          sub.grade === undefined
-                                            ? ''
-                                            : sub.lode
-                                            ? '30L'
-                                            : String(sub.grade);
-
-                                        return (
-                                          <tr
-                                            key={sub.id}
-                                            className={`transition ${
-                                              isDark
-                                                ? 'hover:bg-slate-800/50'
-                                                : 'hover:bg-slate-50/80'
-                                            }`}
-                                          >
-                                            <td
-                                              className={`py-2.5 pr-3 font-medium ${
-                                                isDark
-                                                  ? 'text-slate-100'
-                                                  : 'text-slate-900'
-                                              }`}
-                                            >
-                                              {sub.name}
-                                            </td>
-                                            <td className="py-2.5 pr-2">
-                                              <input
-                                                type="number"
-                                                min="0.5"
-                                                step="0.5"
-                                                value={sub.cfu}
-                                                onChange={(e) =>
-                                                  handleUpdateMedSubject(
-                                                    selectedMedYear,
-                                                    blk.id,
-                                                    sub.id,
-                                                    {
-                                                      cfu: Math.max(
-                                                        0.5,
-                                                        Number(e.target.value) ||
-                                                          0.5
-                                                      ),
-                                                    }
-                                                  )
+                                      <td className="py-2.5 pr-3">
+                                        <input
+                                          type="text"
+                                          value={sub.name}
+                                          onChange={(e) =>
+                                            handleUpdateMedSubject(
+                                              selectedMedYear,
+                                              block.id,
+                                              sub.id,
+                                              { name: e.target.value }
+                                            )
+                                          }
+                                          className={`w-full rounded-lg border px-2.5 py-1.5 text-xs sm:text-sm font-medium ${inputSurfaceClass}`}
+                                        />
+                                      </td>
+                                      <td className="py-2.5 pr-3">
+                                        <input
+                                          type="number"
+                                          min="0.5"
+                                          max="30"
+                                          step="0.5"
+                                          value={sub.cfu}
+                                          onChange={(e) =>
+                                            handleUpdateMedSubject(
+                                              selectedMedYear,
+                                              block.id,
+                                              sub.id,
+                                              {
+                                                cfu: Math.max(
+                                                  0.5,
+                                                  Number(e.target.value) || 0.5
+                                                ),
+                                              }
+                                            )
+                                          }
+                                          className={`w-24 rounded-lg border px-2.5 py-1.5 text-xs sm:text-sm font-semibold ${inputSurfaceClass}`}
+                                        />
+                                      </td>
+                                      <td className="py-2.5 pr-3">
+                                        <select
+                                          value={gradeSelectValue}
+                                          onChange={(e) => {
+                                            const val = e.target.value;
+                                            if (val === '') {
+                                              handleUpdateMedSubject(
+                                                selectedMedYear,
+                                                block.id,
+                                                sub.id,
+                                                { grade: null, lode: false }
+                                              );
+                                            } else {
+                                              const num = Number(val);
+                                              handleUpdateMedSubject(
+                                                selectedMedYear,
+                                                block.id,
+                                                sub.id,
+                                                {
+                                                  grade: num,
+                                                  lode:
+                                                    num === 30
+                                                      ? Boolean(sub.lode)
+                                                      : false,
                                                 }
-                                                className={`w-20 rounded-lg border px-2 py-1 text-xs font-semibold ${inputMutedSurfaceClass}`}
-                                              />
-                                            </td>
-                                            <td className="py-2.5 pr-2">
-                                              <select
-                                                value={selectVal}
-                                                onChange={(e) => {
-                                                  const v = e.target.value;
-                                                  if (v === '') {
-                                                    handleUpdateMedSubject(
-                                                      selectedMedYear,
-                                                      blk.id,
-                                                      sub.id,
-                                                      {
-                                                        grade: null,
-                                                        lode: false,
-                                                      }
-                                                    );
-                                                  } else if (v === '30L') {
-                                                    handleUpdateMedSubject(
-                                                      selectedMedYear,
-                                                      blk.id,
-                                                      sub.id,
-                                                      {
-                                                        grade: 30,
-                                                        lode: true,
-                                                      }
-                                                    );
-                                                  } else {
-                                                    handleUpdateMedSubject(
-                                                      selectedMedYear,
-                                                      blk.id,
-                                                      sub.id,
-                                                      {
-                                                        grade: Number(v),
-                                                        lode: false,
-                                                      }
-                                                    );
-                                                  }
-                                                }}
-                                                className={`w-32 rounded-lg border px-2 py-1 text-xs font-semibold ${inputMutedSurfaceClass}`}
-                                              >
-                                                <option value="">Da fare</option>
-                                                {Array.from(
-                                                  { length: 13 },
-                                                  (_, i) => 18 + i
-                                                ).map((g) => (
-                                                  <option
-                                                    key={g}
-                                                    value={String(g)}
-                                                  >
-                                                    {g} / 30
-                                                  </option>
-                                                ))}
-                                                <option value="30L">
-                                                  30 e Lode
-                                                </option>
-                                              </select>
-                                            </td>
-                                            <td className="py-2.5 text-right">
-                                              <button
-                                                type="button"
-                                                onClick={() =>
-                                                  handleDeleteMedSubject(
-                                                    selectedMedYear,
-                                                    blk.id,
-                                                    sub.id
-                                                  )
-                                                }
-                                                className={`p-1.5 rounded-lg cursor-pointer ${
-                                                  isDark
-                                                    ? 'text-slate-400 hover:text-rose-400 hover:bg-rose-950/60'
-                                                    : 'text-slate-400 hover:text-rose-600 hover:bg-rose-50'
-                                                }`}
-                                                title="Elimina materia"
-                                              >
-                                                <Trash2 className="w-4 h-4" />
-                                              </button>
-                                            </td>
-                                          </tr>
-                                        );
-                                      })}
-                                    </tbody>
-                                  </table>
-                                </div>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
+                                              );
+                                            }
+                                          }}
+                                          className={`w-28 rounded-lg border pl-2.5 pr-6 py-1.5 text-xs sm:text-sm font-semibold ${inputSurfaceClass}`}
+                                        >
+                                          <option value="">Da fare</option>
+                                          {Array.from(
+                                            { length: 13 },
+                                            (_, idx) => 18 + idx
+                                          ).map((v) => (
+                                            <option key={v} value={String(v)}>
+                                              {v}
+                                            </option>
+                                          ))}
+                                        </select>
+                                      </td>
+                                      <td className="py-2.5 pr-3">
+                                        <label
+                                          className={`inline-flex items-center gap-1.5 text-xs font-semibold select-none ${
+                                            isThirty
+                                              ? 'cursor-pointer'
+                                              : 'opacity-35 pointer-events-none'
+                                          }`}
+                                          title={
+                                            isThirty
+                                              ? 'Segna 30 e Lode'
+                                              : 'Disponibile con voto 30'
+                                          }
+                                        >
+                                          <input
+                                            type="checkbox"
+                                            checked={Boolean(sub.lode)}
+                                            disabled={!isThirty}
+                                            onChange={(e) =>
+                                              handleUpdateMedSubject(
+                                                selectedMedYear,
+                                                block.id,
+                                                sub.id,
+                                                { lode: e.target.checked }
+                                              )
+                                            }
+                                            className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                                          />
+                                          <span>Lode</span>
+                                        </label>
+                                      </td>
+                                      <td className="py-2.5 text-right">
+                                        <button
+                                          type="button"
+                                          onClick={() =>
+                                            handleDeleteMedSubject(
+                                              selectedMedYear,
+                                              block.id,
+                                              sub.id
+                                            )
+                                          }
+                                          className={`p-2 rounded-lg cursor-pointer ${
+                                            isDark
+                                              ? 'text-slate-500 hover:text-rose-400 hover:bg-rose-950/60'
+                                              : 'text-slate-400 hover:text-rose-600 hover:bg-rose-50'
+                                          }`}
+                                          title="Elimina materia"
+                                        >
+                                          <Trash2 className="w-4 h-4" />
+                                        </button>
+                                      </td>
+                                    </tr>
+                                  );
+                                })}
+                              </tbody>
+                            </table>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </section>
-                )}
-              </>
-            );
-          })()}
+                );
+              })}
+            </div>
+          )}
         </main>
       )}
     </div>
