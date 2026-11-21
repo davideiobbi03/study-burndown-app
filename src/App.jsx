@@ -6104,7 +6104,7 @@ export default function App() {
         </section>
       )}
 
-      {/* --- HEADER FULL-WIDTH CON ALTEZZA UNIFORME TRA LE SEZIONI --- */}
+      {/* --- HEADER FULL-WIDTH CON ALTEZZA E POSIZIONE NAVIGAZIONE FISSE --- */}
       <header
         className={`border-b sticky top-0 z-30 w-full transition-colors duration-200 ${
           isDark
@@ -6112,8 +6112,9 @@ export default function App() {
             : 'bg-white border-slate-200 shadow-sm'
         }`}
       >
-        <div className="w-full min-h-[68px] px-3 sm:px-6 lg:px-8 py-3 flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+        <div className="w-full min-h-[68px] px-3 sm:px-6 lg:px-8 py-3 flex flex-wrap lg:flex-nowrap items-center justify-between gap-2 sm:gap-3">
+          {/* LATO SINISTRO: ICONA + TITOLO */}
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
             <div className="bg-indigo-600 text-white p-2 rounded-xl shadow-sm shrink-0">
               {activeTab === 'tracker' ? (
                 <BookOpen className="w-5 h-5" />
@@ -6232,83 +6233,14 @@ export default function App() {
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 min-h-[36px]">
-            {pomoRunning && (
-              <button
-                type="button"
-                onClick={enterZenFullscreen}
-                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-bold bg-emerald-700 hover:bg-emerald-800 text-white shadow-sm transition cursor-pointer"
-                title="Apri Sezione Zen a tutto schermo"
-              >
-                <Sparkles className="w-3.5 h-3.5" />
-                <span className="tabular-nums">
-                  {pomoMinutesDisplay}:{pomoSecondsDisplay}
-                </span>
-              </button>
-            )}
-
-            <div
-              className={`inline-flex rounded-xl p-1 border ${
-                isDark
-                  ? 'bg-slate-800 border-slate-700'
-                  : 'bg-slate-100 border-slate-200/80'
-              }`}
-            >
-              <button
-                type="button"
-                onClick={() => handleSwitchTab('tracker')}
-                className={`inline-flex items-center gap-1 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
-                  activeTab === 'tracker'
-                    ? isDark
-                      ? 'bg-slate-900 text-indigo-400 shadow-sm'
-                      : 'bg-white text-indigo-600 shadow-sm'
-                    : isDark
-                    ? 'text-slate-400 hover:text-slate-200'
-                    : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                <BookOpen className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Tracker Studio</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => handleSwitchTab('libretto')}
-                className={`inline-flex items-center gap-1 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
-                  activeTab === 'libretto'
-                    ? isDark
-                      ? 'bg-slate-900 text-indigo-400 shadow-sm'
-                      : 'bg-white text-indigo-600 shadow-sm'
-                    : isDark
-                    ? 'text-slate-400 hover:text-slate-200'
-                    : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                <GraduationCap className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Voti Blocchi</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => handleSwitchTab('tirocinio')}
-                className={`inline-flex items-center gap-1 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
-                  activeTab === 'tirocinio'
-                    ? isDark
-                      ? 'bg-slate-900 text-indigo-400 shadow-sm'
-                      : 'bg-white text-indigo-600 shadow-sm'
-                    : isDark
-                    ? 'text-slate-400 hover:text-slate-200'
-                    : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                <Stethoscope className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Tirocini</span>
-              </button>
-            </div>
-
+          {/* LATO DESTRO: CONTROLLI CONTESTUALI (A SINISTRA) + BLOCCO FISSO (ALL'ESTREMA DESTRA) */}
+          <div className="flex flex-wrap lg:flex-nowrap items-center justify-end gap-1.5 sm:gap-2 min-h-[36px] shrink-0">
+            {/* Controlli specifici della vista corrente */}
             {undoStack.length > 0 && (
               <button
                 type="button"
                 onClick={handleUndo}
-                className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-medium border transition cursor-pointer ${
+                className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-medium border transition cursor-pointer shrink-0 ${
                   isDark
                     ? 'text-slate-300 bg-slate-800 hover:bg-slate-700 border-slate-700'
                     : 'text-slate-600 bg-slate-100 hover:bg-slate-200 border-slate-200'
@@ -6316,70 +6248,15 @@ export default function App() {
                 title="Annulla ultima modifica"
               >
                 <Undo2 className="w-3.5 h-3.5" />
-                <span className="hidden md:inline">Annulla</span>
+                <span className="hidden xl:inline">Annulla</span>
               </button>
             )}
-
-            <button
-              type="button"
-              onClick={() => setShowCloudModal(true)}
-              className={`inline-flex items-center gap-1 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-semibold border transition cursor-pointer ${
-                cloudSession?.access_token
-                  ? cloudStatus === 'error'
-                    ? isDark
-                      ? 'bg-rose-950/70 text-rose-300 border-rose-800'
-                      : 'bg-rose-50 text-rose-700 border-rose-200'
-                    : isDark
-                    ? 'bg-emerald-950/70 text-emerald-300 border-emerald-800/80'
-                    : 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                  : isDark
-                  ? 'text-slate-300 bg-slate-800 hover:bg-slate-700 border-slate-700'
-                  : 'text-slate-700 bg-white hover:bg-slate-50 border-slate-200'
-              }`}
-              title="Sincronizzazione Cloud"
-            >
-              {cloudSession?.access_token ? (
-                cloudStatus === 'syncing' ? (
-                  <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                ) : cloudStatus === 'error' ? (
-                  <CloudOff className="w-3.5 h-3.5" />
-                ) : (
-                  <Cloud className="w-3.5 h-3.5" />
-                )
-              ) : (
-                <Cloud className="w-3.5 h-3.5" />
-              )}
-              <span className="hidden sm:inline">
-                {cloudSession?.access_token
-                  ? cloudStatus === 'syncing'
-                    ? 'Sync...'
-                    : 'Cloud'
-                  : 'Cloud'}
-              </span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setIsDark((d) => !d)}
-              className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-semibold border transition cursor-pointer ${
-                isDark
-                  ? 'bg-slate-800 text-amber-300 border-slate-700 hover:bg-slate-700'
-                  : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
-              }`}
-              title="Cambia tema"
-            >
-              {isDark ? (
-                <Sun className="w-3.5 h-3.5" />
-              ) : (
-                <Moon className="w-3.5 h-3.5" />
-              )}
-            </button>
 
             {activeTab === 'libretto' && (
               <button
                 type="button"
                 onClick={() => setIsBlockReorderMode((v) => !v)}
-                className={`inline-flex items-center gap-1 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-semibold border transition cursor-pointer ${
+                className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-semibold border transition cursor-pointer shrink-0 ${
                   isBlockReorderMode
                     ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
                     : isDark
@@ -6389,7 +6266,7 @@ export default function App() {
                 title="Ordina blocchi"
               >
                 <LayoutGrid className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">
+                <span className="hidden xl:inline">
                   {isBlockReorderMode ? 'Fine' : 'Ordina blocchi'}
                 </span>
               </button>
@@ -6400,7 +6277,7 @@ export default function App() {
                 <button
                   type="button"
                   onClick={() => setIsReorderMode((v) => !v)}
-                  className={`inline-flex items-center gap-1 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-semibold border transition cursor-pointer ${
+                  className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-semibold border transition cursor-pointer shrink-0 ${
                     isReorderMode
                       ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
                       : isCustomLayout
@@ -6412,7 +6289,7 @@ export default function App() {
                   title="Ordina sezioni"
                 >
                   <LayoutGrid className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">
+                  <span className="hidden xl:inline">
                     {isReorderMode ? 'Fine' : 'Ordina sezioni'}
                   </span>
                 </button>
@@ -6428,7 +6305,7 @@ export default function App() {
                     setIsRenamingHeader(false);
                     setConfirmReset(false);
                   }}
-                  className={`rounded-xl border text-xs sm:text-sm font-medium pl-2.5 pr-6 py-1.5 max-w-[140px] sm:max-w-[200px] truncate ${
+                  className={`rounded-xl border text-xs font-medium pl-2.5 pr-6 py-1.5 max-w-[125px] sm:max-w-[155px] truncate shrink-0 ${
                     isDark
                       ? 'border-slate-700 bg-slate-800 text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500'
                       : 'border-slate-300 bg-slate-50 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500'
@@ -6444,16 +6321,17 @@ export default function App() {
                 <button
                   type="button"
                   onClick={handleCreateExam}
-                  className="inline-flex items-center gap-1 px-2.5 sm:px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-semibold shadow-sm transition cursor-pointer"
+                  className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shadow-sm transition cursor-pointer shrink-0"
+                  title="Nuovo esame"
                 >
-                  <Plus className="w-4 h-4" />
+                  <Plus className="w-3.5 h-3.5" />
                   <span className="hidden sm:inline">Nuovo</span>
                 </button>
 
                 <button
                   type="button"
                   onClick={handleDuplicateExam}
-                  className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-medium border transition cursor-pointer ${
+                  className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-medium border transition cursor-pointer shrink-0 ${
                     isDark
                       ? 'text-slate-300 bg-slate-800 hover:bg-slate-700 border-slate-700'
                       : 'text-slate-700 bg-white hover:bg-slate-50 border-slate-200'
@@ -6464,6 +6342,135 @@ export default function App() {
                 </button>
               </>
             )}
+
+            {/* BLOCCO NAVIGAZIONE GLOBALE FISSO ALL'ESTREMA DESTRA */}
+            <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+              {pomoRunning && (
+                <button
+                  type="button"
+                  onClick={enterZenFullscreen}
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-bold bg-emerald-700 hover:bg-emerald-800 text-white shadow-sm transition cursor-pointer"
+                  title="Apri Sezione Zen a tutto schermo"
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span className="tabular-nums">
+                    {pomoMinutesDisplay}:{pomoSecondsDisplay}
+                  </span>
+                </button>
+              )}
+
+              <div
+                className={`inline-flex rounded-xl p-1 border ${
+                  isDark
+                    ? 'bg-slate-800 border-slate-700'
+                    : 'bg-slate-100 border-slate-200/80'
+                }`}
+              >
+                <button
+                  type="button"
+                  onClick={() => handleSwitchTab('tracker')}
+                  className={`inline-flex items-center gap-1 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
+                    activeTab === 'tracker'
+                      ? isDark
+                        ? 'bg-slate-900 text-indigo-400 shadow-sm'
+                        : 'bg-white text-indigo-600 shadow-sm'
+                      : isDark
+                      ? 'text-slate-400 hover:text-slate-200'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  <BookOpen className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Tracker Studio</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleSwitchTab('libretto')}
+                  className={`inline-flex items-center gap-1 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
+                    activeTab === 'libretto'
+                      ? isDark
+                        ? 'bg-slate-900 text-indigo-400 shadow-sm'
+                        : 'bg-white text-indigo-600 shadow-sm'
+                      : isDark
+                      ? 'text-slate-400 hover:text-slate-200'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  <GraduationCap className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Voti Blocchi</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleSwitchTab('tirocinio')}
+                  className={`inline-flex items-center gap-1 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
+                    activeTab === 'tirocinio'
+                      ? isDark
+                        ? 'bg-slate-900 text-indigo-400 shadow-sm'
+                        : 'bg-white text-indigo-600 shadow-sm'
+                      : isDark
+                      ? 'text-slate-400 hover:text-slate-200'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  <Stethoscope className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Tirocini</span>
+                </button>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setShowCloudModal(true)}
+                className={`inline-flex items-center gap-1 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-semibold border transition cursor-pointer ${
+                  cloudSession?.access_token
+                    ? cloudStatus === 'error'
+                      ? isDark
+                        ? 'bg-rose-950/70 text-rose-300 border-rose-800'
+                        : 'bg-rose-50 text-rose-700 border-rose-200'
+                      : isDark
+                      ? 'bg-emerald-950/70 text-emerald-300 border-emerald-800/80'
+                      : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                    : isDark
+                    ? 'text-slate-300 bg-slate-800 hover:bg-slate-700 border-slate-700'
+                    : 'text-slate-700 bg-white hover:bg-slate-50 border-slate-200'
+                }`}
+                title="Sincronizzazione Cloud"
+              >
+                {cloudSession?.access_token ? (
+                  cloudStatus === 'syncing' ? (
+                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                  ) : cloudStatus === 'error' ? (
+                    <CloudOff className="w-3.5 h-3.5" />
+                  ) : (
+                    <Cloud className="w-3.5 h-3.5" />
+                  )
+                ) : (
+                  <Cloud className="w-3.5 h-3.5" />
+                )}
+                <span className="hidden sm:inline">
+                  {cloudSession?.access_token
+                    ? cloudStatus === 'syncing'
+                      ? 'Sync...'
+                      : 'Cloud'
+                    : 'Cloud'}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setIsDark((d) => !d)}
+                className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-semibold border transition cursor-pointer ${
+                  isDark
+                    ? 'bg-slate-800 text-amber-300 border-slate-700 hover:bg-slate-700'
+                    : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+                }`}
+                title="Cambia tema"
+              >
+                {isDark ? (
+                  <Sun className="w-3.5 h-3.5" />
+                ) : (
+                  <Moon className="w-3.5 h-3.5" />
+                )}
+              </button>
+            </div>
           </div>
         </div>
       </header>
@@ -6545,7 +6552,7 @@ export default function App() {
                       setCloudConflictPayload(null);
                       await pushToCloud();
                     }}
-                    className={`px-3 py-2 rounded-xl text-xs font-bold border cursor-pointer ${
+                    className={`px-3 py-2 rounded-xl text-xs font-semibold border cursor-pointer ${
                       isDark
                         ? 'bg-slate-800 border-slate-700 text-slate-200 hover:bg-slate-700'
                         : 'bg-white border-slate-300 text-slate-800 hover:bg-slate-100'
@@ -6557,39 +6564,47 @@ export default function App() {
               </div>
             )}
 
+            {cloudMessage && (
+              <div
+                className={`rounded-xl border p-3 text-xs font-medium ${
+                  cloudMessage.includes('successo')
+                    ? isDark
+                      ? 'bg-emerald-950/60 border-emerald-800 text-emerald-200'
+                      : 'bg-emerald-50 border-emerald-200 text-emerald-800'
+                    : isDark
+                    ? 'bg-rose-950/60 border-rose-800 text-rose-200'
+                    : 'bg-rose-50 border-rose-200 text-rose-800'
+                }`}
+              >
+                {cloudMessage}
+              </div>
+            )}
+
             {cloudSession?.access_token ? (
               <div className="space-y-4">
                 <div
                   className={`rounded-xl border p-4 space-y-2 ${subPanelClass}`}
                 >
-                  <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center justify-between">
                     <span
-                      className={`text-xs font-semibold ${
+                      className={`text-xs font-medium ${
                         isDark ? 'text-slate-400' : 'text-slate-500'
                       }`}
                     >
                       Account connesso
                     </span>
                     <span
-                      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold ${
-                        cloudStatus === 'error'
-                          ? isDark
-                            ? 'bg-rose-900/70 text-rose-200'
-                            : 'bg-rose-100 text-rose-700'
-                          : isDark
-                          ? 'bg-emerald-900/70 text-emerald-200'
+                      className={`text-xs font-bold px-2.5 py-0.5 rounded-full ${
+                        isDark
+                          ? 'bg-emerald-950 text-emerald-300 border border-emerald-800'
                           : 'bg-emerald-100 text-emerald-800'
                       }`}
                     >
-                      {cloudStatus === 'syncing'
-                        ? 'Sincronizzazione...'
-                        : cloudStatus === 'error'
-                        ? 'Errore sync'
-                        : 'Attivo'}
+                      Sincronizzazione automatica attiva
                     </span>
                   </div>
                   <p
-                    className={`text-sm font-bold truncate ${
+                    className={`text-sm font-bold ${
                       isDark ? 'text-slate-100' : 'text-slate-900'
                     }`}
                   >
@@ -6601,54 +6616,51 @@ export default function App() {
                         isDark ? 'text-slate-400' : 'text-slate-500'
                       }`}
                     >
-                      Ultimo aggiornamento: alle {lastSyncedAt}
+                      Ultimo aggiornamento: {lastSyncedAt}
                     </p>
                   )}
                 </div>
 
-                {cloudMessage && (
-                  <p className="text-xs text-rose-500 font-medium">
-                    {cloudMessage}
-                  </p>
-                )}
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                   <button
                     type="button"
+                    disabled={cloudStatus === 'syncing'}
                     onClick={() => pullFromCloud(cloudSession, false)}
-                    className={`inline-flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-xs font-bold border transition cursor-pointer ${
+                    className={`inline-flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-xs font-semibold border transition cursor-pointer ${
                       isDark
                         ? 'bg-slate-800 border-slate-700 text-slate-200 hover:bg-slate-700'
                         : 'bg-white border-slate-300 text-slate-800 hover:bg-slate-50'
                     }`}
                   >
-                    <Download className="w-4 h-4 text-indigo-500" />
+                    <Download className="w-4 h-4" />
                     Aggiorna dal Cloud ora
                   </button>
+
                   <button
                     type="button"
+                    disabled={cloudStatus === 'syncing'}
                     onClick={() => {
                       cloudSyncReadyRef.current = true;
                       pushToCloud();
                     }}
-                    className="inline-flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition cursor-pointer"
+                    className="inline-flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shadow-sm transition cursor-pointer"
                   >
                     <Upload className="w-4 h-4" />
-                    Salva sul Cloud ora
+                    Forza invio al Cloud
                   </button>
                 </div>
 
-                <div className="flex justify-end">
+                <div className="flex justify-end pt-1">
                   <button
                     type="button"
                     onClick={handleCloudLogout}
-                    className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold cursor-pointer ${
+                    className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition cursor-pointer ${
                       isDark
                         ? 'text-rose-400 hover:bg-rose-950/60'
                         : 'text-rose-600 hover:bg-rose-50'
                     }`}
                   >
-                    <LogOut className="w-3.5 h-3.5" />
+                    <LogOut className="w-4 h-4" />
                     Disconnetti account
                   </button>
                 </div>
@@ -6656,117 +6668,101 @@ export default function App() {
             ) : (
               <form onSubmit={handleCloudAuthSubmit} className="space-y-4">
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span
-                      className={`text-xs font-bold ${
-                        isDark ? 'text-slate-200' : 'text-slate-800'
+                  <div
+                    className={`inline-flex rounded-xl p-1 ${
+                      isDark ? 'bg-slate-800' : 'bg-slate-100'
+                    }`}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => setAuthMode('login')}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer ${
+                        authMode === 'login'
+                          ? isDark
+                            ? 'bg-slate-900 text-indigo-400 shadow-sm'
+                            : 'bg-white text-indigo-600 shadow-sm'
+                          : isDark
+                          ? 'text-slate-400'
+                          : 'text-slate-600'
                       }`}
                     >
-                      Accedi al tuo profilo
-                    </span>
-                    <div
-                      className={`inline-flex rounded-lg p-0.5 text-xs ${
-                        isDark ? 'bg-slate-800' : 'bg-slate-100'
+                      Accedi
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setAuthMode('signup')}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer ${
+                        authMode === 'signup'
+                          ? isDark
+                            ? 'bg-slate-900 text-indigo-400 shadow-sm'
+                            : 'bg-white text-indigo-600 shadow-sm'
+                          : isDark
+                          ? 'text-slate-400'
+                          : 'text-slate-600'
                       }`}
                     >
-                      <button
-                        type="button"
-                        onClick={() => setAuthMode('login')}
-                        className={`px-2.5 py-1 rounded-md font-semibold cursor-pointer ${
-                          authMode === 'login'
-                            ? isDark
-                              ? 'bg-slate-900 text-indigo-400'
-                              : 'bg-white text-indigo-600 shadow-2xs'
-                            : isDark
-                            ? 'text-slate-400'
-                            : 'text-slate-600'
-                        }`}
-                      >
-                        Accedi
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setAuthMode('signup')}
-                        className={`px-2.5 py-1 rounded-md font-semibold cursor-pointer ${
-                          authMode === 'signup'
-                            ? isDark
-                              ? 'bg-slate-900 text-indigo-400'
-                              : 'bg-white text-indigo-600 shadow-2xs'
-                            : isDark
-                            ? 'text-slate-400'
-                            : 'text-slate-600'
-                        }`}
-                      >
-                        Registrati
-                      </button>
-                    </div>
+                      Crea Account
+                    </button>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                    <div>
-                      <label
-                        className={`block text-[11px] font-semibold mb-1 ${
-                          isDark ? 'text-slate-300' : 'text-slate-600'
-                        }`}
-                      >
-                        Email
-                      </label>
-                      <input
-                        type="email"
-                        placeholder="nome@email.it"
-                        value={authEmail}
-                        onChange={(e) => setAuthEmail(e.target.value)}
-                        required
-                        className={`w-full rounded-xl border px-3 py-2 text-xs sm:text-sm ${inputMutedSurfaceClass}`}
-                      />
-                    </div>
-                    <div>
-                      <label
-                        className={`block text-[11px] font-semibold mb-1 ${
-                          isDark ? 'text-slate-300' : 'text-slate-600'
-                        }`}
-                      >
-                        Password
-                      </label>
-                      <input
-                        type="password"
-                        placeholder="Min. 6 caratteri"
-                        value={authPassword}
-                        onChange={(e) => setAuthPassword(e.target.value)}
-                        required
-                        className={`w-full rounded-xl border px-3 py-2 text-xs sm:text-sm ${inputMutedSurfaceClass}`}
-                      />
-                    </div>
+                  <div>
+                    <label
+                      className={`block text-xs font-semibold mb-1 ${
+                        isDark ? 'text-slate-300' : 'text-slate-700'
+                      }`}
+                    >
+                      Email
+                    </label>
+                    <input
+                      type="email"
+                      placeholder="nome@esempio.it"
+                      value={authEmail}
+                      onChange={(e) => setAuthEmail(e.target.value)}
+                      required
+                      className={`w-full rounded-xl border px-3 py-2 text-xs sm:text-sm ${inputMutedSurfaceClass}`}
+                    />
                   </div>
 
-                  {cloudMessage && (
-                    <p className="text-xs text-rose-500 font-medium">
-                      {cloudMessage}
-                    </p>
-                  )}
+                  <div>
+                    <label
+                      className={`block text-xs font-semibold mb-1 ${
+                        isDark ? 'text-slate-300' : 'text-slate-700'
+                      }`}
+                    >
+                      Password
+                    </label>
+                    <input
+                      type="password"
+                      placeholder="Minimo 6 caratteri"
+                      value={authPassword}
+                      onChange={(e) => setAuthPassword(e.target.value)}
+                      required
+                      className={`w-full rounded-xl border px-3 py-2 text-xs sm:text-sm ${inputMutedSurfaceClass}`}
+                    />
+                  </div>
 
                   <button
                     type="submit"
                     disabled={authLoading}
-                    className="w-full py-2.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-xs sm:text-sm font-bold shadow-sm transition cursor-pointer"
+                    className="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-xs sm:text-sm font-bold shadow-sm transition cursor-pointer"
                   >
                     {authLoading
                       ? 'Connessione in corso...'
                       : authMode === 'signup'
-                      ? 'Crea Account e Sincronizza'
-                      : 'Accedi e Sincronizza'}
+                      ? 'Registrati e sincronizza'
+                      : 'Accedi e sincronizza'}
                   </button>
                 </div>
 
                 <div
                   className={`pt-2 border-t ${
-                    isDark ? 'border-slate-800' : 'border-slate-100'
+                    isDark ? 'border-slate-800' : 'border-slate-200'
                   }`}
                 >
                   <button
                     type="button"
                     onClick={() => setShowAdvancedServerConfig((v) => !v)}
-                    className={`text-[11px] font-semibold cursor-pointer ${
+                    className={`text-[11px] font-semibold underline cursor-pointer ${
                       isDark
                         ? 'text-slate-400 hover:text-slate-200'
                         : 'text-slate-500 hover:text-slate-800'
@@ -6774,46 +6770,45 @@ export default function App() {
                   >
                     {showAdvancedServerConfig
                       ? 'Nascondi configurazione server Supabase'
-                      : 'Configurazione avanzata server Supabase'}
+                      : 'Modifica configurazione server Supabase'}
                   </button>
 
                   {showAdvancedServerConfig && (
                     <div
                       className={`mt-2.5 rounded-xl border p-3.5 space-y-2.5 ${subPanelClass}`}
                     >
-                      <div className="space-y-2">
-                        <div>
-                          <label
-                            className={`block text-[11px] font-semibold mb-1 ${
-                              isDark ? 'text-slate-300' : 'text-slate-600'
-                            }`}
-                          >
-                            Supabase Project URL
-                          </label>
-                          <input
-                            type="url"
-                            placeholder="https://xyzcompany.supabase.co"
-                            value={cloudUrl}
-                            onChange={(e) => setCloudUrl(e.target.value)}
-                            className={`w-full rounded-xl border px-3 py-2 text-xs ${inputSurfaceClass}`}
-                          />
-                        </div>
-                        <div>
-                          <label
-                            className={`block text-[11px] font-semibold mb-1 ${
-                              isDark ? 'text-slate-300' : 'text-slate-600'
-                            }`}
-                          >
-                            Supabase Anon Public Key
-                          </label>
-                          <input
-                            type="text"
-                            placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6..."
-                            value={cloudAnonKey}
-                            onChange={(e) => setCloudAnonKey(e.target.value)}
-                            className={`w-full rounded-xl border px-3 py-2 text-xs ${inputSurfaceClass}`}
-                          />
-                        </div>
+                      <div>
+                        <label
+                          className={`block text-[11px] font-semibold mb-1 ${
+                            isDark ? 'text-slate-300' : 'text-slate-600'
+                          }`}
+                        >
+                          Supabase Project URL
+                        </label>
+                        <input
+                          type="url"
+                          placeholder="https://xyzcompany.supabase.co"
+                          value={cloudUrl}
+                          onChange={(e) => setCloudUrl(e.target.value)}
+                          className={`w-full rounded-xl border px-3 py-1.5 text-xs ${inputSurfaceClass}`}
+                        />
+                      </div>
+
+                      <div>
+                        <label
+                          className={`block text-[11px] font-semibold mb-1 ${
+                            isDark ? 'text-slate-300' : 'text-slate-600'
+                          }`}
+                        >
+                          Supabase Anon / Publishable Key
+                        </label>
+                        <input
+                          type="password"
+                          placeholder="sb_publishable_... oppure eyJhbGci..."
+                          value={cloudAnonKey}
+                          onChange={(e) => setCloudAnonKey(e.target.value)}
+                          className={`w-full rounded-xl border px-3 py-1.5 text-xs ${inputSurfaceClass}`}
+                        />
                       </div>
                     </div>
                   )}
@@ -6823,23 +6818,23 @@ export default function App() {
 
             <div
               className={`pt-3 border-t flex flex-wrap items-center justify-between gap-2 ${
-                isDark ? 'border-slate-800' : 'border-slate-100'
+                isDark ? 'border-slate-800' : 'border-slate-200'
               }`}
             >
               <span
-                className={`text-xs font-medium ${
+                className={`text-[11px] ${
                   isDark ? 'text-slate-400' : 'text-slate-500'
                 }`}
               >
-                Backup locale rapido (file .json):
+                Backup manuale su file (.json):
               </span>
               <div className="flex items-center gap-2">
                 <button
                   type="button"
                   onClick={handleExportBackupFile}
-                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border cursor-pointer ${
+                  className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-semibold border cursor-pointer ${
                     isDark
-                      ? 'bg-slate-800 border-slate-700 text-slate-200 hover:bg-slate-700'
+                      ? 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700'
                       : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
                   }`}
                 >
@@ -6849,9 +6844,9 @@ export default function App() {
                 <button
                   type="button"
                   onClick={() => importFileInputRef.current?.click()}
-                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border cursor-pointer ${
+                  className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-semibold border cursor-pointer ${
                     isDark
-                      ? 'bg-slate-800 border-slate-700 text-slate-200 hover:bg-slate-700'
+                      ? 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700'
                       : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
                   }`}
                 >
@@ -6861,7 +6856,7 @@ export default function App() {
                 <input
                   ref={importFileInputRef}
                   type="file"
-                  accept=".json,application/json"
+                  accept="application/json,.json"
                   onChange={handleImportBackupFile}
                   className="hidden"
                 />
@@ -6871,1037 +6866,838 @@ export default function App() {
         </div>
       )}
 
-      {/* =====================================================================
-          PAGINA 3: TIROCINI CLINICI & REPARTI
-         ===================================================================== */}
-      {activeTab === 'tirocinio' ? (
-        <main className="w-full px-3 sm:px-6 lg:px-8 py-5 sm:py-6 space-y-5">
-          {/* RIEPILOGO GENERALE TIROCINI */}
-          <section className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+      {/* --- CONTENUTO PRINCIPALE FULL-WIDTH --- */}
+      {activeTab === 'tracker' ? (
+        <main className="w-full px-3 sm:px-6 lg:px-8 py-6 space-y-6">
+          {isReorderMode && (
             <div
-              className={`rounded-2xl border p-4 shadow-sm ${cardSurfaceClass}`}
+              className={`rounded-2xl border p-3.5 sm:px-5 flex flex-wrap items-center justify-between gap-3 shadow-xs ${
+                isDark
+                  ? 'bg-indigo-950/60 border-indigo-800/80'
+                  : 'bg-indigo-50 border-indigo-200'
+              }`}
             >
-              <span
-                className={`text-xs font-medium ${
-                  isDark ? 'text-slate-400' : 'text-slate-500'
-                }`}
-              >
-                Giorni Completati
-              </span>
-              <div className="mt-2 flex items-baseline gap-1.5">
-                <span
-                  className={`text-2xl font-extrabold ${
-                    isDark ? 'text-slate-100' : 'text-slate-900'
+              <div className="flex items-center gap-2.5">
+                <LayoutGrid
+                  className={`w-4 h-4 shrink-0 ${
+                    isDark ? 'text-indigo-400' : 'text-indigo-600'
+                  }`}
+                />
+                <p
+                  className={`text-xs sm:text-sm font-medium ${
+                    isDark ? 'text-indigo-100' : 'text-indigo-950'
                   }`}
                 >
-                  {tirociniStats.doneDays}
-                </span>
+                  <strong>Personalizzazione layout attiva:</strong> usa i
+                  pulsanti{' '}
+                  <span
+                    className={`inline-flex items-center px-1.5 py-0.5 rounded border text-xs font-semibold ${
+                      isDark
+                        ? 'bg-slate-900 border-slate-700 text-slate-200'
+                        : 'bg-white border-indigo-200 text-slate-800'
+                    }`}
+                  >
+                    ↑ ↓ ↔
+                  </span>{' '}
+                  in alto a destra su ogni scheda oppure trascina l&apos;icona{' '}
+                  <GripVertical className="w-3.5 h-3.5 inline" /> per spostare
+                  le sezioni.
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                {isCustomLayout && (
+                  <button
+                    type="button"
+                    onClick={handleResetLayout}
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-semibold transition cursor-pointer ${
+                      isDark
+                        ? 'bg-slate-900 hover:bg-slate-800 text-indigo-300 border-indigo-800'
+                        : 'bg-white hover:bg-indigo-100/60 text-indigo-700 border-indigo-200'
+                    }`}
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" />
+                    Ripristina ordine predefinito
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setIsReorderMode(false)}
+                  className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold transition cursor-pointer"
+                >
+                  <Check className="w-3.5 h-3.5" />
+                  Fatto
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* 1. BANNER DIAGNOSI DINAMICA & ALERT */}
+          <section
+            className={`rounded-2xl border p-4 sm:p-5 transition-all ${statusStyles.wrapper}`}
+          >
+            <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+              <div
+                className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 shadow-sm ${statusStyles.iconBg}`}
+              >
+                <StatusIcon className="w-6 h-6" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex flex-wrap items-center gap-2 mb-1">
+                  <span
+                    className={`text-[11px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full border ${statusStyles.badge}`}
+                  >
+                    {statusStyles.statusTitle}
+                  </span>
+                  <span className="text-xs opacity-75">
+                    • Scadenza prima lettura:{' '}
+                    <strong>{formatShortDate(analytics.studyDeadline)}</strong>
+                  </span>
+                </div>
+                <h2
+                  className={`text-base sm:text-lg font-bold leading-snug ${statusStyles.headlineColor}`}
+                >
+                  {statusStyles.statusHeadline}
+                </h2>
+                <p
+                  className={`text-xs sm:text-sm mt-1 leading-relaxed ${statusStyles.detailColor}`}
+                >
+                  {statusStyles.statusDetail}
+                </p>
+              </div>
+            </div>
+          </section>
+
+          {/* 2. RIEPILOGO METRICHE CHIAVE (KPI) */}
+          <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+            <div
+              className={`rounded-2xl border p-4 shadow-sm flex flex-col justify-between ${cardSurfaceClass}`}
+            >
+              <div className="flex items-center justify-between">
                 <span
-                  className={`text-xs font-medium ${
+                  className={`text-xs font-semibold uppercase tracking-wide ${
                     isDark ? 'text-slate-400' : 'text-slate-500'
                   }`}
                 >
-                  / {tirociniStats.totalDays} gg
+                  Avanzamento
                 </span>
-              </div>
-              <div
-                className={`mt-2.5 w-full h-2 rounded-full overflow-hidden ${
-                  isDark ? 'bg-slate-800' : 'bg-slate-100'
-                }`}
-              >
-                <div
-                  className="h-full bg-emerald-500 rounded-full transition-all duration-300"
-                  style={{ width: `${tirociniStats.pct}%` }}
+                <BookOpen
+                  className={`w-4 h-4 ${
+                    isDark ? 'text-indigo-400' : 'text-indigo-500'
+                  }`}
                 />
               </div>
-            </div>
-
-            <div
-              className={`rounded-2xl border p-4 shadow-sm ${cardSurfaceClass}`}
-            >
-              <span
-                className={`text-xs font-medium ${
-                  isDark ? 'text-slate-400' : 'text-slate-500'
-                }`}
-              >
-                Reparti Conclusi
-              </span>
-              <div className="mt-2 flex items-baseline gap-1.5">
-                <span
-                  className={`text-2xl font-extrabold ${
-                    isDark ? 'text-emerald-400' : 'text-emerald-600'
+              <div className="mt-2">
+                <div className="flex items-baseline gap-1.5">
+                  <span
+                    className={`text-2xl font-extrabold ${
+                      isDark ? 'text-slate-50' : 'text-slate-900'
+                    }`}
+                  >
+                    {analytics.completedPages}
+                  </span>
+                  <span
+                    className={`text-xs font-medium ${
+                      isDark ? 'text-slate-400' : 'text-slate-500'
+                    }`}
+                  >
+                    / {analytics.totalPages} pag ({analytics.completionPct.toFixed(1)}%)
+                  </span>
+                </div>
+                <div
+                  className={`w-full h-2 rounded-full mt-2.5 overflow-hidden ${
+                    isDark ? 'bg-slate-800' : 'bg-slate-100'
                   }`}
                 >
-                  {tirociniStats.doneRotations}
-                </span>
-                <span
-                  className={`text-xs font-medium ${
+                  <div
+                    className="h-full bg-indigo-600 rounded-full transition-all duration-500"
+                    style={{ width: `${analytics.completionPct}%` }}
+                  />
+                </div>
+                <p
+                  className={`text-xs mt-1.5 ${
                     isDark ? 'text-slate-400' : 'text-slate-500'
                   }`}
                 >
-                  / {tirociniStats.totalRotations} reparti
-                </span>
+                  Mancano{' '}
+                  <strong
+                    className={isDark ? 'text-slate-200' : 'text-slate-700'}
+                  >
+                    {analytics.remainingPages}
+                  </strong>{' '}
+                  pagine
+                </p>
               </div>
-              <p
-                className={`mt-1.5 text-xs ${
-                  isDark ? 'text-slate-400' : 'text-slate-500'
-                }`}
-              >
-                {tirociniStats.pct.toFixed(0)}% del monte giorni svolto
-              </p>
             </div>
 
             <div
-              className={`rounded-2xl border p-4 shadow-sm ${cardSurfaceClass}`}
+              className={`rounded-2xl border p-4 shadow-sm flex flex-col justify-between ${cardSurfaceClass}`}
             >
-              <span
-                className={`text-xs font-medium ${
-                  isDark ? 'text-slate-400' : 'text-slate-500'
-                }`}
-              >
-                Giorni Rimanenti
-              </span>
-              <div className="mt-2 flex items-baseline gap-1.5">
+              <div className="flex items-center justify-between">
                 <span
-                  className={`text-2xl font-extrabold ${
+                  className={`text-xs font-semibold uppercase tracking-wide ${
+                    isDark ? 'text-slate-400' : 'text-slate-500'
+                  }`}
+                >
+                  Giorni Rimanenti
+                </span>
+                <Calendar
+                  className={`w-4 h-4 ${
+                    isDark ? 'text-indigo-400' : 'text-indigo-500'
+                  }`}
+                />
+              </div>
+              <div className="mt-2">
+                <div className="flex items-baseline gap-1.5">
+                  <span
+                    className={`text-2xl font-extrabold ${
+                      isDark ? 'text-slate-50' : 'text-slate-900'
+                    }`}
+                  >
+                    {analytics.remainingUsefulDays}
+                  </span>
+                  <span
+                    className={`text-xs font-medium ${
+                      isDark ? 'text-slate-400' : 'text-slate-500'
+                    }`}
+                  >
+                    giorni utili studio
+                  </span>
+                </div>
+                <p
+                  className={`text-xs mt-2.5 ${
+                    isDark ? 'text-slate-400' : 'text-slate-500'
+                  }`}
+                >
+                  {analytics.daysToExam} giorni totali all&apos;appello
+                </p>
+                <p
+                  className={`text-xs ${
+                    isDark ? 'text-slate-500' : 'text-slate-400'
+                  }`}
+                >
+                  ({analytics.safeReviewDays} gg ripasso finale inclusi)
+                </p>
+              </div>
+            </div>
+
+            <div
+              className={`rounded-2xl border p-4 shadow-sm flex flex-col justify-between ${cardSurfaceClass}`}
+            >
+              <div className="flex items-center justify-between">
+                <span
+                  className={`text-xs font-semibold uppercase tracking-wide ${
+                    isDark ? 'text-slate-400' : 'text-slate-500'
+                  }`}
+                >
+                  Ritmo Reale vs Iniziale
+                </span>
+                <Clock
+                  className={`w-4 h-4 ${
+                    isDark ? 'text-indigo-400' : 'text-indigo-500'
+                  }`}
+                />
+              </div>
+              <div className="mt-2">
+                <div className="flex items-baseline gap-1.5">
+                  <span
+                    className={`text-2xl font-extrabold ${
+                      isDark ? 'text-slate-50' : 'text-slate-900'
+                    }`}
+                  >
+                    {analytics.realDailyAvg.toFixed(1)}
+                  </span>
+                  <span
+                    className={`text-xs font-medium ${
+                      isDark ? 'text-slate-400' : 'text-slate-500'
+                    }`}
+                  >
+                    pag/giorno reali
+                  </span>
+                </div>
+                <p
+                  className={`text-xs mt-2.5 ${
+                    isDark ? 'text-slate-400' : 'text-slate-500'
+                  }`}
+                >
+                  Minimo iniziale:{' '}
+                  <strong
+                    className={isDark ? 'text-slate-200' : 'text-slate-700'}
+                  >
+                    {analytics.initialMinPace.toFixed(1)}
+                  </strong>{' '}
+                  pag/gg
+                </p>
+                <p
+                  className={`text-xs ${
+                    isDark ? 'text-slate-500' : 'text-slate-400'
+                  }`}
+                >
+                  {analytics.realDailyAvg >= analytics.initialMinPace
+                    ? 'Sopra la media iniziale'
+                    : 'Sotto la media iniziale'}
+                </p>
+              </div>
+            </div>
+
+            <div
+              className={`rounded-2xl border p-4 shadow-sm flex flex-col justify-between ${
+                isDark
+                  ? 'bg-indigo-950/35 border-indigo-800/70'
+                  : 'bg-indigo-50/40 border-indigo-200/80'
+              }`}
+            >
+              <div className="flex items-center justify-between">
+                <span
+                  className={`text-xs font-semibold uppercase tracking-wide ${
+                    isDark ? 'text-indigo-300' : 'text-indigo-700'
+                  }`}
+                >
+                  Nuovo Ritmo Richiesto
+                </span>
+                <Target
+                  className={`w-4 h-4 ${
+                    isDark ? 'text-indigo-400' : 'text-indigo-600'
+                  }`}
+                />
+              </div>
+              <div className="mt-2">
+                <div className="flex items-baseline gap-1.5">
+                  <span
+                    className={`text-2xl font-extrabold ${
+                      isDark ? 'text-indigo-300' : 'text-indigo-700'
+                    }`}
+                  >
+                    {analytics.newRequiredPace.toFixed(1)}
+                  </span>
+                  <span
+                    className={`text-xs font-medium ${
+                      isDark ? 'text-indigo-300/80' : 'text-indigo-700/80'
+                    }`}
+                  >
+                    pag/giorno
+                  </span>
+                </div>
+                <p
+                  className={`text-xs mt-2.5 ${
+                    isDark ? 'text-slate-300' : 'text-slate-600'
+                  }`}
+                >
+                  Obiettivo da oggi al{' '}
+                  <strong>{formatShortDate(analytics.studyDeadline)}</strong>
+                </p>
+                <p
+                  className={`text-xs font-medium ${
                     isDark ? 'text-indigo-400' : 'text-indigo-600'
                   }`}
                 >
-                  {tirociniStats.remainingDays}
-                </span>
-                <span
-                  className={`text-xs font-medium ${
-                    isDark ? 'text-slate-400' : 'text-slate-500'
+                  (≈ {Math.ceil(analytics.newRequiredPace)} pag arrotondate)
+                </p>
+              </div>
+            </div>
+          </section>
+
+          {/* 3. CORPO PRINCIPALE PERSONALIZZABILE */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            <div
+              onDragOver={(e) => {
+                e.preventDefault();
+                if (
+                  dragOverTarget?.col !== 'left' ||
+                  dragOverTarget?.index !== layout.left.length
+                ) {
+                  setDragOverTarget({ col: 'left', index: layout.left.length });
+                }
+              }}
+              onDrop={(e) => {
+                e.preventDefault();
+                handleDropSection('left', layout.left.length);
+              }}
+              className={`${
+                layout.left.length === 0
+                  ? isReorderMode || draggedSection
+                    ? 'lg:col-span-4 min-h-[180px]'
+                    : 'hidden'
+                  : layout.right.length === 0
+                  ? 'lg:col-span-12'
+                  : 'lg:col-span-8'
+              } space-y-6 transition-all`}
+            >
+              {layout.left.map((secId, idx) =>
+                renderSection(secId, 'left', idx, layout.left.length)
+              )}
+
+              {layout.left.length === 0 && (isReorderMode || draggedSection) && (
+                <div
+                  className={`rounded-2xl border-2 border-dashed p-8 text-center text-xs font-medium ${
+                    isDark
+                      ? 'border-indigo-700 bg-indigo-950/30 text-indigo-300'
+                      : 'border-indigo-300 bg-indigo-50/40 text-indigo-700'
                   }`}
                 >
-                  giorni da svolgere
-                </span>
-              </div>
-              <p
-                className={`mt-1.5 text-xs ${
-                  isDark ? 'text-slate-400' : 'text-slate-500'
-                }`}
-              >
-                {tirociniStats.totalRotations - tirociniStats.doneRotations}{' '}
-                reparti in coda o in corso
-              </p>
+                  Colonna principale vuota — trascina qui una scheda oppure usa{' '}
+                  <strong>↔</strong> per riportarla qui
+                </div>
+              )}
             </div>
 
             <div
-              className={`rounded-2xl border p-4 shadow-sm ${cardSurfaceClass}`}
+              onDragOver={(e) => {
+                e.preventDefault();
+                if (
+                  dragOverTarget?.col !== 'right' ||
+                  dragOverTarget?.index !== layout.right.length
+                ) {
+                  setDragOverTarget({
+                    col: 'right',
+                    index: layout.right.length,
+                  });
+                }
+              }}
+              onDrop={(e) => {
+                e.preventDefault();
+                handleDropSection('right', layout.right.length);
+              }}
+              className={`${
+                layout.right.length === 0
+                  ? isReorderMode || draggedSection
+                    ? 'lg:col-span-4 min-h-[180px]'
+                    : 'hidden'
+                  : layout.left.length === 0
+                  ? 'lg:col-span-12'
+                  : 'lg:col-span-4'
+              } space-y-6 transition-all`}
             >
-              <span
-                className={`text-xs font-medium ${
-                  isDark ? 'text-slate-400' : 'text-slate-500'
-                }`}
-              >
-                Moduli Verbalizzati
-              </span>
-              <div className="mt-2 flex items-baseline gap-1.5">
-                <span
-                  className={`text-2xl font-extrabold ${
-                    isDark ? 'text-slate-100' : 'text-slate-900'
-                  }`}
-                >
-                  {tirociniList.filter((t) => t.verbalizzato).length}
-                </span>
-                <span
-                  className={`text-xs font-medium ${
-                    isDark ? 'text-slate-400' : 'text-slate-500'
-                  }`}
-                >
-                  / {tirociniList.length} tirocini
-                </span>
-              </div>
-              <p
-                className={`mt-1.5 text-xs ${
-                  isDark ? 'text-slate-400' : 'text-slate-500'
-                }`}
-              >
-                Spunta &quot;Verbalizzato&quot; a libretto registrato
-              </p>
-            </div>
-          </section>
-
-          {/* BARRA AGGIUNTA NUOVO MODULO TIROCINIO */}
-          <section
-            className={`rounded-2xl border p-4 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${cardSurfaceClass}`}
-          >
-            <div>
-              <h2
-                className={`text-base font-bold ${
-                  isDark ? 'text-slate-100' : 'text-slate-900'
-                }`}
-              >
-                Moduli Tirocinio &amp; Rotazioni Reparti
-              </h2>
-              <p
-                className={`text-xs ${
-                  isDark ? 'text-slate-400' : 'text-slate-500'
-                }`}
-              >
-                Traccia reparti, durata in giorni, date di frequenza, stato e
-                verbalizzazione
-              </p>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
-              {tirociniList.length > 0 && (
-                <button
-                  type="button"
-                  onClick={handleToggleAllTirocini}
-                  className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border text-xs font-semibold transition cursor-pointer shrink-0 ${
-                    isDark
-                      ? 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700'
-                      : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
-                  }`}
-                >
-                  <ChevronsUpDown className="w-3.5 h-3.5" />
-                  <span>
-                    {areAllTirociniExpanded ? 'Comprimi tutti' : 'Espandi tutti'}
-                  </span>
-                </button>
+              {layout.right.map((secId, idx) =>
+                renderSection(secId, 'right', idx, layout.right.length)
               )}
 
-              <form
-                onSubmit={handleAddTirocinioModule}
-                className="flex items-center gap-2 flex-1 sm:w-auto"
-              >
-                <input
-                  type="text"
-                  placeholder="Nuovo tirocinio (es. Tirocinio 4)..."
-                  value={newTirocinioModuleName}
-                  onChange={(e) => setNewTirocinioModuleName(e.target.value)}
-                  className={`flex-1 sm:w-56 rounded-xl border px-3 py-2 text-xs sm:text-sm ${inputMutedSurfaceClass}`}
-                />
-                <button
-                  type="submit"
-                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-semibold shadow-sm transition cursor-pointer shrink-0"
-                >
-                  <Plus className="w-4 h-4" />
-                  <span>Aggiungi</span>
-                </button>
-              </form>
-            </div>
-          </section>
-
-          {/* ELENCO MODULI TIROCINIO */}
-          <div className="space-y-4">
-            {tirociniList.map((mod) => {
-              const isExpanded = Boolean(expandedTirocini[mod.id]);
-              const rots = mod.rotations || [];
-              const modTotalDays = rots.reduce(
-                (acc, r) => acc + (Number(r.durationDays) || 0),
-                0
-              );
-              const modDoneDays = rots
-                .filter((r) => r.status === 'done')
-                .reduce((acc, r) => acc + (Number(r.durationDays) || 0), 0);
-              const modDoneCount = rots.filter(
-                (r) => r.status === 'done'
-              ).length;
-              const allRotsDone =
-                rots.length > 0 && modDoneCount === rots.length;
-
-              const draft = newRotationDrafts[mod.id] || {
-                icon: '🏥',
-                name: '',
-                durationDays: 5,
-                startDate: '',
-                endDate: '',
-                status: 'not_started',
-              };
-
-              return (
-                <section
-                  key={mod.id}
-                  className={`rounded-2xl border p-4 sm:p-5 shadow-sm transition-all ${cardSurfaceClass}`}
-                >
-                  {/* HEADER MODULO TIROCINIO */}
+              {layout.right.length === 0 &&
+                (isReorderMode || draggedSection) && (
                   <div
-                    className={`flex flex-wrap items-center justify-between gap-3 ${
-                      isExpanded
-                        ? `pb-3.5 border-b ${
-                            isDark ? 'border-slate-800' : 'border-slate-100'
-                          }`
-                        : ''
+                    className={`rounded-2xl border-2 border-dashed p-8 text-center text-xs font-medium ${
+                      isDark
+                        ? 'border-indigo-700 bg-indigo-950/30 text-indigo-300'
+                        : 'border-indigo-300 bg-indigo-50/40 text-indigo-700'
                     }`}
                   >
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <button
-                        type="button"
-                        onClick={() => toggleTirocinioExpanded(mod.id)}
-                        className={`p-1.5 rounded-lg transition cursor-pointer ${
-                          isDark
-                            ? 'text-slate-300 hover:bg-slate-800'
-                            : 'text-slate-600 hover:bg-slate-100'
-                        }`}
-                        title={isExpanded ? 'Riduci' : 'Espandi'}
-                      >
-                        {isExpanded ? (
-                          <ChevronDown className="w-4 h-4" />
-                        ) : (
-                          <ChevronRight className="w-4 h-4" />
-                        )}
-                      </button>
-
-                      {editingTirocinioId === mod.id ? (
-                        <div className="flex items-center gap-1.5">
-                          <input
-                            type="text"
-                            value={editingTirocinioTitle}
-                            onChange={(e) =>
-                              setEditingTirocinioTitle(e.target.value)
-                            }
-                            onBlur={() => handleRenameTirocinioModule(mod.id)}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter')
-                                handleRenameTirocinioModule(mod.id);
-                              if (e.key === 'Escape')
-                                setEditingTirocinioId(null);
-                            }}
-                            autoFocus
-                            className={`text-base font-bold border-b-2 border-indigo-600 bg-transparent focus:outline-none px-1 ${
-                              isDark ? 'text-slate-100' : 'text-slate-900'
-                            }`}
-                          />
-                          <button
-                            type="button"
-                            onClick={() => handleRenameTirocinioModule(mod.id)}
-                            className="p-1 text-emerald-500 cursor-pointer"
-                          >
-                            <Check className="w-4 h-4" />
-                          </button>
-                        </div>
-                      ) : (
-                        <div className="flex items-center gap-2 min-w-0">
-                          <button
-                            type="button"
-                            onClick={() => toggleTirocinioExpanded(mod.id)}
-                            className="text-left min-w-0 cursor-pointer"
-                          >
-                            <h3
-                              className={`text-base sm:text-lg font-bold truncate ${
-                                isDark ? 'text-slate-100' : 'text-slate-900'
-                              }`}
-                            >
-                              {mod.name}
-                            </h3>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setEditingTirocinioId(mod.id);
-                              setEditingTirocinioTitle(mod.name);
-                            }}
-                            className={`p-1 rounded-lg transition cursor-pointer ${
-                              isDark
-                                ? 'text-slate-500 hover:text-indigo-400'
-                                : 'text-slate-400 hover:text-indigo-600'
-                            }`}
-                            title="Rinomina tirocinio"
-                          >
-                            <Edit3 className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      )}
-
-                      <span
-                        className={`text-xs font-semibold px-2.5 py-0.5 rounded-full border ${
-                          allRotsDone
-                            ? isDark
-                              ? 'bg-emerald-950/70 text-emerald-300 border-emerald-800'
-                              : 'bg-emerald-50 text-emerald-800 border-emerald-200'
-                            : indigoPillClass
-                        }`}
-                      >
-                        {modDoneDays}/{modTotalDays} gg ({modDoneCount}/
-                        {rots.length} reparti)
-                      </span>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      {/* CHECKBOX VERBALIZZATO */}
-                      <button
-                        type="button"
-                        onClick={() => handleToggleTirocinioVerbalizzato(mod.id)}
-                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border transition cursor-pointer ${
-                          mod.verbalizzato
-                            ? isDark
-                              ? 'bg-emerald-950/80 text-emerald-300 border-emerald-700'
-                              : 'bg-emerald-50 text-emerald-800 border-emerald-300'
-                            : isDark
-                            ? 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'
-                            : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
-                        }`}
-                      >
-                        {mod.verbalizzato ? (
-                          <CheckSquare className="w-3.5 h-3.5 text-emerald-500" />
-                        ) : (
-                          <Square className="w-3.5 h-3.5" />
-                        )}
-                        <span>Verbalizzato</span>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteTirocinioModule(mod.id)}
-                        className={`p-2 rounded-lg transition cursor-pointer ${
-                          isDark
-                            ? 'text-slate-500 hover:text-rose-400 hover:bg-rose-950/60'
-                            : 'text-slate-400 hover:text-rose-600 hover:bg-rose-50'
-                        }`}
-                        title="Elimina modulo tirocinio"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
+                    Colonna laterale vuota — trascina qui una scheda oppure usa{' '}
+                    <strong>↔</strong> per spostarla qui
                   </div>
-
-                  {/* TABELLA REPARTI / ROTAZIONI */}
-                  {isExpanded && (
-                    <div className="pt-3.5 space-y-4">
-                      {rots.length > 0 ? (
-                        <div className="overflow-x-auto">
-                          <table className="w-full text-left border-collapse text-sm min-w-[680px]">
-                            <thead>
-                              <tr
-                                className={`border-b text-[11px] uppercase tracking-wider ${
-                                  isDark
-                                    ? 'border-slate-800 text-slate-400'
-                                    : 'border-slate-200 text-slate-500'
-                                }`}
-                              >
-                                <th className="py-2 font-semibold w-14">
-                                  Icona
-                                </th>
-                                <th className="py-2 font-semibold">Reparto</th>
-                                <th className="py-2 font-semibold w-28">
-                                  Durata
-                                </th>
-                                <th className="py-2 font-semibold w-36">
-                                  Inizio
-                                </th>
-                                <th className="py-2 font-semibold w-36">
-                                  Fine
-                                </th>
-                                <th className="py-2 font-semibold w-36">
-                                  Stato
-                                </th>
-                                <th className="py-2 font-semibold text-right w-12"></th>
-                              </tr>
-                            </thead>
-                            <tbody
-                              className={`divide-y ${
-                                isDark
-                                  ? 'divide-slate-800/80'
-                                  : 'divide-slate-100'
-                              }`}
-                            >
-                              {rots.map((rot) => {
-                                const statusSelectStyle =
-                                  rot.status === 'done'
-                                    ? isDark
-                                      ? 'bg-emerald-950/80 border-emerald-700 text-emerald-300'
-                                      : 'bg-emerald-50 border-emerald-300 text-emerald-800'
-                                    : rot.status === 'in_progress'
-                                    ? isDark
-                                      ? 'bg-amber-950/80 border-amber-700 text-amber-300'
-                                      : 'bg-amber-50 border-amber-300 text-amber-800'
-                                    : isDark
-                                    ? 'bg-slate-800 border-slate-700 text-slate-300'
-                                    : 'bg-slate-100 border-slate-200 text-slate-700';
-
-                                return (
-                                  <tr
-                                    key={rot.id}
-                                    className={`transition ${
-                                      isDark
-                                        ? 'hover:bg-slate-800/40'
-                                        : 'hover:bg-slate-50/70'
-                                    }`}
-                                  >
-                                    <td className="py-2 pr-2">
-                                      <select
-                                        value={rot.icon || '🏥'}
-                                        onChange={(e) =>
-                                          handleUpdateRotation(mod.id, rot.id, {
-                                            icon: e.target.value,
-                                          })
-                                        }
-                                        aria-label="Icona reparto"
-                                        className={`rounded-lg border px-1.5 py-1.5 text-base cursor-pointer ${inputMutedSurfaceClass}`}
-                                      >
-                                        {TIROCINIO_ICONS.map((ic) => (
-                                          <option key={ic} value={ic}>
-                                            {ic}
-                                          </option>
-                                        ))}
-                                      </select>
-                                    </td>
-                                    <td className="py-2 pr-2">
-                                      <input
-                                        type="text"
-                                        value={rot.name}
-                                        onChange={(e) =>
-                                          handleUpdateRotation(mod.id, rot.id, {
-                                            name: e.target.value,
-                                          })
-                                        }
-                                        placeholder="Nome reparto"
-                                        className={`w-full rounded-lg border px-2.5 py-1.5 text-xs sm:text-sm font-semibold ${inputMutedSurfaceClass}`}
-                                      />
-                                    </td>
-                                    <td className="py-2 pr-2">
-                                      <div className="flex items-center gap-1">
-                                        <input
-                                          type="number"
-                                          min="1"
-                                          max="180"
-                                          value={rot.durationDays}
-                                          onChange={(e) =>
-                                            handleUpdateRotation(
-                                              mod.id,
-                                              rot.id,
-                                              {
-                                                durationDays: Math.max(
-                                                  1,
-                                                  Number(e.target.value) || 1
-                                                ),
-                                              }
-                                            )
-                                          }
-                                          className={`w-16 rounded-lg border px-2 py-1.5 text-xs sm:text-sm font-bold text-center ${inputMutedSurfaceClass}`}
-                                        />
-                                        <span
-                                          className={`text-xs ${
-                                            isDark
-                                              ? 'text-slate-400'
-                                              : 'text-slate-500'
-                                          }`}
-                                        >
-                                          gg
-                                        </span>
-                                      </div>
-                                    </td>
-                                    <td className="py-2 pr-2">
-                                      <input
-                                        type="date"
-                                        value={rot.startDate || ''}
-                                        onChange={(e) =>
-                                          handleUpdateRotation(mod.id, rot.id, {
-                                            startDate: e.target.value,
-                                          })
-                                        }
-                                        className={`w-full rounded-lg border px-2 py-1.5 text-xs ${inputMutedSurfaceClass}`}
-                                      />
-                                    </td>
-                                    <td className="py-2 pr-2">
-                                      <input
-                                        type="date"
-                                        value={rot.endDate || ''}
-                                        onChange={(e) =>
-                                          handleUpdateRotation(mod.id, rot.id, {
-                                            endDate: e.target.value,
-                                          })
-                                        }
-                                        className={`w-full rounded-lg border px-2 py-1.5 text-xs ${inputMutedSurfaceClass}`}
-                                      />
-                                    </td>
-                                    <td className="py-2 pr-2">
-                                      <select
-                                        value={rot.status}
-                                        onChange={(e) =>
-                                          handleUpdateRotation(mod.id, rot.id, {
-                                            status: e.target.value,
-                                          })
-                                        }
-                                        className={`w-full rounded-lg border px-2 py-1.5 text-xs font-bold cursor-pointer focus:outline-none ${statusSelectStyle}`}
-                                      >
-                                        <option value="not_started">
-                                          Non iniziato
-                                        </option>
-                                        <option value="in_progress">
-                                          In corso
-                                        </option>
-                                        <option value="done">Fatto</option>
-                                      </select>
-                                    </td>
-                                    <td className="py-2 text-right">
-                                      <button
-                                        type="button"
-                                        onClick={() =>
-                                          handleDeleteRotation(mod.id, rot.id)
-                                        }
-                                        className={`p-1.5 rounded-lg transition cursor-pointer ${
-                                          isDark
-                                            ? 'text-slate-500 hover:text-rose-400 hover:bg-rose-950/60'
-                                            : 'text-slate-400 hover:text-rose-600 hover:bg-rose-50'
-                                        }`}
-                                        title="Elimina reparto"
-                                      >
-                                        <Trash2 className="w-4 h-4" />
-                                      </button>
-                                    </td>
-                                  </tr>
-                                );
-                              })}
-                            </tbody>
-                          </table>
-                        </div>
-                      ) : (
-                        <div
-                          className={`rounded-xl border border-dashed p-4 text-center text-xs ${
-                            isDark
-                              ? 'border-slate-800 text-slate-400'
-                              : 'border-slate-200 text-slate-500'
-                          }`}
-                        >
-                          Nessun reparto inserito in questo tirocinio.
-                        </div>
-                      )}
-
-                      {/* FORM AGGIUNTA NUOVO REPARTO */}
-                      <form
-                        onSubmit={(e) => handleAddRotation(e, mod.id)}
-                        className={`pt-3 border-t grid grid-cols-2 sm:grid-cols-12 gap-2 items-end ${
-                          isDark ? 'border-slate-800/80' : 'border-slate-100'
-                        }`}
-                      >
-                        <div className="col-span-1 sm:col-span-1">
-                          <label
-                            className={`block text-[10px] font-semibold mb-1 ${
-                              isDark ? 'text-slate-400' : 'text-slate-500'
-                            }`}
-                          >
-                            Icona
-                          </label>
-                          <select
-                            value={draft.icon}
-                            onChange={(e) =>
-                              setNewRotationDrafts((prev) => ({
-                                ...prev,
-                                [mod.id]: { ...draft, icon: e.target.value },
-                              }))
-                            }
-                            className={`w-full rounded-xl border px-1.5 py-2 text-sm cursor-pointer ${inputMutedSurfaceClass}`}
-                          >
-                            {TIROCINIO_ICONS.map((ic) => (
-                              <option key={ic} value={ic}>
-                                {ic}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-
-                        <div className="col-span-1 sm:col-span-3">
-                          <label
-                            className={`block text-[10px] font-semibold mb-1 ${
-                              isDark ? 'text-slate-400' : 'text-slate-500'
-                            }`}
-                          >
-                            Reparto
-                          </label>
-                          <input
-                            type="text"
-                            placeholder="Es. Chirurgia Generale"
-                            value={draft.name}
-                            onChange={(e) =>
-                              setNewRotationDrafts((prev) => ({
-                                ...prev,
-                                [mod.id]: { ...draft, name: e.target.value },
-                              }))
-                            }
-                            required
-                            className={`w-full rounded-xl border px-3 py-2 text-xs ${inputMutedSurfaceClass}`}
-                          />
-                        </div>
-
-                        <div className="col-span-1 sm:col-span-2">
-                          <label
-                            className={`block text-[10px] font-semibold mb-1 ${
-                              isDark ? 'text-slate-400' : 'text-slate-500'
-                            }`}
-                          >
-                            Durata (gg)
-                          </label>
-                          <input
-                            type="number"
-                            min="1"
-                            max="180"
-                            value={draft.durationDays}
-                            onChange={(e) =>
-                              setNewRotationDrafts((prev) => ({
-                                ...prev,
-                                [mod.id]: {
-                                  ...draft,
-                                  durationDays: e.target.value,
-                                },
-                              }))
-                            }
-                            required
-                            className={`w-full rounded-xl border px-2.5 py-2 text-xs font-semibold ${inputMutedSurfaceClass}`}
-                          />
-                        </div>
-
-                        <div className="col-span-1 sm:col-span-2">
-                          <label
-                            className={`block text-[10px] font-semibold mb-1 ${
-                              isDark ? 'text-slate-400' : 'text-slate-500'
-                            }`}
-                          >
-                            Inizio
-                          </label>
-                          <input
-                            type="date"
-                            value={draft.startDate}
-                            onChange={(e) =>
-                              setNewRotationDrafts((prev) => ({
-                                ...prev,
-                                [mod.id]: {
-                                  ...draft,
-                                  startDate: e.target.value,
-                                },
-                              }))
-                            }
-                            className={`w-full rounded-xl border px-2 py-2 text-xs ${inputMutedSurfaceClass}`}
-                          />
-                        </div>
-
-                        <div className="col-span-1 sm:col-span-2">
-                          <label
-                            className={`block text-[10px] font-semibold mb-1 ${
-                              isDark ? 'text-slate-400' : 'text-slate-500'
-                            }`}
-                          >
-                            Fine
-                          </label>
-                          <input
-                            type="date"
-                            value={draft.endDate}
-                            onChange={(e) =>
-                              setNewRotationDrafts((prev) => ({
-                                ...prev,
-                                [mod.id]: {
-                                  ...draft,
-                                  endDate: e.target.value,
-                                },
-                              }))
-                            }
-                            className={`w-full rounded-xl border px-2 py-2 text-xs ${inputMutedSurfaceClass}`}
-                          />
-                        </div>
-
-                        <div className="col-span-1 sm:col-span-2">
-                          <button
-                            type="submit"
-                            className="w-full inline-flex items-center justify-center gap-1 px-3 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shadow-sm transition cursor-pointer"
-                          >
-                            <Plus className="w-3.5 h-3.5" />
-                            <span>Reparto</span>
-                          </button>
-                        </div>
-                      </form>
-                    </div>
-                  )}
-                </section>
-              );
-            })}
+                )}
+            </div>
           </div>
         </main>
       ) : activeTab === 'libretto' ? (
-        /* ===================================================================
-            PAGINA 2: MEDICINA (1° - 6° ANNO) & CALCOLATORE VOTO BLOCCHI
-           =================================================================== */
-        <main className="w-full px-3 sm:px-6 lg:px-8 py-5 sm:py-6 space-y-5">
+        /* =====================================================================
+           PAGINA DEDICATA: MEDICINA (1° - 6° ANNO) E CALCOLO VOTO BLOCCHI
+           ===================================================================== */
+        <main className="w-full px-3 sm:px-6 lg:px-8 py-6 space-y-6">
           {(() => {
-            const yearBlocks = currentYearBlocks;
+            const yearSummaries = [1, 2, 3, 4, 5, 6].map((yr) => {
+              const blocks = medYears[yr] || [];
+              let yearTotalCfu = 0;
+              let yearWeightedSum = 0;
+              let completedBlocksCount = 0;
 
-            const computeBlockStats = (blk) => {
-              const subs = blk.subjects || [];
-              const totalCfu = subs.reduce(
-                (acc, s) => acc + (Number(s.cfu) || 0),
-                0
-              );
-              const gradedSubs = subs.filter(
-                (s) => s.grade !== null && s.grade !== '' && Number(s.grade) >= 18
-              );
-              const gradedCfu = gradedSubs.reduce(
-                (acc, s) => acc + (Number(s.cfu) || 0),
-                0
-              );
-              const weightedSum = gradedSubs.reduce(
-                (acc, s) => acc + Number(s.grade) * (Number(s.cfu) || 0),
-                0
-              );
-              const exactAvg = gradedCfu > 0 ? weightedSum / gradedCfu : null;
-              const verbalizedGrade =
-                exactAvg !== null ? Math.round(exactAvg) : null;
-              const isComplete =
-                subs.length > 0 && gradedSubs.length === subs.length;
-              const all30L =
-                gradedSubs.length > 0 &&
-                gradedSubs.every((s) => Number(s.grade) === 30 && s.lode);
+              blocks.forEach((blk) => {
+                let blkCfu = 0;
+                let blkGradedCfu = 0;
+                let blkWeighted = 0;
+                let allGraded = blk.subjects.length > 0;
 
-              return {
-                totalCfu,
-                gradedCfu,
-                exactAvg,
-                verbalizedGrade,
-                isComplete,
-                all30L,
-                gradedCount: gradedSubs.length,
-                totalCount: subs.length,
-              };
-            };
-
-            let careerVerbalizedSum = 0;
-            let careerVerbalizedCfu = 0;
-            let careerTotalCfu = 0;
-            let careerCompletedBlocks = 0;
-            let careerTotalBlocks = 0;
-
-            let selectedYearVerbalizedSum = 0;
-            let selectedYearVerbalizedCfu = 0;
-            let selectedYearTotalCfu = 0;
-
-            [1, 2, 3, 4, 5, 6].forEach((yr) => {
-              (medYears[yr] || []).forEach((blk) => {
-                const st = computeBlockStats(blk);
-                careerTotalBlocks += 1;
-                careerTotalCfu += st.totalCfu;
-                if (yr === selectedMedYear) {
-                  selectedYearTotalCfu += st.totalCfu;
-                }
-                if (st.isComplete && st.verbalizedGrade !== null) {
-                  careerCompletedBlocks += 1;
-                  careerVerbalizedSum += st.verbalizedGrade * st.totalCfu;
-                  careerVerbalizedCfu += st.totalCfu;
-                  if (yr === selectedMedYear) {
-                    selectedYearVerbalizedSum +=
-                      st.verbalizedGrade * st.totalCfu;
-                    selectedYearVerbalizedCfu += st.totalCfu;
+                blk.subjects.forEach((sub) => {
+                  const c = Number(sub.cfu) || 0;
+                  blkCfu += c;
+                  if (sub.grade !== null && sub.grade !== undefined) {
+                    blkGradedCfu += c;
+                    blkWeighted += Number(sub.grade) * c;
+                  } else {
+                    allGraded = false;
                   }
+                });
+
+                if (allGraded && blkGradedCfu > 0) {
+                  completedBlocksCount += 1;
+                  const exactBlockAvg = blkWeighted / blkGradedCfu;
+                  const roundedBlockGrade = Math.round(exactBlockAvg);
+                  yearTotalCfu += blkCfu;
+                  yearWeightedSum += roundedBlockGrade * blkCfu;
                 }
               });
+
+              const yearAvg =
+                yearTotalCfu > 0 ? yearWeightedSum / yearTotalCfu : null;
+
+              return {
+                year: yr,
+                blocksCount: blocks.length,
+                completedBlocksCount,
+                yearTotalCfu,
+                yearWeightedSum,
+                yearAvg,
+              };
             });
 
-            const careerAvg =
-              careerVerbalizedCfu > 0
-                ? careerVerbalizedSum / careerVerbalizedCfu
-                : null;
-            const degreeBase =
-              careerAvg !== null ? (careerAvg * 110) / 30 : null;
-            const yearAvg =
-              selectedYearVerbalizedCfu > 0
-                ? selectedYearVerbalizedSum / selectedYearVerbalizedCfu
-                : null;
+            const globalTotalCfu = yearSummaries.reduce(
+              (acc, y) => acc + y.yearTotalCfu,
+              0
+            );
+            const globalWeightedSum = yearSummaries.reduce(
+              (acc, y) => acc + y.yearWeightedSum,
+              0
+            );
+            const globalAvg =
+              globalTotalCfu > 0 ? globalWeightedSum / globalTotalCfu : null;
+            const globalBaseDegree =
+              globalAvg !== null ? (globalAvg * 110) / 30 : null;
+
+            const currentYearSummary = yearSummaries[selectedMedYear - 1];
 
             return (
               <>
-                <section className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                {isBlockReorderMode && (
                   <div
-                    className={`rounded-2xl border p-4 shadow-sm ${cardSurfaceClass}`}
+                    className={`rounded-2xl border p-3.5 sm:px-5 flex flex-wrap items-center justify-between gap-3 shadow-xs ${
+                      isDark
+                        ? 'bg-indigo-950/60 border-indigo-800/80'
+                        : 'bg-indigo-50 border-indigo-200'
+                    }`}
                   >
-                    <span
-                      className={`text-xs font-medium ${
-                        isDark ? 'text-slate-400' : 'text-slate-500'
-                      }`}
-                    >
-                      Media Ponderata Carriera
-                    </span>
-                    <div className="mt-2 flex items-baseline gap-1.5">
-                      <span
-                        className={`text-2xl font-extrabold ${
+                    <div className="flex items-center gap-2.5">
+                      <LayoutGrid
+                        className={`w-4 h-4 shrink-0 ${
                           isDark ? 'text-indigo-400' : 'text-indigo-600'
                         }`}
+                      />
+                      <p
+                        className={`text-xs sm:text-sm font-medium ${
+                          isDark ? 'text-indigo-100' : 'text-indigo-950'
+                        }`}
                       >
-                        {careerAvg !== null ? careerAvg.toFixed(2) : '—'}
-                      </span>
+                        <strong>Riordino blocchi attivo:</strong> usa le
+                        frecce{' '}
+                        <span
+                          className={`inline-flex items-center px-1.5 py-0.5 rounded border text-xs font-semibold ${
+                            isDark
+                              ? 'bg-slate-900 border-slate-700 text-slate-200'
+                              : 'bg-white border-indigo-200 text-slate-800'
+                          }`}
+                        >
+                          ↑ ↓
+                        </span>{' '}
+                        oppure trascina l&apos;icona{' '}
+                        <GripVertical className="w-3.5 h-3.5 inline" /> per
+                        cambiare l&apos;ordine dei blocchi del {selectedMedYear}°
+                        Anno.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setIsBlockReorderMode(false)}
+                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold transition cursor-pointer"
+                    >
+                      <Check className="w-3.5 h-3.5" />
+                      Fatto
+                    </button>
+                  </div>
+                )}
+
+                <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                  <div
+                    className={`rounded-2xl border p-4 shadow-sm flex flex-col justify-between ${cardSurfaceClass}`}
+                  >
+                    <div className="flex items-center justify-between">
                       <span
-                        className={`text-xs font-medium ${
+                        className={`text-xs font-semibold uppercase tracking-wide ${
                           isDark ? 'text-slate-400' : 'text-slate-500'
                         }`}
                       >
-                        / 30
+                        Media Ponderata Totale
                       </span>
+                      <GraduationCap
+                        className={`w-4 h-4 ${
+                          isDark ? 'text-indigo-400' : 'text-indigo-500'
+                        }`}
+                      />
                     </div>
-                    <p
-                      className={`mt-1.5 text-xs ${
-                        isDark ? 'text-slate-400' : 'text-slate-500'
-                      }`}
-                    >
-                      Su {careerCompletedBlocks} blocchi completi
-                    </p>
+                    <div className="mt-2">
+                      <div className="flex items-baseline gap-1.5">
+                        <span
+                          className={`text-2xl font-extrabold ${
+                            isDark ? 'text-slate-50' : 'text-slate-900'
+                          }`}
+                        >
+                          {globalAvg !== null ? globalAvg.toFixed(2) : '—'}
+                        </span>
+                        <span
+                          className={`text-xs font-medium ${
+                            isDark ? 'text-slate-400' : 'text-slate-500'
+                          }`}
+                        >
+                          / 30
+                        </span>
+                      </div>
+                      <p
+                        className={`text-xs mt-2 ${
+                          isDark ? 'text-slate-400' : 'text-slate-500'
+                        }`}
+                      >
+                        Calcolata sui voti verbalizzati dei blocchi completi
+                      </p>
+                    </div>
                   </div>
 
                   <div
-                    className={`rounded-2xl border p-4 shadow-sm ${cardSurfaceClass}`}
+                    className={`rounded-2xl border p-4 shadow-sm flex flex-col justify-between ${
+                      isDark
+                        ? 'bg-indigo-950/35 border-indigo-800/70'
+                        : 'bg-indigo-50/40 border-indigo-200/80'
+                    }`}
                   >
-                    <span
-                      className={`text-xs font-medium ${
-                        isDark ? 'text-slate-400' : 'text-slate-500'
-                      }`}
-                    >
-                      Base di Laurea Stimata
-                    </span>
-                    <div className="mt-2 flex items-baseline gap-1.5">
+                    <div className="flex items-center justify-between">
                       <span
-                        className={`text-2xl font-extrabold ${
+                        className={`text-xs font-semibold uppercase tracking-wide ${
+                          isDark ? 'text-indigo-300' : 'text-indigo-700'
+                        }`}
+                      >
+                        Base di Laurea
+                      </span>
+                      <Target
+                        className={`w-4 h-4 ${
+                          isDark ? 'text-indigo-400' : 'text-indigo-600'
+                        }`}
+                      />
+                    </div>
+                    <div className="mt-2">
+                      <div className="flex items-baseline gap-1.5">
+                        <span
+                          className={`text-2xl font-extrabold ${
+                            isDark ? 'text-indigo-300' : 'text-indigo-700'
+                          }`}
+                        >
+                          {globalBaseDegree !== null
+                            ? globalBaseDegree.toFixed(2)
+                            : '—'}
+                        </span>
+                        <span
+                          className={`text-xs font-medium ${
+                            isDark ? 'text-indigo-300/80' : 'text-indigo-700/80'
+                          }`}
+                        >
+                          / 110
+                        </span>
+                      </div>
+                      <p
+                        className={`text-xs mt-2 ${
+                          isDark ? 'text-slate-300' : 'text-slate-600'
+                        }`}
+                      >
+                        (Media × 110) ÷ 30
+                      </p>
+                    </div>
+                  </div>
+
+                  <div
+                    className={`rounded-2xl border p-4 shadow-sm flex flex-col justify-between ${cardSurfaceClass}`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span
+                        className={`text-xs font-semibold uppercase tracking-wide ${
+                          isDark ? 'text-slate-400' : 'text-slate-500'
+                        }`}
+                      >
+                        CFU Verbalizzati
+                      </span>
+                      <BookOpen
+                        className={`w-4 h-4 ${
+                          isDark ? 'text-indigo-400' : 'text-indigo-500'
+                        }`}
+                      />
+                    </div>
+                    <div className="mt-2">
+                      <div className="flex items-baseline gap-1.5">
+                        <span
+                          className={`text-2xl font-extrabold ${
+                            isDark ? 'text-slate-50' : 'text-slate-900'
+                          }`}
+                        >
+                          {globalTotalCfu}
+                        </span>
+                        <span
+                          className={`text-xs font-medium ${
+                            isDark ? 'text-slate-400' : 'text-slate-500'
+                          }`}
+                        >
+                          / 360 CFU
+                        </span>
+                      </div>
+                      <div
+                        className={`w-full h-2 rounded-full mt-2.5 overflow-hidden ${
+                          isDark ? 'bg-slate-800' : 'bg-slate-100'
+                        }`}
+                      >
+                        <div
+                          className="h-full bg-indigo-600 rounded-full transition-all duration-500"
+                          style={{
+                            width: `${Math.min(
+                              100,
+                              (globalTotalCfu / 360) * 100
+                            )}%`,
+                          }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div
+                    className={`rounded-2xl border p-4 shadow-sm flex flex-col justify-between ${cardSurfaceClass}`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span
+                        className={`text-xs font-semibold uppercase tracking-wide ${
+                          isDark ? 'text-slate-400' : 'text-slate-500'
+                        }`}
+                      >
+                        Media {selectedMedYear}° Anno
+                      </span>
+                      <CheckCircle2
+                        className={`w-4 h-4 ${
                           isDark ? 'text-emerald-400' : 'text-emerald-600'
                         }`}
-                      >
-                        {degreeBase !== null ? degreeBase.toFixed(2) : '—'}
-                      </span>
-                      <span
-                        className={`text-xs font-medium ${
+                      />
+                    </div>
+                    <div className="mt-2">
+                      <div className="flex items-baseline gap-1.5">
+                        <span
+                          className={`text-2xl font-extrabold ${
+                            isDark ? 'text-slate-50' : 'text-slate-900'
+                          }`}
+                        >
+                          {currentYearSummary.yearAvg !== null
+                            ? currentYearSummary.yearAvg.toFixed(2)
+                            : '—'}
+                        </span>
+                        <span
+                          className={`text-xs font-medium ${
+                            isDark ? 'text-slate-400' : 'text-slate-500'
+                          }`}
+                        >
+                          ({currentYearSummary.yearTotalCfu} CFU)
+                        </span>
+                      </div>
+                      <p
+                        className={`text-xs mt-2 ${
                           isDark ? 'text-slate-400' : 'text-slate-500'
                         }`}
                       >
-                        / 110
-                      </span>
+                        {currentYearSummary.completedBlocksCount} su{' '}
+                        {currentYearSummary.blocksCount} blocchi completati
+                      </p>
                     </div>
-                    <p
-                      className={`mt-1.5 text-xs ${
-                        isDark ? 'text-slate-400' : 'text-slate-500'
-                      }`}
-                    >
-                      Esclusi punti tesi / bonus
-                    </p>
-                  </div>
-
-                  <div
-                    className={`rounded-2xl border p-4 shadow-sm ${cardSurfaceClass}`}
-                  >
-                    <span
-                      className={`text-xs font-medium ${
-                        isDark ? 'text-slate-400' : 'text-slate-500'
-                      }`}
-                    >
-                      CFU Verbalizzati Totali
-                    </span>
-                    <div className="mt-2 flex items-baseline gap-1.5">
-                      <span
-                        className={`text-2xl font-extrabold ${
-                          isDark ? 'text-slate-100' : 'text-slate-900'
-                        }`}
-                      >
-                        {careerVerbalizedCfu}
-                      </span>
-                      <span
-                        className={`text-xs font-medium ${
-                          isDark ? 'text-slate-400' : 'text-slate-500'
-                        }`}
-                      >
-                        / {careerTotalCfu} CFU inseriti
-                      </span>
-                    </div>
-                    <p
-                      className={`mt-1.5 text-xs ${
-                        isDark ? 'text-slate-400' : 'text-slate-500'
-                      }`}
-                    >
-                      {careerCompletedBlocks} / {careerTotalBlocks} blocchi
-                      chiusi
-                    </p>
-                  </div>
-
-                  <div
-                    className={`rounded-2xl border p-4 shadow-sm ${cardSurfaceClass}`}
-                  >
-                    <span
-                      className={`text-xs font-medium ${
-                        isDark ? 'text-slate-400' : 'text-slate-500'
-                      }`}
-                    >
-                      Media {selectedMedYear}° Anno
-                    </span>
-                    <div className="mt-2 flex items-baseline gap-1.5">
-                      <span
-                        className={`text-2xl font-extrabold ${
-                          isDark ? 'text-slate-100' : 'text-slate-900'
-                        }`}
-                      >
-                        {yearAvg !== null ? yearAvg.toFixed(2) : '—'}
-                      </span>
-                      <span
-                        className={`text-xs font-medium ${
-                          isDark ? 'text-slate-400' : 'text-slate-500'
-                        }`}
-                      >
-                        ({selectedYearVerbalizedCfu}/{selectedYearTotalCfu} CFU)
-                      </span>
-                    </div>
-                    <p
-                      className={`mt-1.5 text-xs ${
-                        isDark ? 'text-slate-400' : 'text-slate-500'
-                      }`}
-                    >
-                      {yearBlocks.length}{' '}
-                      {yearBlocks.length === 1 ? 'blocco' : 'blocchi'} nel{' '}
-                      {selectedMedYear}° anno
-                    </p>
                   </div>
                 </section>
 
                 <section
-                  className={`rounded-2xl border p-4 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-3 ${cardSurfaceClass}`}
+                  className={`rounded-2xl border p-3.5 sm:p-4 shadow-sm ${cardSurfaceClass}`}
                 >
-                  <div className="flex flex-wrap items-center gap-1.5">
-                    {[1, 2, 3, 4, 5, 6].map((yr) => {
-                      const count = (medYears[yr] || []).length;
-                      const isSel = selectedMedYear === yr;
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
+                    {yearSummaries.map((ys) => {
+                      const isSelected = ys.year === selectedMedYear;
                       return (
                         <button
-                          key={yr}
+                          key={ys.year}
                           type="button"
                           onClick={() => {
-                            setSelectedMedYear(yr);
+                            setSelectedMedYear(ys.year);
                             setEditingBlockId(null);
-                            setDraggedBlockId(null);
-                            setDragOverBlockIdx(null);
+                            setIsBlockReorderMode(false);
                           }}
-                          className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition cursor-pointer ${
-                            isSel
-                              ? 'bg-indigo-600 text-white shadow-sm'
+                          className={`rounded-xl border p-3 text-left transition cursor-pointer ${
+                            isSelected
+                              ? 'bg-indigo-600 border-indigo-600 text-white shadow-sm'
                               : isDark
-                              ? 'bg-slate-800 text-slate-300 hover:bg-slate-700'
-                              : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                              ? 'bg-slate-800/70 border-slate-700/80 text-slate-200 hover:bg-slate-800'
+                              : 'bg-slate-50 border-slate-200/80 text-slate-800 hover:bg-slate-100'
                           }`}
                         >
-                          <span>{yr}° Anno</span>
-                          {count > 0 && (
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-extrabold">
+                              {ys.year}° Anno
+                            </span>
                             <span
-                              className={`px-1.5 py-0.2 rounded-full text-[10px] font-extrabold ${
-                                isSel
+                              className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${
+                                isSelected
                                   ? 'bg-white/20 text-white'
                                   : isDark
-                                  ? 'bg-slate-700 text-slate-300'
+                                  ? 'bg-slate-900 text-slate-300'
                                   : 'bg-white text-slate-600'
                               }`}
                             >
-                              {count}
+                              {ys.blocksCount}{' '}
+                              {ys.blocksCount === 1 ? 'blocco' : 'blocchi'}
                             </span>
-                          )}
+                          </div>
+                          <div
+                            className={`text-xs mt-2 flex items-center justify-between ${
+                              isSelected
+                                ? 'text-indigo-100'
+                                : isDark
+                                ? 'text-slate-400'
+                                : 'text-slate-500'
+                            }`}
+                          >
+                            <span>
+                              Media:{' '}
+                              <strong>
+                                {ys.yearAvg !== null
+                                  ? ys.yearAvg.toFixed(2)
+                                  : '—'}
+                              </strong>
+                            </span>
+                            <span>{ys.yearTotalCfu} CFU</span>
+                          </div>
                         </button>
                       );
                     })}
                   </div>
+                </section>
 
-                  <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
-                    {yearBlocks.length > 0 && (
+                <section
+                  className={`rounded-2xl border p-4 sm:p-5 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${cardSurfaceClass}`}
+                >
+                  <div>
+                    <h2
+                      className={`text-base sm:text-lg font-bold ${
+                        isDark ? 'text-slate-100' : 'text-slate-900'
+                      }`}
+                    >
+                      Blocchi &amp; Esami Integrati — {selectedMedYear}° Anno
+                    </h2>
+                    <p
+                      className={`text-xs ${
+                        isDark ? 'text-slate-400' : 'text-slate-500'
+                      }`}
+                    >
+                      Aggiungi i blocchi dell&apos;anno e inserisci i moduli con
+                      i rispettivi CFU per calcolare automaticamente il voto
+                      finale verbalizzato.
+                    </p>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-2">
+                    {currentYearBlocks.length > 0 && (
                       <button
                         type="button"
                         onClick={handleToggleAllCurrentBlocks}
-                        className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border text-xs font-semibold transition cursor-pointer shrink-0 ${
+                        className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold border transition cursor-pointer shrink-0 ${
                           isDark
                             ? 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700'
                             : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
                         }`}
                         title={
                           areAllCurrentBlocksExpanded
-                            ? 'Comprimi tutti i blocchi di questo anno'
-                            : 'Espandi tutti i blocchi di questo anno'
+                            ? 'Comprimi tutti i blocchi'
+                            : 'Espandi tutti i blocchi'
                         }
                       >
                         <ChevronsUpDown className="w-3.5 h-3.5" />
@@ -7915,53 +7711,84 @@ export default function App() {
 
                     <form
                       onSubmit={handleAddMedBlock}
-                      className="flex items-center gap-2 flex-1 md:w-auto"
+                      className="flex items-center gap-2 w-full sm:w-auto"
                     >
                       <input
                         type="text"
-                        placeholder={`Nuovo blocco (${selectedMedYear}° anno)...`}
+                        placeholder="Nuovo blocco (es. Anatomia Umana)..."
                         value={newBlockName}
                         onChange={(e) => setNewBlockName(e.target.value)}
-                        className={`flex-1 md:w-64 rounded-xl border px-3 py-2 text-xs sm:text-sm ${inputMutedSurfaceClass}`}
+                        className={`w-full sm:w-72 rounded-xl border px-3 py-2 text-xs sm:text-sm ${inputMutedSurfaceClass}`}
                       />
                       <button
                         type="submit"
-                        className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-semibold shadow-sm transition cursor-pointer shrink-0"
+                        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-semibold shadow-sm transition shrink-0 cursor-pointer"
                       >
                         <Plus className="w-4 h-4" />
-                        <span>Blocco</span>
+                        Crea Blocco
                       </button>
                     </form>
                   </div>
                 </section>
 
-                {yearBlocks.length === 0 ? (
+                {currentYearBlocks.length === 0 ? (
                   <div
-                    className={`rounded-2xl border border-dashed p-10 text-center space-y-2 ${
+                    className={`rounded-2xl border-2 border-dashed p-10 text-center space-y-2 ${
                       isDark
-                        ? 'border-slate-800 bg-slate-900/50 text-slate-400'
-                        : 'border-slate-300 bg-white text-slate-500'
+                        ? 'border-slate-800 bg-slate-900/40 text-slate-400'
+                        : 'border-slate-200 bg-white text-slate-500'
                     }`}
                   >
+                    <GraduationCap className="w-8 h-8 mx-auto opacity-50" />
                     <p className="text-sm font-semibold">
-                      Nessun blocco inserito per il {selectedMedYear}° anno di
-                      Medicina.
+                      Nessun blocco inserito per il {selectedMedYear}° Anno
                     </p>
                     <p className="text-xs">
-                      Usa la barra qui sopra per creare un esame integrato (es.
-                      Anatomia Umana, Patologia Generale, Clinica Medica) e
-                      inserire i singoli moduli con i relativi CFU.
+                      Usa il campo qui sopra per creare il primo esame
+                      integrato (blocco) e aggiungere i suoi singoli moduli.
                     </p>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 items-start">
-                    {yearBlocks.map((block, blockIdx) => {
-                      const st = computeBlockStats(block);
+                  <div className="space-y-4">
+                    {currentYearBlocks.map((block, blockIdx) => {
                       const isExpanded = Boolean(expandedBlocks[block.id]);
-                      const isBeingDragged = draggedBlockId === block.id;
-                      const isDropTarget =
-                        dragOverBlockIdx === blockIdx &&
-                        draggedBlockId !== block.id;
+
+                      const totalBlockCfu = block.subjects.reduce(
+                        (sum, s) => sum + (Number(s.cfu) || 0),
+                        0
+                      );
+                      const gradedSubjects = block.subjects.filter(
+                        (s) => s.grade !== null && s.grade !== undefined
+                      );
+                      const missingSubjects = block.subjects.filter(
+                        (s) => s.grade === null || s.grade === undefined
+                      );
+                      const gradedBlockCfu = gradedSubjects.reduce(
+                        (sum, s) => sum + (Number(s.cfu) || 0),
+                        0
+                      );
+                      const missingBlockCfu = missingSubjects.reduce(
+                        (sum, s) => sum + (Number(s.cfu) || 0),
+                        0
+                      );
+                      const weightedSum = gradedSubjects.reduce(
+                        (sum, s) =>
+                          sum + Number(s.grade) * (Number(s.cfu) || 0),
+                        0
+                      );
+                      const exactAvg =
+                        gradedBlockCfu > 0
+                          ? weightedSum / gradedBlockCfu
+                          : null;
+                      const roundedFinalGrade =
+                        exactAvg !== null ? Math.round(exactAvg) : null;
+                      const isComplete =
+                        block.subjects.length > 0 &&
+                        missingSubjects.length === 0;
+
+                      const hasLode =
+                        roundedFinalGrade === 30 &&
+                        gradedSubjects.some((s) => s.lode);
 
                       const draft = newSubjectDrafts[block.id] || {
                         name: '',
@@ -7969,14 +7796,13 @@ export default function App() {
                         grade: '',
                       };
 
-                      const blockOrderBtnClass = `p-1.5 rounded-lg disabled:opacity-30 disabled:pointer-events-none transition cursor-pointer ${
-                        isDark
-                          ? 'hover:bg-slate-700/80 hover:text-slate-100'
-                          : 'hover:bg-white hover:text-slate-900 hover:shadow-2xs'
-                      }`;
+                      const isBeingDragged = draggedBlockId === block.id;
+                      const isDropTargetBefore =
+                        dragOverBlockIdx === blockIdx &&
+                        draggedBlockId !== block.id;
 
                       return (
-                        <section
+                        <article
                           key={block.id}
                           draggable={blockDragReadyId === block.id}
                           onDragStart={(e) => {
@@ -7999,10 +7825,10 @@ export default function App() {
                             setDragOverBlockIdx(null);
                             setBlockDragReadyId(null);
                           }}
-                          className={`rounded-2xl border p-4 sm:p-5 shadow-sm transition-all duration-200 ${cardSurfaceClass} ${
+                          className={`rounded-2xl border shadow-sm overflow-hidden transition-all duration-200 ${cardSurfaceClass} ${
                             isBeingDragged ? 'opacity-45 scale-[0.99]' : ''
                           } ${
-                            isDropTarget
+                            isDropTargetBefore
                               ? `ring-2 ring-indigo-500 ring-offset-4 ${
                                   isDark
                                     ? 'ring-offset-slate-950'
@@ -8018,146 +7844,216 @@ export default function App() {
                           }`}
                         >
                           <div
-                            className={`flex items-start justify-between gap-3 ${
+                            onClick={() => {
+                              if (editingBlockId !== block.id) {
+                                toggleBlockExpanded(block.id);
+                              }
+                            }}
+                            className={`p-4 sm:px-5 flex flex-wrap items-center justify-between gap-3 cursor-pointer select-none transition-colors ${
                               isExpanded
-                                ? `pb-3 border-b ${
-                                    isDark
-                                      ? 'border-slate-800'
-                                      : 'border-slate-100'
-                                  }`
-                                : ''
+                                ? isDark
+                                  ? 'border-b border-slate-800 bg-slate-800/35'
+                                  : 'border-b border-slate-100 bg-slate-50/70'
+                                : isDark
+                                ? 'hover:bg-slate-800/45'
+                                : 'hover:bg-slate-50/90'
                             }`}
                           >
-                            <div className="flex items-start gap-2 min-w-0 flex-1">
+                            <div className="flex items-center gap-2.5 min-w-0 flex-1">
                               <button
                                 type="button"
-                                onClick={() => toggleBlockExpanded(block.id)}
-                                className={`mt-0.5 p-1.5 rounded-lg transition cursor-pointer shrink-0 ${
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  toggleBlockExpanded(block.id);
+                                }}
+                                className={`p-1 rounded-lg transition cursor-pointer shrink-0 ${
                                   isDark
-                                    ? 'text-slate-300 hover:bg-slate-800'
-                                    : 'text-slate-600 hover:bg-slate-100'
+                                    ? 'text-slate-400 hover:text-slate-100 hover:bg-slate-800'
+                                    : 'text-slate-500 hover:text-slate-900 hover:bg-slate-200/60'
                                 }`}
                                 title={
                                   isExpanded
-                                    ? 'Riduci dettagli blocco'
-                                    : 'Espandi moduli e inserimento voti'
+                                    ? 'Comprimi blocco'
+                                    : 'Espandi blocco'
                                 }
                               >
                                 {isExpanded ? (
-                                  <ChevronDown className="w-4 h-4" />
+                                  <ChevronDown className="w-5 h-5" />
                                 ) : (
-                                  <ChevronRight className="w-4 h-4" />
+                                  <ChevronRight className="w-5 h-5" />
                                 )}
                               </button>
 
-                              <div className="min-w-0 flex-1">
-                                {editingBlockId === block.id ? (
-                                  <div className="flex items-center gap-1.5">
-                                    <input
-                                      type="text"
-                                      value={editingBlockTitle}
-                                      onChange={(e) =>
-                                        setEditingBlockTitle(e.target.value)
-                                      }
-                                      onBlur={() =>
+                              {editingBlockId === block.id ? (
+                                <div
+                                  className="flex items-center gap-1.5"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  <input
+                                    type="text"
+                                    value={editingBlockTitle}
+                                    onChange={(e) =>
+                                      setEditingBlockTitle(e.target.value)
+                                    }
+                                    onKeyDown={(e) => {
+                                      if (e.key === 'Enter')
                                         handleRenameMedBlock(
                                           selectedMedYear,
                                           block.id
-                                        )
-                                      }
-                                      onKeyDown={(e) => {
-                                        if (e.key === 'Enter')
-                                          handleRenameMedBlock(
-                                            selectedMedYear,
-                                            block.id
-                                          );
-                                        if (e.key === 'Escape')
-                                          setEditingBlockId(null);
-                                      }}
-                                      autoFocus
-                                      className={`text-base font-bold border-b-2 border-indigo-600 bg-transparent focus:outline-none w-full ${
+                                        );
+                                      if (e.key === 'Escape')
+                                        setEditingBlockId(null);
+                                    }}
+                                    className={`rounded-lg border px-2.5 py-1 text-sm font-bold ${inputSurfaceClass}`}
+                                    autoFocus
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      handleRenameMedBlock(
+                                        selectedMedYear,
+                                        block.id
+                                      )
+                                    }
+                                    className="p-1.5 rounded-lg text-emerald-500 hover:bg-emerald-950/50 cursor-pointer"
+                                  >
+                                    <Check className="w-4 h-4" />
+                                  </button>
+                                </div>
+                              ) : (
+                                <div className="flex flex-wrap items-center gap-2 min-w-0">
+                                  <h3
+                                    className={`text-base sm:text-lg font-extrabold truncate ${
+                                      isDark
+                                        ? 'text-slate-100'
+                                        : 'text-slate-900'
+                                    }`}
+                                  >
+                                    {block.name}
+                                  </h3>
+
+                                  <span
+                                    className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${indigoPillClass}`}
+                                  >
+                                    {totalBlockCfu} CFU totali
+                                  </span>
+
+                                  <span
+                                    className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                                      isDark
+                                        ? 'bg-slate-800 text-slate-400'
+                                        : 'bg-slate-100 text-slate-600'
+                                    }`}
+                                  >
+                                    {gradedSubjects.length}/
+                                    {block.subjects.length} moduli
+                                  </span>
+
+                                  {isComplete ? (
+                                    <span
+                                      className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full border ${
                                         isDark
-                                          ? 'text-slate-100'
-                                          : 'text-slate-900'
+                                          ? 'bg-emerald-950/80 text-emerald-300 border-emerald-800'
+                                          : 'bg-emerald-50 text-emerald-700 border-emerald-200'
                                       }`}
-                                    />
-                                    <button
-                                      type="button"
-                                      onClick={() =>
-                                        handleRenameMedBlock(
-                                          selectedMedYear,
-                                          block.id
-                                        )
-                                      }
-                                      className="p-1 text-emerald-500 cursor-pointer"
                                     >
-                                      <Check className="w-4 h-4" />
-                                    </button>
-                                  </div>
-                                ) : (
-                                  <div className="flex items-center gap-1.5">
-                                    <button
-                                      type="button"
-                                      onClick={() =>
-                                        toggleBlockExpanded(block.id)
-                                      }
-                                      className="text-left min-w-0 cursor-pointer"
-                                    >
-                                      <h3
-                                        className={`text-base font-bold truncate transition-colors ${
-                                          isDark
-                                            ? 'text-slate-100 hover:text-indigo-400'
-                                            : 'text-slate-900 hover:text-indigo-600'
-                                        }`}
-                                      >
-                                        {block.name}
-                                      </h3>
-                                    </button>
-                                    <button
-                                      type="button"
-                                      onClick={() => {
-                                        setEditingBlockId(block.id);
-                                        setEditingBlockTitle(block.name);
-                                      }}
-                                      className={`p-1 rounded-lg transition cursor-pointer shrink-0 ${
+                                      Blocco Completo
+                                    </span>
+                                  ) : (
+                                    <span
+                                      className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full border ${
                                         isDark
-                                          ? 'text-slate-500 hover:text-indigo-400'
-                                          : 'text-slate-400 hover:text-indigo-600'
+                                          ? 'bg-amber-950/60 text-amber-300 border-amber-800/70'
+                                          : 'bg-amber-50 text-amber-800 border-amber-200'
                                       }`}
-                                      title="Rinomina blocco"
                                     >
-                                      <Edit3 className="w-3.5 h-3.5" />
-                                    </button>
+                                      {block.subjects.length === 0
+                                        ? 'Vuoto'
+                                        : 'In corso'}
+                                    </span>
+                                  )}
+
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setEditingBlockId(block.id);
+                                      setEditingBlockTitle(block.name);
+                                    }}
+                                    className={`p-1.5 rounded-lg cursor-pointer ${
+                                      isDark
+                                        ? 'text-slate-500 hover:text-slate-200 hover:bg-slate-800'
+                                        : 'text-slate-400 hover:text-slate-700 hover:bg-slate-100'
+                                    }`}
+                                    title="Rinomina blocco"
+                                  >
+                                    <Edit3 className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+
+                            <div
+                              className="flex flex-wrap items-center gap-3"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <div className="flex items-center gap-3 text-right">
+                                {exactAvg !== null && (
+                                  <div>
+                                    <span
+                                      className={`block text-[10px] font-semibold uppercase tracking-wider ${
+                                        isDark
+                                          ? 'text-slate-400'
+                                          : 'text-slate-500'
+                                      }`}
+                                    >
+                                      Media Esatta
+                                    </span>
+                                    <span
+                                      className={`text-sm font-bold ${
+                                        isDark
+                                          ? 'text-slate-200'
+                                          : 'text-slate-800'
+                                      }`}
+                                    >
+                                      {exactAvg.toFixed(2)}
+                                    </span>
                                   </div>
                                 )}
 
-                                <p
-                                  onClick={() => toggleBlockExpanded(block.id)}
-                                  className={`text-xs mt-0.5 cursor-pointer ${
-                                    isDark ? 'text-slate-400' : 'text-slate-500'
+                                <div
+                                  className={`px-3.5 py-1.5 rounded-xl border ${
+                                    roundedFinalGrade !== null
+                                      ? isComplete
+                                        ? isDark
+                                          ? 'bg-emerald-950/70 border-emerald-700/80 text-emerald-200'
+                                          : 'bg-emerald-50 border-emerald-200 text-emerald-900'
+                                        : isDark
+                                        ? 'bg-indigo-950/70 border-indigo-700/80 text-indigo-200'
+                                        : 'bg-indigo-50 border-indigo-200 text-indigo-900'
+                                      : isDark
+                                      ? 'bg-slate-800 border-slate-700 text-slate-400'
+                                      : 'bg-slate-100 border-slate-200 text-slate-500'
                                   }`}
                                 >
-                                  {st.totalCfu} CFU totali · {st.gradedCount}/
-                                  {st.totalCount} moduli con voto
-                                  {!isExpanded && (
-                                    <span
-                                      className={`ml-1.5 font-medium ${
-                                        isDark
-                                          ? 'text-indigo-400'
-                                          : 'text-indigo-600'
-                                      }`}
-                                    >
-                                      · Apri
-                                    </span>
-                                  )}
-                                </p>
+                                  <span className="block text-[10px] font-bold uppercase tracking-wider opacity-80">
+                                    {isComplete
+                                      ? 'Voto Blocco'
+                                      : 'Voto Parziale'}
+                                  </span>
+                                  <span className="text-lg font-black leading-tight">
+                                    {roundedFinalGrade !== null
+                                      ? `${roundedFinalGrade}${
+                                          hasLode ? 'L' : ''
+                                        } / 30`
+                                      : '— / 30'}
+                                  </span>
+                                </div>
                               </div>
-                            </div>
 
-                            <div className="flex items-center gap-2 shrink-0">
                               <div
                                 role="group"
-                                aria-label="Controlli posizione blocco"
+                                aria-label="Riordina blocco"
                                 className={`inline-flex items-center gap-0.5 rounded-xl p-1 border transition-colors ${
                                   isBlockReorderMode
                                     ? isDark
@@ -8172,17 +8068,27 @@ export default function App() {
                                   type="button"
                                   onClick={() => moveBlockUp(blockIdx)}
                                   disabled={blockIdx === 0}
-                                  className={blockOrderBtnClass}
-                                  title="Sposta blocco prima"
+                                  className={`p-1.5 rounded-lg disabled:opacity-30 disabled:pointer-events-none transition cursor-pointer ${
+                                    isDark
+                                      ? 'hover:bg-slate-700/80 hover:text-slate-100'
+                                      : 'hover:bg-white hover:text-slate-900'
+                                  }`}
+                                  title="Sposta blocco in alto"
                                 >
                                   <ArrowUp className="w-3.5 h-3.5" />
                                 </button>
                                 <button
                                   type="button"
                                   onClick={() => moveBlockDown(blockIdx)}
-                                  disabled={blockIdx === yearBlocks.length - 1}
-                                  className={blockOrderBtnClass}
-                                  title="Sposta blocco dopo"
+                                  disabled={
+                                    blockIdx === currentYearBlocks.length - 1
+                                  }
+                                  className={`p-1.5 rounded-lg disabled:opacity-30 disabled:pointer-events-none transition cursor-pointer ${
+                                    isDark
+                                      ? 'hover:bg-slate-700/80 hover:text-slate-100'
+                                      : 'hover:bg-white hover:text-slate-900'
+                                  }`}
+                                  title="Sposta blocco in basso"
                                 >
                                   <ArrowDown className="w-3.5 h-3.5" />
                                 </button>
@@ -8197,43 +8103,10 @@ export default function App() {
                                       ? 'hover:bg-slate-700/80 hover:text-slate-100'
                                       : 'hover:bg-white hover:text-slate-900'
                                   }`}
-                                  title="Trascina per riordinare"
+                                  title="Trascina per riordinare il blocco"
                                 >
                                   <GripVertical className="w-3.5 h-3.5" />
                                 </span>
-                              </div>
-
-                              <div
-                                onClick={() => toggleBlockExpanded(block.id)}
-                                className={`px-3 py-1.5 rounded-xl border text-right cursor-pointer ${
-                                  st.verbalizedGrade !== null
-                                    ? st.isComplete
-                                      ? isDark
-                                        ? 'bg-emerald-950/70 border-emerald-800 text-emerald-200'
-                                        : 'bg-emerald-50 border-emerald-200 text-emerald-900'
-                                      : isDark
-                                      ? 'bg-amber-950/60 border-amber-800 text-amber-200'
-                                      : 'bg-amber-50 border-amber-200 text-amber-900'
-                                    : isDark
-                                    ? 'bg-slate-800 border-slate-700 text-slate-400'
-                                    : 'bg-slate-50 border-slate-200 text-slate-500'
-                                }`}
-                              >
-                                <div className="text-[10px] font-bold uppercase tracking-wider opacity-80">
-                                  {st.isComplete ? 'Voto Blocco' : 'Parziale'}
-                                </div>
-                                <div className="text-base font-black leading-tight">
-                                  {st.verbalizedGrade !== null
-                                    ? `${st.verbalizedGrade}${
-                                        st.all30L ? 'L' : ''
-                                      }`
-                                    : '—'}
-                                  {st.exactAvg !== null && (
-                                    <span className="text-[11px] font-semibold opacity-75 ml-1">
-                                      ({st.exactAvg.toFixed(2)})
-                                    </span>
-                                  )}
-                                </div>
                               </div>
 
                               <button
@@ -8244,7 +8117,7 @@ export default function App() {
                                     block.id
                                   )
                                 }
-                                className={`p-2 rounded-lg transition cursor-pointer ${
+                                className={`p-2 rounded-xl transition cursor-pointer ${
                                   isDark
                                     ? 'text-slate-500 hover:text-rose-400 hover:bg-rose-950/60'
                                     : 'text-slate-400 hover:text-rose-600 hover:bg-rose-50'
@@ -8257,150 +8130,205 @@ export default function App() {
                           </div>
 
                           {isExpanded && (
-                            <div className="pt-4 space-y-4">
-                              {(block.subjects || []).length === 0 ? (
-                                <p
-                                  className={`text-xs italic py-2 ${
-                                    isDark ? 'text-slate-500' : 'text-slate-400'
-                                  }`}
-                                >
-                                  Aggiungi qui sotto i singoli insegnamenti che
-                                  compongono questo blocco.
-                                </p>
-                              ) : (
-                                <div className="space-y-2">
-                                  {(block.subjects || []).map((sub) => {
-                                    const selectGradeVal =
-                                      sub.grade === null || sub.grade === ''
-                                        ? ''
-                                        : sub.grade === 30 && sub.lode
-                                        ? '30L'
-                                        : String(sub.grade);
-
-                                    return (
-                                      <div
-                                        key={sub.id}
-                                        className={`flex flex-wrap sm:flex-nowrap items-center gap-2 rounded-xl border p-2.5 ${subPanelClass}`}
+                            <div className="p-4 sm:p-5 space-y-4">
+                              {block.subjects.length > 0 && (
+                                <div className="overflow-x-auto">
+                                  <table className="w-full text-left border-collapse text-sm min-w-[460px]">
+                                    <thead>
+                                      <tr
+                                        className={`border-b text-xs ${
+                                          isDark
+                                            ? 'border-slate-800 text-slate-400'
+                                            : 'border-slate-200 text-slate-500'
+                                        }`}
                                       >
-                                        <input
-                                          type="text"
-                                          value={sub.name}
-                                          onChange={(e) =>
-                                            handleUpdateMedSubject(
-                                              selectedMedYear,
-                                              block.id,
-                                              sub.id,
-                                              { name: e.target.value }
-                                            )
-                                          }
-                                          className={`flex-1 min-w-[140px] rounded-lg border px-2.5 py-1.5 text-xs sm:text-sm font-medium ${inputSurfaceClass}`}
-                                        />
+                                        <th className="py-2 font-semibold">
+                                          Modulo / Materia del Blocco
+                                        </th>
+                                        <th className="py-2 font-semibold w-28">
+                                          CFU
+                                        </th>
+                                        <th className="py-2 font-semibold w-40">
+                                          Voto Modulo
+                                        </th>
+                                        <th className="py-2 font-semibold w-24 text-right">
+                                          Peso
+                                        </th>
+                                        <th className="py-2 font-semibold w-14 text-right"></th>
+                                      </tr>
+                                    </thead>
+                                    <tbody
+                                      className={`divide-y ${
+                                        isDark
+                                          ? 'divide-slate-800/80'
+                                          : 'divide-slate-100'
+                                      }`}
+                                    >
+                                      {block.subjects.map((sub) => {
+                                        const subCfu = Number(sub.cfu) || 0;
+                                        const weightPct =
+                                          totalBlockCfu > 0
+                                            ? (subCfu / totalBlockCfu) * 100
+                                            : 0;
+                                        const selectVal =
+                                          sub.grade === null ||
+                                          sub.grade === undefined
+                                            ? ''
+                                            : sub.lode
+                                            ? '30L'
+                                            : String(sub.grade);
 
-                                        <div className="flex items-center gap-1.5 shrink-0">
-                                          <input
-                                            type="number"
-                                            min="0.5"
-                                            max="60"
-                                            step="0.5"
-                                            value={sub.cfu}
-                                            onChange={(e) =>
-                                              handleUpdateMedSubject(
-                                                selectedMedYear,
-                                                block.id,
-                                                sub.id,
-                                                {
-                                                  cfu: Math.max(
-                                                    0.5,
-                                                    Number(e.target.value) ||
-                                                      0.5
-                                                  ),
-                                                }
-                                              )
-                                            }
-                                            className={`w-16 rounded-lg border px-2 py-1.5 text-xs font-bold text-center ${inputSurfaceClass}`}
-                                            title="CFU modulo"
-                                          />
-                                          <span
-                                            className={`text-[11px] font-semibold ${
+                                        return (
+                                          <tr
+                                            key={sub.id}
+                                            className={
                                               isDark
-                                                ? 'text-slate-400'
-                                                : 'text-slate-500'
-                                            }`}
-                                          >
-                                            CFU
-                                          </span>
-                                        </div>
-
-                                        <select
-                                          value={selectGradeVal}
-                                          onChange={(e) => {
-                                            const val = e.target.value;
-                                            if (val === '') {
-                                              handleUpdateMedSubject(
-                                                selectedMedYear,
-                                                block.id,
-                                                sub.id,
-                                                { grade: null, lode: false }
-                                              );
-                                            } else if (val === '30L') {
-                                              handleUpdateMedSubject(
-                                                selectedMedYear,
-                                                block.id,
-                                                sub.id,
-                                                { grade: 30, lode: true }
-                                              );
-                                            } else {
-                                              handleUpdateMedSubject(
-                                                selectedMedYear,
-                                                block.id,
-                                                sub.id,
-                                                {
-                                                  grade: Number(val),
-                                                  lode: false,
-                                                }
-                                              );
+                                                ? 'hover:bg-slate-800/40'
+                                                : 'hover:bg-slate-50/70'
                                             }
-                                          }}
-                                          className={`w-24 rounded-lg border px-2 py-1.5 text-xs font-bold shrink-0 cursor-pointer ${
-                                            selectGradeVal !== ''
-                                              ? indigoPillClass
-                                              : inputSurfaceClass
-                                          }`}
-                                          title="Voto modulo"
-                                        >
-                                          <option value="">Da dare</option>
-                                          <option value="30L">30L</option>
-                                          {Array.from(
-                                            { length: 13 },
-                                            (_, i) => 30 - i
-                                          ).map((g) => (
-                                            <option key={g} value={String(g)}>
-                                              {g}
-                                            </option>
-                                          ))}
-                                        </select>
-
-                                        <button
-                                          type="button"
-                                          onClick={() =>
-                                            handleDeleteMedSubject(
-                                              selectedMedYear,
-                                              block.id,
-                                              sub.id
-                                            )
-                                          }
-                                          className={`p-1.5 rounded-lg transition cursor-pointer shrink-0 ${
-                                            isDark
-                                              ? 'text-slate-500 hover:text-rose-400 hover:bg-rose-950/60'
-                                              : 'text-slate-400 hover:text-rose-600 hover:bg-rose-50'
-                                          }`}
-                                          title="Elimina modulo"
-                                        >
-                                          <Trash2 className="w-4 h-4" />
-                                        </button>
-                                      </div>
-                                    );
-                                  })}
+                                          >
+                                            <td className="py-2.5 pr-3">
+                                              <input
+                                                type="text"
+                                                value={sub.name}
+                                                onChange={(e) =>
+                                                  handleUpdateMedSubject(
+                                                    selectedMedYear,
+                                                    block.id,
+                                                    sub.id,
+                                                    { name: e.target.value }
+                                                  )
+                                                }
+                                                className={`w-full bg-transparent font-semibold focus:outline-none border-b border-transparent focus:border-indigo-500 py-0.5 ${
+                                                  isDark
+                                                    ? 'text-slate-100'
+                                                    : 'text-slate-800'
+                                                }`}
+                                              />
+                                            </td>
+                                            <td className="py-2.5 pr-3">
+                                              <input
+                                                type="number"
+                                                min="0.5"
+                                                max="60"
+                                                step="0.5"
+                                                value={sub.cfu}
+                                                onChange={(e) =>
+                                                  handleUpdateMedSubject(
+                                                    selectedMedYear,
+                                                    block.id,
+                                                    sub.id,
+                                                    {
+                                                      cfu: Math.max(
+                                                        0.5,
+                                                        Number(
+                                                          e.target.value
+                                                        ) || 0.5
+                                                      ),
+                                                    }
+                                                  )
+                                                }
+                                                className={`w-20 rounded-lg border px-2 py-1 text-xs font-bold ${inputMutedSurfaceClass}`}
+                                              />
+                                            </td>
+                                            <td className="py-2.5 pr-3">
+                                              <select
+                                                value={selectVal}
+                                                onChange={(e) => {
+                                                  const v = e.target.value;
+                                                  if (v === '') {
+                                                    handleUpdateMedSubject(
+                                                      selectedMedYear,
+                                                      block.id,
+                                                      sub.id,
+                                                      {
+                                                        grade: null,
+                                                        lode: false,
+                                                      }
+                                                    );
+                                                  } else if (v === '30L') {
+                                                    handleUpdateMedSubject(
+                                                      selectedMedYear,
+                                                      block.id,
+                                                      sub.id,
+                                                      {
+                                                        grade: 30,
+                                                        lode: true,
+                                                      }
+                                                    );
+                                                  } else {
+                                                    handleUpdateMedSubject(
+                                                      selectedMedYear,
+                                                      block.id,
+                                                      sub.id,
+                                                      {
+                                                        grade: Number(v),
+                                                        lode: false,
+                                                      }
+                                                    );
+                                                  }
+                                                }}
+                                                className={`rounded-lg border px-2.5 py-1 text-xs font-bold cursor-pointer ${
+                                                  selectVal === ''
+                                                    ? inputMutedSurfaceClass
+                                                    : isDark
+                                                    ? 'bg-emerald-950/60 border-emerald-800 text-emerald-200'
+                                                    : 'bg-emerald-50 border-emerald-200 text-emerald-800'
+                                                }`}
+                                              >
+                                                <option value="">
+                                                  Da sostenere
+                                                </option>
+                                                {Array.from(
+                                                  { length: 13 },
+                                                  (_, i) => 18 + i
+                                                ).map((g) => (
+                                                  <option
+                                                    key={g}
+                                                    value={String(g)}
+                                                  >
+                                                    {g}
+                                                  </option>
+                                                ))}
+                                                <option value="30L">
+                                                  30 e Lode
+                                                </option>
+                                              </select>
+                                            </td>
+                                            <td
+                                              className={`py-2.5 text-right text-xs font-medium ${
+                                                isDark
+                                                  ? 'text-slate-400'
+                                                  : 'text-slate-500'
+                                              }`}
+                                            >
+                                              {weightPct.toFixed(0)}%
+                                            </td>
+                                            <td className="py-2.5 text-right">
+                                              <button
+                                                type="button"
+                                                onClick={() =>
+                                                  handleDeleteMedSubject(
+                                                    selectedMedYear,
+                                                    block.id,
+                                                    sub.id
+                                                  )
+                                                }
+                                                className={`p-1.5 rounded-lg cursor-pointer ${
+                                                  isDark
+                                                    ? 'text-slate-500 hover:text-rose-400 hover:bg-rose-950/60'
+                                                    : 'text-slate-400 hover:text-rose-600 hover:bg-rose-50'
+                                                }`}
+                                                title="Elimina modulo"
+                                              >
+                                                <Trash2 className="w-4 h-4" />
+                                              </button>
+                                            </td>
+                                          </tr>
+                                        );
+                                      })}
+                                    </tbody>
+                                  </table>
                                 </div>
                               )}
 
@@ -8412,83 +8340,172 @@ export default function App() {
                                     block.id
                                   )
                                 }
-                                className={`pt-3 border-t flex flex-wrap sm:flex-nowrap items-center gap-2 ${
-                                  isDark
-                                    ? 'border-slate-800/80'
-                                    : 'border-slate-100'
-                                }`}
+                                className="grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-end pt-1"
                               >
-                                <input
-                                  type="text"
-                                  placeholder="Materia del blocco (es. Fisiologia)..."
-                                  value={draft.name}
-                                  onChange={(e) =>
-                                    setNewSubjectDrafts((prev) => ({
-                                      ...prev,
-                                      [block.id]: {
-                                        ...draft,
-                                        name: e.target.value,
-                                      },
-                                    }))
-                                  }
-                                  required
-                                  className={`flex-1 min-w-[140px] rounded-xl border px-3 py-2 text-xs ${inputMutedSurfaceClass}`}
-                                />
-                                <input
-                                  type="number"
-                                  min="0.5"
-                                  max="60"
-                                  step="0.5"
-                                  placeholder="CFU"
-                                  value={draft.cfu}
-                                  onChange={(e) =>
-                                    setNewSubjectDrafts((prev) => ({
-                                      ...prev,
-                                      [block.id]: {
-                                        ...draft,
-                                        cfu: e.target.value,
-                                      },
-                                    }))
-                                  }
-                                  required
-                                  className={`w-16 rounded-xl border px-2 py-2 text-xs font-bold text-center ${inputMutedSurfaceClass}`}
-                                  title="CFU"
-                                />
-                                <select
-                                  value={draft.grade}
-                                  onChange={(e) =>
-                                    setNewSubjectDrafts((prev) => ({
-                                      ...prev,
-                                      [block.id]: {
-                                        ...draft,
-                                        grade: e.target.value,
-                                      },
-                                    }))
-                                  }
-                                  className={`w-24 rounded-xl border px-2 py-2 text-xs font-semibold cursor-pointer ${inputMutedSurfaceClass}`}
-                                >
-                                  <option value="">Da dare</option>
-                                  <option value="30L">30L</option>
-                                  {Array.from(
-                                    { length: 13 },
-                                    (_, i) => 30 - i
-                                  ).map((g) => (
-                                    <option key={g} value={String(g)}>
-                                      {g}
-                                    </option>
-                                  ))}
-                                </select>
-                                <button
-                                  type="submit"
-                                  className="inline-flex items-center justify-center gap-1 px-3 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shadow-sm transition cursor-pointer shrink-0"
-                                >
-                                  <Plus className="w-3.5 h-3.5" />
-                                  <span>Aggiungi</span>
-                                </button>
+                                <div className="sm:col-span-6">
+                                  <label
+                                    className={`block text-[11px] font-semibold mb-1 ${
+                                      isDark
+                                        ? 'text-slate-400'
+                                        : 'text-slate-500'
+                                    }`}
+                                  >
+                                    Aggiungi modulo al blocco
+                                  </label>
+                                  <input
+                                    type="text"
+                                    placeholder="Es. Anatomia Splancnica..."
+                                    value={draft.name}
+                                    onChange={(e) =>
+                                      setNewSubjectDrafts((prev) => ({
+                                        ...prev,
+                                        [block.id]: {
+                                          ...draft,
+                                          name: e.target.value,
+                                        },
+                                      }))
+                                    }
+                                    required
+                                    className={`w-full rounded-xl border px-3 py-2 text-xs sm:text-sm ${inputMutedSurfaceClass}`}
+                                  />
+                                </div>
+                                <div className="sm:col-span-2">
+                                  <label
+                                    className={`block text-[11px] font-semibold mb-1 ${
+                                      isDark
+                                        ? 'text-slate-400'
+                                        : 'text-slate-500'
+                                    }`}
+                                  >
+                                    CFU
+                                  </label>
+                                  <input
+                                    type="number"
+                                    min="0.5"
+                                    max="60"
+                                    step="0.5"
+                                    value={draft.cfu}
+                                    onChange={(e) =>
+                                      setNewSubjectDrafts((prev) => ({
+                                        ...prev,
+                                        [block.id]: {
+                                          ...draft,
+                                          cfu: e.target.value,
+                                        },
+                                      }))
+                                    }
+                                    required
+                                    className={`w-full rounded-xl border px-3 py-2 text-xs sm:text-sm ${inputMutedSurfaceClass}`}
+                                  />
+                                </div>
+                                <div className="sm:col-span-2">
+                                  <label
+                                    className={`block text-[11px] font-semibold mb-1 ${
+                                      isDark
+                                        ? 'text-slate-400'
+                                        : 'text-slate-500'
+                                    }`}
+                                  >
+                                    Voto
+                                  </label>
+                                  <select
+                                    value={draft.grade}
+                                    onChange={(e) =>
+                                      setNewSubjectDrafts((prev) => ({
+                                        ...prev,
+                                        [block.id]: {
+                                          ...draft,
+                                          grade: e.target.value,
+                                        },
+                                      }))
+                                    }
+                                    className={`w-full rounded-xl border px-3 py-2 text-xs sm:text-sm ${inputMutedSurfaceClass}`}
+                                  >
+                                    <option value="">Da sostenere</option>
+                                    {Array.from(
+                                      { length: 13 },
+                                      (_, i) => 18 + i
+                                    ).map((g) => (
+                                      <option key={g} value={String(g)}>
+                                        {g}
+                                      </option>
+                                    ))}
+                                    <option value="30L">30 e Lode</option>
+                                  </select>
+                                </div>
+                                <div className="sm:col-span-2">
+                                  <button
+                                    type="submit"
+                                    className="w-full inline-flex items-center justify-center gap-1 px-3 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-semibold shadow-sm transition cursor-pointer"
+                                  >
+                                    <Plus className="w-4 h-4" />
+                                    Aggiungi
+                                  </button>
+                                </div>
                               </form>
+
+                              {!isComplete &&
+                                gradedBlockCfu > 0 &&
+                                missingBlockCfu > 0 && (
+                                  <div
+                                    className={`rounded-xl border p-3.5 space-y-2 ${subPanelClass}`}
+                                  >
+                                    <p
+                                      className={`text-xs font-bold ${
+                                        isDark
+                                          ? 'text-slate-200'
+                                          : 'text-slate-800'
+                                      }`}
+                                    >
+                                      Simulatore Voto Mancante (
+                                      {missingBlockCfu} CFU rimanenti nel
+                                      blocco):
+                                    </p>
+                                    <div className="flex flex-wrap gap-2">
+                                      {[24, 26, 27, 28, 29, 30].map(
+                                        (targetGrade) => {
+                                          const minThreshold =
+                                            targetGrade - 0.5;
+                                          const neededAvgOnRemaining =
+                                            (minThreshold * totalBlockCfu -
+                                              weightedSum) /
+                                            missingBlockCfu;
+                                          const achievable =
+                                            neededAvgOnRemaining <= 30;
+                                          const displayNeeded =
+                                            neededAvgOnRemaining <= 18
+                                              ? '18'
+                                              : neededAvgOnRemaining.toFixed(1);
+
+                                          return (
+                                            <span
+                                              key={targetGrade}
+                                              className={`px-2.5 py-1 rounded-lg text-xs font-semibold border ${
+                                                achievable
+                                                  ? isDark
+                                                    ? 'bg-slate-900 border-slate-700 text-slate-200'
+                                                    : 'bg-white border-slate-200 text-slate-700'
+                                                  : isDark
+                                                  ? 'bg-rose-950/40 border-rose-900/60 text-rose-300 opacity-75'
+                                                  : 'bg-rose-50 border-rose-200 text-rose-700 opacity-75'
+                                              }`}
+                                            >
+                                              Per {targetGrade}:{' '}
+                                              <strong>
+                                                {achievable
+                                                  ? `≥ ${displayNeeded}`
+                                                  : 'Impossibile'}
+                                              </strong>
+                                            </span>
+                                          );
+                                        }
+                                      )}
+                                    </div>
+                                  </div>
+                                )}
                             </div>
                           )}
-                        </section>
+                        </article>
                       );
                     })}
                   </div>
@@ -8498,388 +8515,878 @@ export default function App() {
           })()}
         </main>
       ) : (
-        /* ===================================================================
-            PAGINA 1: TRACKER STUDIO & SPACED REPETITION
-           =================================================================== */
-        <main className="w-full px-3 sm:px-6 lg:px-8 py-5 sm:py-6 space-y-5">
-          <section
-            className={`rounded-2xl border p-4 sm:p-5 transition-all shadow-sm ${statusStyles.wrapper}`}
-          >
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <div className="flex items-start gap-3.5">
-                <div
-                  className={`p-2.5 rounded-xl shrink-0 shadow-sm mt-0.5 ${statusStyles.iconBg}`}
-                >
-                  <StatusIcon className="w-6 h-6" />
-                </div>
-                <div className="space-y-1">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span
-                      className={`text-[11px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full border ${statusStyles.badge}`}
-                    >
-                      {statusStyles.statusTitle}
-                    </span>
-                    <span className="text-xs font-medium opacity-75">
-                      Scadenza prima lettura:{' '}
-                      <strong>
-                        {formatShortDate(analytics.studyDeadline)}
-                      </strong>{' '}
-                      (Appello: {formatShortDate(activeExam.examDate)})
-                    </span>
-                  </div>
-                  <h2
-                    className={`text-base sm:text-lg font-bold leading-snug ${statusStyles.headlineColor}`}
-                  >
-                    {statusStyles.statusHeadline}
-                  </h2>
-                  <p
-                    className={`text-xs sm:text-sm leading-relaxed ${statusStyles.detailColor}`}
-                  >
-                    {statusStyles.statusDetail}
-                  </p>
-                </div>
-              </div>
-
-              <div className="shrink-0 flex sm:flex-col items-center sm:items-end justify-between border-t md:border-t-0 pt-3 md:pt-0 border-current/10">
-                <span className="text-[11px] uppercase tracking-wider font-semibold opacity-75">
-                  Ritmo Richiesto Ora
-                </span>
-                <div className="text-2xl sm:text-3xl font-extrabold tracking-tight">
-                  {analytics.newRequiredPace.toFixed(1)}{' '}
-                  <span className="text-xs sm:text-sm font-semibold opacity-80">
-                    pag/gg
-                  </span>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          <section className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        /* =====================================================================
+           PAGINA DEDICATA: TIROCINI CLINICI & REPARTI
+           ===================================================================== */
+        <main className="w-full px-3 sm:px-6 lg:px-8 py-6 space-y-6">
+          {/* 1. RIEPILOGO METRICHE CHIAVE TIROCINI */}
+          <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
             <div
-              className={`rounded-2xl border p-4 shadow-sm ${cardSurfaceClass}`}
+              className={`rounded-2xl border p-4 shadow-sm flex flex-col justify-between ${cardSurfaceClass}`}
             >
               <div className="flex items-center justify-between">
                 <span
-                  className={`text-xs font-medium ${
+                  className={`text-xs font-semibold uppercase tracking-wide ${
                     isDark ? 'text-slate-400' : 'text-slate-500'
                   }`}
                 >
-                  Avanzamento
-                </span>
-                <BookOpen
-                  className={`w-4 h-4 ${
-                    isDark ? 'text-indigo-400' : 'text-indigo-500'
-                  }`}
-                />
-              </div>
-              <div className="mt-2 flex items-baseline gap-1.5">
-                <span
-                  className={`text-2xl font-extrabold ${
-                    isDark ? 'text-slate-100' : 'text-slate-900'
-                  }`}
-                >
-                  {analytics.completedPages}
-                </span>
-                <span
-                  className={`text-xs font-medium ${
-                    isDark ? 'text-slate-400' : 'text-slate-500'
-                  }`}
-                >
-                  / {analytics.totalPages} pag
-                </span>
-              </div>
-              <div
-                className={`mt-2.5 w-full h-2 rounded-full overflow-hidden ${
-                  isDark ? 'bg-slate-800' : 'bg-slate-100'
-                }`}
-              >
-                <div
-                  className="h-full bg-indigo-600 rounded-full transition-all duration-300"
-                  style={{ width: `${analytics.completionPct}%` }}
-                />
-              </div>
-              <p
-                className={`mt-1.5 text-[11px] ${
-                  isDark ? 'text-slate-400' : 'text-slate-500'
-                }`}
-              >
-                {analytics.completionPct.toFixed(1)}% completato ·{' '}
-                {analytics.remainingPages} pag rimanenti
-              </p>
-            </div>
-
-            <div
-              className={`rounded-2xl border p-4 shadow-sm ${cardSurfaceClass}`}
-            >
-              <div className="flex items-center justify-between">
-                <span
-                  className={`text-xs font-medium ${
-                    isDark ? 'text-slate-400' : 'text-slate-500'
-                  }`}
-                >
-                  Giorni Utili Rimanenti
+                  Giorni Completati
                 </span>
                 <Calendar
                   className={`w-4 h-4 ${
-                    isDark ? 'text-indigo-400' : 'text-indigo-500'
+                    isDark ? 'text-emerald-400' : 'text-emerald-600'
                   }`}
                 />
               </div>
-              <div className="mt-2 flex items-baseline gap-1.5">
-                <span
-                  className={`text-2xl font-extrabold ${
-                    isDark ? 'text-slate-100' : 'text-slate-900'
+              <div className="mt-2">
+                <div className="flex items-baseline gap-1.5">
+                  <span
+                    className={`text-2xl font-extrabold ${
+                      isDark ? 'text-slate-50' : 'text-slate-900'
+                    }`}
+                  >
+                    {tirociniStats.doneDays}
+                  </span>
+                  <span
+                    className={`text-xs font-medium ${
+                      isDark ? 'text-slate-400' : 'text-slate-500'
+                    }`}
+                  >
+                    / {tirociniStats.totalDays} gg ({tirociniStats.pct.toFixed(0)}%)
+                  </span>
+                </div>
+                <div
+                  className={`w-full h-2 rounded-full mt-2.5 overflow-hidden ${
+                    isDark ? 'bg-slate-800' : 'bg-slate-100'
                   }`}
                 >
-                  {analytics.remainingUsefulDays}
-                </span>
-                <span
-                  className={`text-xs font-medium ${
-                    isDark ? 'text-slate-400' : 'text-slate-500'
-                  }`}
-                >
-                  giorni studio
-                </span>
+                  <div
+                    className="h-full bg-emerald-500 rounded-full transition-all duration-500"
+                    style={{ width: `${tirociniStats.pct}%` }}
+                  />
+                </div>
               </div>
-              <p
-                className={`mt-2.5 text-xs ${
-                  isDark ? 'text-slate-400' : 'text-slate-500'
-                }`}
-              >
-                {analytics.daysToExam} gg totali all&apos;appello (
-                {analytics.safeReviewDays} gg ripasso)
-              </p>
             </div>
 
             <div
-              className={`rounded-2xl border p-4 shadow-sm ${cardSurfaceClass}`}
+              className={`rounded-2xl border p-4 shadow-sm flex flex-col justify-between ${cardSurfaceClass}`}
             >
               <div className="flex items-center justify-between">
                 <span
-                  className={`text-xs font-medium ${
+                  className={`text-xs font-semibold uppercase tracking-wide ${
                     isDark ? 'text-slate-400' : 'text-slate-500'
                   }`}
                 >
-                  Ritmo Richiesto
+                  Reparti Svolti
                 </span>
-                <Target
+                <CheckCircle2
                   className={`w-4 h-4 ${
                     isDark ? 'text-indigo-400' : 'text-indigo-500'
                   }`}
                 />
               </div>
-              <div className="mt-2 flex items-baseline gap-1.5">
-                <span
-                  className={`text-2xl font-extrabold ${
-                    isDark ? 'text-slate-100' : 'text-slate-900'
-                  }`}
-                >
-                  {analytics.newRequiredPace.toFixed(1)}
-                </span>
-                <span
-                  className={`text-xs font-medium ${
+              <div className="mt-2">
+                <div className="flex items-baseline gap-1.5">
+                  <span
+                    className={`text-2xl font-extrabold ${
+                      isDark ? 'text-slate-50' : 'text-slate-900'
+                    }`}
+                  >
+                    {tirociniStats.doneRotations}
+                  </span>
+                  <span
+                    className={`text-xs font-medium ${
+                      isDark ? 'text-slate-400' : 'text-slate-500'
+                    }`}
+                  >
+                    su {tirociniStats.totalRotations} reparti
+                  </span>
+                </div>
+                <p
+                  className={`text-xs mt-2 ${
                     isDark ? 'text-slate-400' : 'text-slate-500'
                   }`}
                 >
-                  pag / giorno
-                </span>
+                  {tirociniStats.inProgressRotations > 0
+                    ? `${tirociniStats.inProgressRotations} attualmente in corso`
+                    : 'Nessun reparto in corso oggi'}
+                </p>
               </div>
-              <p
-                className={`mt-2.5 text-xs ${
-                  isDark ? 'text-slate-400' : 'text-slate-500'
-                }`}
-              >
-                Media reale finora:{' '}
-                <strong
-                  className={isDark ? 'text-slate-200' : 'text-slate-700'}
-                >
-                  {analytics.realDailyAvg.toFixed(1)}
-                </strong>{' '}
-                pag/gg
-              </p>
             </div>
 
             <div
-              className={`rounded-2xl border p-4 shadow-sm ${cardSurfaceClass}`}
+              className={`rounded-2xl border p-4 shadow-sm flex flex-col justify-between ${
+                isDark
+                  ? 'bg-indigo-950/35 border-indigo-800/70'
+                  : 'bg-indigo-50/40 border-indigo-200/80'
+              }`}
             >
               <div className="flex items-center justify-between">
                 <span
-                  className={`text-xs font-medium ${
-                    isDark ? 'text-slate-400' : 'text-slate-500'
+                  className={`text-xs font-semibold uppercase tracking-wide ${
+                    isDark ? 'text-indigo-300' : 'text-indigo-700'
                   }`}
                 >
-                  Tempo di Studio
+                  Giorni Rimanenti
                 </span>
                 <Clock
                   className={`w-4 h-4 ${
+                    isDark ? 'text-indigo-400' : 'text-indigo-600'
+                  }`}
+                />
+              </div>
+              <div className="mt-2">
+                <div className="flex items-baseline gap-1.5">
+                  <span
+                    className={`text-2xl font-extrabold ${
+                      isDark ? 'text-indigo-300' : 'text-indigo-700'
+                    }`}
+                  >
+                    {tirociniStats.remainingDays}
+                  </span>
+                  <span
+                    className={`text-xs font-medium ${
+                      isDark ? 'text-indigo-300/80' : 'text-indigo-700/80'
+                    }`}
+                  >
+                    giorni di frequenza
+                  </span>
+                </div>
+                <p
+                  className={`text-xs mt-2 ${
+                    isDark ? 'text-slate-300' : 'text-slate-600'
+                  }`}
+                >
+                  Tra i reparti programmati in calendario
+                </p>
+              </div>
+            </div>
+
+            <div
+              className={`rounded-2xl border p-4 shadow-sm flex flex-col justify-between ${cardSurfaceClass}`}
+            >
+              <div className="flex items-center justify-between">
+                <span
+                  className={`text-xs font-semibold uppercase tracking-wide ${
+                    isDark ? 'text-slate-400' : 'text-slate-500'
+                  }`}
+                >
+                  Moduli Verbalizzati
+                </span>
+                <Stethoscope
+                  className={`w-4 h-4 ${
                     isDark ? 'text-indigo-400' : 'text-indigo-500'
                   }`}
                 />
               </div>
-              <div className="mt-2 flex items-baseline gap-1.5">
-                <span
-                  className={`text-2xl font-extrabold ${
-                    isDark ? 'text-slate-100' : 'text-slate-900'
-                  }`}
-                >
-                  {formatMinutesHuman(pomoStats.todayMinutes)}
-                </span>
-                <span
-                  className={`text-xs font-medium ${
+              <div className="mt-2">
+                <div className="flex items-baseline gap-1.5">
+                  <span
+                    className={`text-2xl font-extrabold ${
+                      isDark ? 'text-slate-50' : 'text-slate-900'
+                    }`}
+                  >
+                    {tirociniList.filter((t) => t.verbalizzato).length}
+                  </span>
+                  <span
+                    className={`text-xs font-medium ${
+                      isDark ? 'text-slate-400' : 'text-slate-500'
+                    }`}
+                  >
+                    su {tirociniList.length} tirocini
+                  </span>
+                </div>
+                <p
+                  className={`text-xs mt-2 ${
                     isDark ? 'text-slate-400' : 'text-slate-500'
                   }`}
                 >
-                  oggi ({pomoStats.todayCount} pom)
-                </span>
+                  Spunta &quot;Verbalizzato&quot; a libretto completato
+                </p>
               </div>
-              <p
-                className={`mt-2.5 text-xs ${
-                  isDark ? 'text-slate-400' : 'text-slate-500'
-                }`}
-              >
-                Totale esame:{' '}
-                <strong
-                  className={isDark ? 'text-slate-200' : 'text-slate-700'}
-                >
-                  {formatMinutesHuman(pomoStats.totalMinutes)}
-                </strong>{' '}
-                ({pomoStats.totalCount} pom)
-              </p>
             </div>
           </section>
 
-          {isReorderMode && (
-            <div
-              className={`rounded-2xl border p-3.5 flex flex-wrap items-center justify-between gap-3 ${
-                isDark
-                  ? 'bg-indigo-950/60 border-indigo-800/80 text-indigo-100'
-                  : 'bg-indigo-50 border-indigo-200 text-indigo-950'
-              }`}
-            >
-              <div className="flex items-center gap-2 text-xs sm:text-sm">
-                <LayoutGrid
-                  className={`w-4 h-4 shrink-0 ${
-                    isDark ? 'text-indigo-400' : 'text-indigo-600'
-                  }`}
-                />
-                <span>
-                  <strong>Personalizza disposizione:</strong> usa le frecce o
-                  trascina la maniglia in alto a destra di ogni riquadro.
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                {isCustomLayout && (
-                  <button
-                    type="button"
-                    onClick={handleResetLayout}
-                    className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-xl border text-xs font-semibold transition cursor-pointer ${
-                      isDark
-                        ? 'bg-slate-900 hover:bg-slate-800 text-slate-200 border-slate-700'
-                        : 'bg-white hover:bg-indigo-100/60 text-indigo-700 border-indigo-200'
-                    }`}
-                  >
-                    <RotateCcw className="w-3.5 h-3.5" />
-                    Ripristina ordine standard
-                  </button>
-                )}
+          {/* 2. BARRA AGGIUNTA NUOVO MODULO TIROCINIO */}
+          <section
+            className={`rounded-2xl border p-4 sm:p-5 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${cardSurfaceClass}`}
+          >
+            <div>
+              <h2
+                className={`text-base sm:text-lg font-bold ${
+                  isDark ? 'text-slate-100' : 'text-slate-900'
+                }`}
+              >
+                Registro Reparti &amp; Rotazioni Cliniche
+              </h2>
+              <p
+                className={`text-xs ${
+                  isDark ? 'text-slate-400' : 'text-slate-500'
+                }`}
+              >
+                Monitora presenze, date dei reparti, durata in giorni e stato
+                di verbalizzazione di ogni tirocinio.
+              </p>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              {tirociniList.length > 0 && (
                 <button
                   type="button"
-                  onClick={() => setIsReorderMode(false)}
-                  className="px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shadow-sm transition cursor-pointer"
+                  onClick={handleToggleAllTirocini}
+                  className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold border transition cursor-pointer shrink-0 ${
+                    isDark
+                      ? 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700'
+                      : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
+                  }`}
                 >
-                  Fatto
+                  <ChevronsUpDown className="w-3.5 h-3.5" />
+                  <span>
+                    {areAllTirociniExpanded
+                      ? 'Comprimi tutti'
+                      : 'Espandi tutti'}
+                  </span>
                 </button>
-              </div>
+              )}
+
+              <form
+                onSubmit={handleAddTirocinioModule}
+                className="flex items-center gap-2 w-full sm:w-auto"
+              >
+                <input
+                  type="text"
+                  placeholder="Nuovo tirocinio (es. Tirocinio 4)..."
+                  value={newTirocinioModuleName}
+                  onChange={(e) => setNewTirocinioModuleName(e.target.value)}
+                  className={`w-full sm:w-64 rounded-xl border px-3 py-2 text-xs sm:text-sm ${inputMutedSurfaceClass}`}
+                />
+                <button
+                  type="submit"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-semibold shadow-sm transition shrink-0 cursor-pointer"
+                >
+                  <Plus className="w-4 h-4" />
+                  Aggiungi
+                </button>
+              </form>
+            </div>
+          </section>
+
+          {/* 3. LISTA SCHEDE TIROCINI */}
+          {tirociniList.length === 0 ? (
+            <div
+              className={`rounded-2xl border-2 border-dashed p-10 text-center space-y-2 ${
+                isDark
+                  ? 'border-slate-800 bg-slate-900/40 text-slate-400'
+                  : 'border-slate-200 bg-white text-slate-500'
+              }`}
+            >
+              <Stethoscope className="w-8 h-8 mx-auto opacity-50" />
+              <p className="text-sm font-semibold">
+                Nessun tirocinio registrato
+              </p>
+              <p className="text-xs">
+                Crea il tuo primo modulo di tirocinio qui sopra per iniziare a
+                tracciare i reparti.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-5">
+              {tirociniList.map((mod) => {
+                const isExpanded = Boolean(expandedTirocini[mod.id]);
+                const modTotalDays = mod.rotations.reduce(
+                  (sum, r) => sum + (Number(r.durationDays) || 0),
+                  0
+                );
+                const modDoneDays = mod.rotations
+                  .filter((r) => r.status === 'done')
+                  .reduce((sum, r) => sum + (Number(r.durationDays) || 0), 0);
+                const modDoneCount = mod.rotations.filter(
+                  (r) => r.status === 'done'
+                ).length;
+                const modPct =
+                  modTotalDays > 0
+                    ? Math.min(100, (modDoneDays / modTotalDays) * 100)
+                    : 0;
+
+                const draft = newRotationDrafts[mod.id] || {
+                  icon: '🏥',
+                  name: '',
+                  durationDays: 5,
+                  startDate: '',
+                  endDate: '',
+                  status: 'not_started',
+                };
+
+                return (
+                  <article
+                    key={mod.id}
+                    className={`rounded-2xl border shadow-sm overflow-hidden transition-all ${cardSurfaceClass}`}
+                  >
+                    {/* Header Scheda Tirocinio */}
+                    <div
+                      onClick={() => {
+                        if (editingTirocinioId !== mod.id) {
+                          toggleTirocinioExpanded(mod.id);
+                        }
+                      }}
+                      className={`p-4 sm:px-5 flex flex-wrap items-center justify-between gap-3 cursor-pointer select-none transition-colors ${
+                        isExpanded
+                          ? isDark
+                            ? 'border-b border-slate-800 bg-slate-800/35'
+                            : 'border-b border-slate-100 bg-slate-50/70'
+                          : isDark
+                          ? 'hover:bg-slate-800/45'
+                          : 'hover:bg-slate-50/90'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleTirocinioExpanded(mod.id);
+                          }}
+                          className={`p-1 rounded-lg transition cursor-pointer shrink-0 ${
+                            isDark
+                              ? 'text-slate-400 hover:text-slate-100 hover:bg-slate-800'
+                              : 'text-slate-500 hover:text-slate-900 hover:bg-slate-200/60'
+                          }`}
+                        >
+                          {isExpanded ? (
+                            <ChevronDown className="w-5 h-5" />
+                          ) : (
+                            <ChevronRight className="w-5 h-5" />
+                          )}
+                        </button>
+
+                        {editingTirocinioId === mod.id ? (
+                          <div
+                            className="flex items-center gap-1.5"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <input
+                              type="text"
+                              value={editingTirocinioTitle}
+                              onChange={(e) =>
+                                setEditingTirocinioTitle(e.target.value)
+                              }
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter')
+                                  handleRenameTirocinioModule(mod.id);
+                                if (e.key === 'Escape')
+                                  setEditingTirocinioId(null);
+                              }}
+                              className={`rounded-lg border px-2.5 py-1 text-sm font-bold ${inputSurfaceClass}`}
+                              autoFocus
+                            />
+                            <button
+                              type="button"
+                              onClick={() =>
+                                handleRenameTirocinioModule(mod.id)
+                              }
+                              className="p-1.5 rounded-lg text-emerald-500 hover:bg-emerald-950/50 cursor-pointer"
+                            >
+                              <Check className="w-4 h-4" />
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="flex flex-wrap items-center gap-2 min-w-0">
+                            <h3
+                              className={`text-base sm:text-lg font-extrabold truncate ${
+                                isDark ? 'text-slate-100' : 'text-slate-900'
+                              }`}
+                            >
+                              {mod.name}
+                            </h3>
+
+                            <span
+                              className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${indigoPillClass}`}
+                            >
+                              {modDoneDays} / {modTotalDays} gg
+                            </span>
+
+                            <span
+                              className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                                isDark
+                                  ? 'bg-slate-800 text-slate-400'
+                                  : 'bg-slate-100 text-slate-600'
+                              }`}
+                            >
+                              {modDoneCount}/{mod.rotations.length} reparti
+                            </span>
+
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setEditingTirocinioId(mod.id);
+                                setEditingTirocinioTitle(mod.name);
+                              }}
+                              className={`p-1.5 rounded-lg cursor-pointer ${
+                                isDark
+                                  ? 'text-slate-500 hover:text-slate-200 hover:bg-slate-800'
+                                  : 'text-slate-400 hover:text-slate-700 hover:bg-slate-100'
+                              }`}
+                              title="Rinomina tirocinio"
+                            >
+                              <Edit3 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        )}
+                      </div>
+
+                      <div
+                        className="flex flex-wrap items-center gap-2.5"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {/* Barra avanzamento compatta */}
+                        <div className="hidden sm:flex items-center gap-2">
+                          <div
+                            className={`w-24 h-2 rounded-full overflow-hidden ${
+                              isDark ? 'bg-slate-800' : 'bg-slate-200'
+                            }`}
+                          >
+                            <div
+                              className="h-full bg-emerald-500 rounded-full transition-all duration-300"
+                              style={{ width: `${modPct}%` }}
+                            />
+                          </div>
+                          <span
+                            className={`text-xs font-bold tabular-nums ${
+                              isDark ? 'text-slate-300' : 'text-slate-700'
+                            }`}
+                          >
+                            {modPct.toFixed(0)}%
+                          </span>
+                        </div>
+
+                        {/* Pillola Verbalizzato cliccabile */}
+                        <button
+                          type="button"
+                          onClick={() =>
+                            handleToggleTirocinioVerbalizzato(mod.id)
+                          }
+                          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border transition cursor-pointer ${
+                            mod.verbalizzato
+                              ? isDark
+                                ? 'bg-emerald-950/80 border-emerald-700 text-emerald-300'
+                                : 'bg-emerald-50 border-emerald-200 text-emerald-800'
+                              : isDark
+                              ? 'bg-slate-800 border-slate-700 text-slate-400 hover:text-slate-200'
+                              : 'bg-white border-slate-200 text-slate-600 hover:text-slate-900'
+                          }`}
+                          title="Segna tirocinio come verbalizzato"
+                        >
+                          {mod.verbalizzato ? (
+                            <CheckSquare className="w-3.5 h-3.5 text-emerald-500" />
+                          ) : (
+                            <Square className="w-3.5 h-3.5" />
+                          )}
+                          <span>Verbalizzato</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteTirocinioModule(mod.id)}
+                          className={`p-2 rounded-xl transition cursor-pointer ${
+                            isDark
+                              ? 'text-slate-500 hover:text-rose-400 hover:bg-rose-950/60'
+                              : 'text-slate-400 hover:text-rose-600 hover:bg-rose-50'
+                          }`}
+                          title="Elimina modulo tirocinio"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Corpo Tabella Reparti */}
+                    {isExpanded && (
+                      <div className="p-4 sm:p-5 space-y-4">
+                        {mod.rotations.length > 0 && (
+                          <div className="overflow-x-auto">
+                            <table className="w-full text-left border-collapse text-sm min-w-[680px]">
+                              <thead>
+                                <tr
+                                  className={`border-b text-xs ${
+                                    isDark
+                                      ? 'border-slate-800 text-slate-400'
+                                      : 'border-slate-200 text-slate-500'
+                                  }`}
+                                >
+                                  <th className="py-2 font-semibold w-14">
+                                    Icona
+                                  </th>
+                                  <th className="py-2 font-semibold">
+                                    Reparto
+                                  </th>
+                                  <th className="py-2 font-semibold w-36">
+                                    Data Inizio
+                                  </th>
+                                  <th className="py-2 font-semibold w-36">
+                                    Data Fine
+                                  </th>
+                                  <th className="py-2 font-semibold w-28">
+                                    Durata (gg)
+                                  </th>
+                                  <th className="py-2 font-semibold w-40">
+                                    Stato
+                                  </th>
+                                  <th className="py-2 font-semibold w-12 text-right"></th>
+                                </tr>
+                              </thead>
+                              <tbody
+                                className={`divide-y ${
+                                  isDark
+                                    ? 'divide-slate-800/80'
+                                    : 'divide-slate-100'
+                                }`}
+                              >
+                                {mod.rotations.map((rot) => {
+                                  const statusSelectStyle =
+                                    rot.status === 'done'
+                                      ? isDark
+                                        ? 'bg-emerald-950/70 border-emerald-800 text-emerald-300'
+                                        : 'bg-emerald-50 border-emerald-200 text-emerald-800'
+                                      : rot.status === 'in_progress'
+                                      ? isDark
+                                        ? 'bg-amber-950/70 border-amber-800 text-amber-300'
+                                        : 'bg-amber-50 border-amber-200 text-amber-800'
+                                      : isDark
+                                      ? 'bg-slate-800 border-slate-700 text-slate-300'
+                                      : 'bg-slate-100 border-slate-200 text-slate-700';
+
+                                  return (
+                                    <tr
+                                      key={rot.id}
+                                      className={
+                                        isDark
+                                          ? 'hover:bg-slate-800/40'
+                                          : 'hover:bg-slate-50/70'
+                                      }
+                                    >
+                                      <td className="py-2.5 pr-2">
+                                        <select
+                                          value={rot.icon || '🏥'}
+                                          onChange={(e) =>
+                                            handleUpdateRotation(
+                                              mod.id,
+                                              rot.id,
+                                              { icon: e.target.value }
+                                            )
+                                          }
+                                          className={`rounded-lg border px-1.5 py-1 text-base cursor-pointer ${inputMutedSurfaceClass}`}
+                                          aria-label="Icona reparto"
+                                        >
+                                          {TIROCINIO_ICONS.map((ic) => (
+                                            <option key={ic} value={ic}>
+                                              {ic}
+                                            </option>
+                                          ))}
+                                        </select>
+                                      </td>
+
+                                      <td className="py-2.5 pr-3">
+                                        <input
+                                          type="text"
+                                          value={rot.name}
+                                          onChange={(e) =>
+                                            handleUpdateRotation(
+                                              mod.id,
+                                              rot.id,
+                                              { name: e.target.value }
+                                            )
+                                          }
+                                          className={`w-full bg-transparent font-semibold focus:outline-none border-b border-transparent focus:border-indigo-500 py-0.5 ${
+                                            isDark
+                                              ? 'text-slate-100'
+                                              : 'text-slate-800'
+                                          }`}
+                                        />
+                                      </td>
+
+                                      <td className="py-2.5 pr-2">
+                                        <input
+                                          type="date"
+                                          value={rot.startDate || ''}
+                                          onChange={(e) =>
+                                            handleUpdateRotation(
+                                              mod.id,
+                                              rot.id,
+                                              { startDate: e.target.value }
+                                            )
+                                          }
+                                          className={`w-full rounded-lg border px-2 py-1 text-xs font-medium ${inputMutedSurfaceClass}`}
+                                        />
+                                      </td>
+
+                                      <td className="py-2.5 pr-2">
+                                        <input
+                                          type="date"
+                                          value={rot.endDate || ''}
+                                          onChange={(e) =>
+                                            handleUpdateRotation(
+                                              mod.id,
+                                              rot.id,
+                                              { endDate: e.target.value }
+                                            )
+                                          }
+                                          className={`w-full rounded-lg border px-2 py-1 text-xs font-medium ${inputMutedSurfaceClass}`}
+                                        />
+                                      </td>
+
+                                      <td className="py-2.5 pr-2">
+                                        <div className="flex items-center gap-1">
+                                          <input
+                                            type="number"
+                                            min="1"
+                                            max="90"
+                                            value={rot.durationDays}
+                                            onChange={(e) =>
+                                              handleUpdateRotation(
+                                                mod.id,
+                                                rot.id,
+                                                {
+                                                  durationDays: Math.max(
+                                                    1,
+                                                    Number(e.target.value) || 1
+                                                  ),
+                                                }
+                                              )
+                                            }
+                                            className={`w-16 rounded-lg border px-2 py-1 text-xs font-bold ${inputMutedSurfaceClass}`}
+                                          />
+                                          <span
+                                            className={`text-xs ${
+                                              isDark
+                                                ? 'text-slate-400'
+                                                : 'text-slate-500'
+                                            }`}
+                                          >
+                                            gg
+                                          </span>
+                                        </div>
+                                      </td>
+
+                                      <td className="py-2.5 pr-2">
+                                        <select
+                                          value={rot.status}
+                                          onChange={(e) =>
+                                            handleUpdateRotation(
+                                              mod.id,
+                                              rot.id,
+                                              { status: e.target.value }
+                                            )
+                                          }
+                                          className={`w-full rounded-lg border px-2.5 py-1 text-xs font-bold cursor-pointer ${statusSelectStyle}`}
+                                        >
+                                          <option value="not_started">
+                                            Non iniziato
+                                          </option>
+                                          <option value="in_progress">
+                                            In corso
+                                          </option>
+                                          <option value="done">Fatto</option>
+                                        </select>
+                                      </td>
+
+                                      <td className="py-2.5 text-right">
+                                        <button
+                                          type="button"
+                                          onClick={() =>
+                                            handleDeleteRotation(mod.id, rot.id)
+                                          }
+                                          className={`p-1.5 rounded-lg cursor-pointer ${
+                                            isDark
+                                              ? 'text-slate-500 hover:text-rose-400 hover:bg-rose-950/60'
+                                              : 'text-slate-400 hover:text-rose-600 hover:bg-rose-50'
+                                          }`}
+                                          title="Elimina reparto"
+                                        >
+                                          <Trash2 className="w-4 h-4" />
+                                        </button>
+                                      </td>
+                                    </tr>
+                                  );
+                                })}
+                              </tbody>
+                            </table>
+                          </div>
+                        )}
+
+                        {/* Form Aggiunta Nuovo Reparto */}
+                        <form
+                          onSubmit={(e) => handleAddRotation(e, mod.id)}
+                          className="grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-end pt-1"
+                        >
+                          <div className="sm:col-span-1">
+                            <label
+                              className={`block text-[11px] font-semibold mb-1 ${
+                                isDark ? 'text-slate-400' : 'text-slate-500'
+                              }`}
+                            >
+                              Icona
+                            </label>
+                            <select
+                              value={draft.icon}
+                              onChange={(e) =>
+                                setNewRotationDrafts((prev) => ({
+                                  ...prev,
+                                  [mod.id]: { ...draft, icon: e.target.value },
+                                }))
+                              }
+                              className={`w-full rounded-xl border px-2 py-2 text-sm ${inputMutedSurfaceClass}`}
+                            >
+                              {TIROCINIO_ICONS.map((ic) => (
+                                <option key={ic} value={ic}>
+                                  {ic}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+
+                          <div className="sm:col-span-3">
+                            <label
+                              className={`block text-[11px] font-semibold mb-1 ${
+                                isDark ? 'text-slate-400' : 'text-slate-500'
+                              }`}
+                            >
+                              Nome Reparto
+                            </label>
+                            <input
+                              type="text"
+                              placeholder="Es. Cardiologia, Chirurgia..."
+                              value={draft.name}
+                              onChange={(e) =>
+                                setNewRotationDrafts((prev) => ({
+                                  ...prev,
+                                  [mod.id]: { ...draft, name: e.target.value },
+                                }))
+                              }
+                              required
+                              className={`w-full rounded-xl border px-3 py-2 text-xs sm:text-sm ${inputMutedSurfaceClass}`}
+                            />
+                          </div>
+
+                          <div className="sm:col-span-2">
+                            <label
+                              className={`block text-[11px] font-semibold mb-1 ${
+                                isDark ? 'text-slate-400' : 'text-slate-500'
+                              }`}
+                            >
+                              Data Inizio
+                            </label>
+                            <input
+                              type="date"
+                              value={draft.startDate}
+                              onChange={(e) =>
+                                setNewRotationDrafts((prev) => ({
+                                  ...prev,
+                                  [mod.id]: {
+                                    ...draft,
+                                    startDate: e.target.value,
+                                  },
+                                }))
+                              }
+                              className={`w-full rounded-xl border px-2.5 py-2 text-xs ${inputMutedSurfaceClass}`}
+                            />
+                          </div>
+
+                          <div className="sm:col-span-2">
+                            <label
+                              className={`block text-[11px] font-semibold mb-1 ${
+                                isDark ? 'text-slate-400' : 'text-slate-500'
+                              }`}
+                            >
+                              Data Fine
+                            </label>
+                            <input
+                              type="date"
+                              value={draft.endDate}
+                              onChange={(e) =>
+                                setNewRotationDrafts((prev) => ({
+                                  ...prev,
+                                  [mod.id]: {
+                                    ...draft,
+                                    endDate: e.target.value,
+                                  },
+                                }))
+                              }
+                              className={`w-full rounded-xl border px-2.5 py-2 text-xs ${inputMutedSurfaceClass}`}
+                            />
+                          </div>
+
+                          <div className="sm:col-span-1">
+                            <label
+                              className={`block text-[11px] font-semibold mb-1 ${
+                                isDark ? 'text-slate-400' : 'text-slate-500'
+                              }`}
+                            >
+                              Giorni
+                            </label>
+                            <input
+                              type="number"
+                              min="1"
+                              max="90"
+                              value={draft.durationDays}
+                              onChange={(e) =>
+                                setNewRotationDrafts((prev) => ({
+                                  ...prev,
+                                  [mod.id]: {
+                                    ...draft,
+                                    durationDays: e.target.value,
+                                  },
+                                }))
+                              }
+                              required
+                              className={`w-full rounded-xl border px-2.5 py-2 text-xs sm:text-sm ${inputMutedSurfaceClass}`}
+                            />
+                          </div>
+
+                          <div className="sm:col-span-1">
+                            <label
+                              className={`block text-[11px] font-semibold mb-1 ${
+                                isDark ? 'text-slate-400' : 'text-slate-500'
+                              }`}
+                            >
+                              Stato
+                            </label>
+                            <select
+                              value={draft.status}
+                              onChange={(e) =>
+                                setNewRotationDrafts((prev) => ({
+                                  ...prev,
+                                  [mod.id]: {
+                                    ...draft,
+                                    status: e.target.value,
+                                  },
+                                }))
+                              }
+                              className={`w-full rounded-xl border px-2 py-2 text-xs ${inputMutedSurfaceClass}`}
+                            >
+                              <option value="not_started">Non iniziato</option>
+                              <option value="in_progress">In corso</option>
+                              <option value="done">Fatto</option>
+                            </select>
+                          </div>
+
+                          <div className="sm:col-span-2">
+                            <button
+                              type="submit"
+                              className="w-full inline-flex items-center justify-center gap-1 px-3 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-semibold shadow-sm transition cursor-pointer"
+                            >
+                              <Plus className="w-4 h-4" />
+                              Reparto
+                            </button>
+                          </div>
+                        </form>
+                      </div>
+                    )}
+                  </article>
+                );
+              })}
             </div>
           )}
-
-          <div
-            className={`grid grid-cols-1 ${
-              layout.left.length > 0 && layout.right.length > 0
-                ? 'lg:grid-cols-12'
-                : 'lg:grid-cols-1'
-            } gap-5 items-start`}
-          >
-            {(layout.left.length > 0 || draggedSection) && (
-              <div
-                onDragOver={(e) => {
-                  e.preventDefault();
-                  if (layout.left.length === 0) {
-                    setDragOverTarget({ col: 'left', index: 0 });
-                  }
-                }}
-                onDrop={(e) => {
-                  e.preventDefault();
-                  handleDropSection('left', layout.left.length);
-                }}
-                className={`${
-                  layout.right.length > 0 || draggedSection
-                    ? 'lg:col-span-8'
-                    : 'lg:col-span-12'
-                } space-y-5 min-h-[120px] rounded-2xl transition-colors ${
-                  layout.left.length === 0 && draggedSection
-                    ? isDark
-                      ? 'border-2 border-dashed border-indigo-500/70 bg-indigo-950/30 p-4 flex items-center justify-center'
-                      : 'border-2 border-dashed border-indigo-400 bg-indigo-50/40 p-4 flex items-center justify-center'
-                    : ''
-                }`}
-              >
-                {layout.left.length === 0 && draggedSection ? (
-                  <p
-                    className={`text-xs font-semibold ${
-                      isDark ? 'text-indigo-300' : 'text-indigo-700'
-                    }`}
-                  >
-                    Rilascia qui per spostare nella colonna principale
-                  </p>
-                ) : (
-                  layout.left.map((secId, idx) =>
-                    renderSection(secId, 'left', idx, layout.left.length)
-                  )
-                )}
-              </div>
-            )}
-
-            {(layout.right.length > 0 || draggedSection) && (
-              <div
-                onDragOver={(e) => {
-                  e.preventDefault();
-                  if (layout.right.length === 0) {
-                    setDragOverTarget({ col: 'right', index: 0 });
-                  }
-                }}
-                onDrop={(e) => {
-                  e.preventDefault();
-                  handleDropSection('right', layout.right.length);
-                }}
-                className={`${
-                  layout.left.length > 0 || draggedSection
-                    ? 'lg:col-span-4'
-                    : 'lg:col-span-12'
-                } space-y-5 min-h-[120px] rounded-2xl transition-colors ${
-                  layout.right.length === 0 && draggedSection
-                    ? isDark
-                      ? 'border-2 border-dashed border-indigo-500/70 bg-indigo-950/30 p-4 flex items-center justify-center'
-                      : 'border-2 border-dashed border-indigo-400 bg-indigo-50/40 p-4 flex items-center justify-center'
-                    : ''
-                }`}
-              >
-                {layout.right.length === 0 && draggedSection ? (
-                  <p
-                    className={`text-xs font-semibold ${
-                      isDark ? 'text-indigo-300' : 'text-indigo-700'
-                    }`}
-                  >
-                    Rilascia qui per spostare nella colonna laterale
-                  </p>
-                ) : (
-                  layout.right.map((secId, idx) =>
-                    renderSection(secId, 'right', idx, layout.right.length)
-                  )
-                )}
-              </div>
-            )}
-          </div>
         </main>
       )}
     </div>
