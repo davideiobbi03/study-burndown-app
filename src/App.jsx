@@ -1,13 +1,3 @@
-Ecco il codice aggiornato e ottimizzato per smartphone e tablet (sia in orientamento verticale/portrait che orizzontale/landscape), mantenendo intatte tutte le funzionalità, la grafica e la persistenza locale + cloud.
-
-Principali miglioramenti mobile/tablet applicati:
-
-1. Safe Area & Viewport Dinamico (100dvh): supporto completo a notch, Dynamic Island e barra Home di iPhone/iPad (env(safe-area-inset-*)) e altezza dinamica min-h-[100dvh] per evitare tagli con la barra indirizzi mobile.
-2. Header Responsive Multi-Orientamento: su schermi stretti (smartphone portrait) i controlli contestuali passano su una seconda riga pulita senza schiacciare il titolo dell'esame, mentre in landscape e su tablet si allineano fluidamente con target touch comodi (min-h-[36px]).
-3. Sezione Focus Zen Landscape-Friendly: in orientamento orizzontale su telefono (max-height: 540px in landscape), la vista Zen compatta automaticamente anello, timer e spaziature verticali in modo che tutto (controlli, timer e player audio) resti visibile senza dover scorrere.
-4. Spaced Repetition & Voti Blocchi su Touch: i pulsanti di valutazione (Difficile / Buono / Facile) e i selettori di voto/CFU si dispongono a griglia su schermi piccoli per essere premuti comodamente con il pollice senza toccare per errore il cestino.
-5. Touch & Tap Optimization: aggiunto -webkit-tap-highlight-color: transparent, touch-action: manipulation sui pulsanti (elimina il ritardo di 300ms al tocco su iOS) e padding safe-area nel modale Cloud Sync.
-
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import {
   ResponsiveContainer,
